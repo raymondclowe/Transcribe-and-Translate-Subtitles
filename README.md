@@ -70,6 +70,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 - [ ] Real-Time Translate & Trascribe Video Player
 
 ---
+---
+---
 # 转录和翻译字幕
 
 ## 🚨 重要提示  
