@@ -1,8 +1,8 @@
 # Transcribe and Translate Subtitles
 
 ## 🚨 Important Note
-**This project is for non-commercial use only!**
-**Every task runs locally without internet, ensuring maximum privacy**
+- **This project is for non-commercial use only!**
+- **Every task runs locally without internet, ensuring maximum privacy**
 
 ---
 
@@ -75,8 +75,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 # 转录和翻译字幕
 
 ## 🚨 重要提示  
-**此项目仅限非商业用途！**  
-**所有任务均在本地运行，无需连接互联网，确保最大程度的隐私保护。**
+- **此项目仅限非商业用途！**  
+- **所有任务均在本地运行，无需连接互联网，确保最大程度的隐私保护。**
 
 ---
 
