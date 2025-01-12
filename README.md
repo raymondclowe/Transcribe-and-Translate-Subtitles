@@ -45,7 +45,7 @@ The application will process the videos one by one.
 python run.py
 ```
 3. Once the application starts, you will see a webpage open in your browser.
-   ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/Screenshot%20from%202025-01-13%2000-47-34.png)
+   ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-01-13%2000-47-34.png)
 
 ### 🛠️ Step 8: Fix Silero-VAD Error (if encountered)
 On the first run, you might encounter a **Silero-VAD error**. Simply restart the application, and it should be resolved.
@@ -59,7 +59,9 @@ The LLM integration is based on the [ipex-llm](https://github.com/intel-analytic
 ---
 
 ## 🎉 Enjoy the Application!
-
+```
+Transcribe_and_Translate_Subtitles/Results/Subtitles
+```
 ---
 
 ## 📌 To-Do List
@@ -115,7 +117,7 @@ Transcribe_and_Translate_Subtitles/Media
 python run.py
 ```
 3. 应用程序启动后，你的浏览器将自动打开一个网页。  
-   ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/Screenshot%20from%202025-01-13%2000-53-21.png)
+   ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-01-13%2000-53-21.png)
 
 ### 🛠️ 第八步：修复 Silero-VAD 错误（如有）  
 首次运行时，你可能会遇到 **Silero-VAD 错误**。只需重启应用程序即可解决该问题。
@@ -131,7 +133,9 @@ python run.py
 ---
 
 ## 🎉 尽情享受应用程序吧！
-
+```
+Transcribe_and_Translate_Subtitles/Results/Subtitles
+```
 ---
 
 ## 📌 待办事项  
