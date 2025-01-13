@@ -467,7 +467,7 @@ def update_translate_language(dropdown_model_llm):
             update_D = gr.update(choices=["Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Whisper-Large-V2-japanese-5k-steps"], value="Whisper-Large-V3-Turbo")
         else:
             update_C = gr.update(choices=["sym_int4", "asym_int4", "sym_int5", "asym_int5", "sym_int8", "gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="sym_int4")
-            update_D = gr.update(choices=["SenseVoiceSmall - Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
+            update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
     return update_A, update_B, update_C, update_D
 
 
@@ -1698,7 +1698,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_asr = gr.Dropdown(
-                choices=["SenseVoiceSmall - Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"],
+                choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"],
                 label="ASR Model",
                 info="Model used for transcription.",
                 value="SenseVoiceSmall - Fast",
@@ -1760,7 +1760,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #f968f3;'>Audio Processor</span>")
         with gr.Column():
             model_denoiser = gr.Dropdown(
-                choices=["None", "ZipEnhancer - Time Consume", "GTCRN - Fast", "DFSMN - Fast & Chinese"],
+                choices=["None", "ZipEnhancer-Time Consume", "GTCRN-Fast", "DFSMN-Fast & Chinese"],
                 label="Denoiser",
                 info="Choose a denoiser for audio processing.",
                 value="None",
