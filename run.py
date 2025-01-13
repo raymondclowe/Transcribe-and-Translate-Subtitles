@@ -1454,9 +1454,9 @@ def handle_inputs(
                         text_file.write(f"{text_combine}\n")
                         subtitles_file.write(f"{idx}\n{timestamp}{text_combine}\n\n")
                         idx += 1
-        del text_combine
-        del save_text
-        del save_timestamps
+            del text_combine
+            del save_text
+            del save_timestamps
         print("\nSave completed for timestamps, transcribe text, and original language subtitles.")
         print(f"Transcribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
 
