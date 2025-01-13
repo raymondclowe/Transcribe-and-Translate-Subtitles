@@ -730,8 +730,15 @@ def handle_inputs(
         denoiser_name = None
         USE_DENOISED = False
 
+    if os.name == 'nt' and "CPU" not in hardware:
+        special_set = True
+        denoiser_os = "Windows"
+    else:
+        special_set = False
+        denoiser_os = "Linux"
+
     if denoiser_name:
-        onnx_model_A = f"./Denoiser/{denoiser_name}.ort"
+        onnx_model_A = f"./Denoiser/{denoiser_os}/{denoiser_name}.ort"
         if os.path.isfile(onnx_model_A):
             print(f"\nFound the Denoiser-{denoiser_name}.")
         else:
@@ -1527,10 +1534,6 @@ def handle_inputs(
                 if system_ram < 16:
                     if ("8" in model_llm_accuracy) or ("16" in model_llm_accuracy):
                         print("\nWarning for the low memory system with 8 bit or 16 bit LLM accuracy. Try to using the 4 bit or lower bit instead.")
-                if os.name == 'nt' and "CPU" not in hardware:
-                    special_set = True
-                else:
-                    special_set = False
                 if os.path.isfile(model_llm_custom_path) and (
                         ("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
                     translation_model = AutoModelForCausalLM.from_gguf(llm_path, cpu_embedding=True)
