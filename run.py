@@ -1202,7 +1202,7 @@ def handle_inputs(
             shape_value_in = ort_session_A._inputs_meta[0].shape[-1]
             shape_value_out = ort_session_A._outputs_meta[0].shape[-1]
             if isinstance(shape_value_in, str):
-                INPUT_AUDIO_LENGTH = min(48000, audio_len)  # You can adjust it.
+                INPUT_AUDIO_LENGTH = min(30720, audio_len)  # You can adjust it.
             else:
                 INPUT_AUDIO_LENGTH = shape_value_in
             stride_step = INPUT_AUDIO_LENGTH
