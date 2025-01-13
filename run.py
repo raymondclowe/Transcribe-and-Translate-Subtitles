@@ -1461,7 +1461,7 @@ def handle_inputs(
         print(f"Transcribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
 
         if "Translate" not in task:
-            return f"Transcribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles"
+            continue
         else:
             start_time = time.time()
             if FIRST_RUN:
@@ -1498,7 +1498,8 @@ def handle_inputs(
                     llm_path = "./LLM/Qwen/32B"
                     MAX_TRANSLATE_LINES = 150
                 elif model_llm == "Whisper":
-                    return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles"
+                    print(f"Translate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
+                    continue
                 else:
                     return "Can not find the LLM model for translation task."
 
