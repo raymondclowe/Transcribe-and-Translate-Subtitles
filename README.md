@@ -12,6 +12,7 @@
 - Run the following command in your terminal to install the latest required Python packages:
 ```bash
 conda install ffmpeg
+
 pip install -r requirements.txt
 ```
 
@@ -89,6 +90,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 - 在终端中运行以下命令来安装所需的最新 Python 包：  
 ```bash
 conda install ffmpeg
+
 pip install -r requirements.txt
 ```
 
