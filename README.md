@@ -16,7 +16,7 @@ pip install -r requirements.txt
 
 ### 📥 Step 2: Download Necessary Models
 1. Download the required models from Google Drive: [Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)
-2. Or download from ModelScope:[Transcribe_and_Translate_Subtitles](https://modelscope.cn/models/h5n1aids/Transcribe-and-Translate-Subtitles/files)
+2. Or download from ModelScope: [Transcribe_and_Translate_Subtitles](https://modelscope.cn/models/h5n1aids/Transcribe-and-Translate-Subtitles/files)
 3. After downloading, unzip the file.
 
 ### 🤖 Step 3: Download a Preferred LLM Model
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 
 ### 📥 第二步：下载必要的模型  
 1. 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)  
-2. 或从 ModelScope 下载载所需模型:[Transcribe_and_Translate_Subtitles](https://modelscope.cn/models/h5n1aids/Transcribe-and-Translate-Subtitles/files)
+2. 或从 ModelScope 下载载所需模型: [Transcribe_and_Translate_Subtitles](https://modelscope.cn/models/h5n1aids/Transcribe-and-Translate-Subtitles/files)
 3. 下载完成后，解压文件。
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型  
