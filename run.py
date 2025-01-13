@@ -1562,6 +1562,9 @@ def handle_inputs(
 
             step_size = MAX_TRANSLATE_LINES - TRANSLATE_OVERLAP
             total_lines = len(asr_lines)
+            if total_lines == 0:
+                print("\nEmpty content for translation task.")
+                continue 
             inv_total_lines = float(100.0 / total_lines)
 
             print("\nStart to translate.\n")
