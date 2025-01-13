@@ -730,8 +730,11 @@ def handle_inputs(
         denoiser_name = None
         USE_DENOISED = False
 
-    if os.name == 'nt' and "CPU" not in hardware:
-        special_set = True
+    if os.name == 'nt':
+        if "CPU" not in hardware:
+            special_set = True
+        else:
+            special_set = False
         denoiser_os = "Windows"
     else:
         special_set = False
