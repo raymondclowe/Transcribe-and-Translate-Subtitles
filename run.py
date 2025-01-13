@@ -459,7 +459,7 @@ def update_translate_language(dropdown_model_llm):
     if "Custom" in dropdown_model_llm:
         update_B = gr.update(visible=True, value=None)
         update_C = gr.update(choices=["gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="gguf_q4k_s")
-        update_D = gr.update(choices=["SenseVoiceSmall - Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
+        update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
     else:
         update_B = gr.update(visible=False, value=None)
         if "Whisper" in dropdown_model_llm:
@@ -1396,7 +1396,7 @@ def handle_inputs(
 
             subtitles_file.write("WEBVTT\n\n")  # Correct VTT header
             idx = 0
-            for _, (text, t_stamp) in enumerate(zip(save_text, save_timestamps), start=1):
+            for text, t_stamp in zip(save_text, save_timestamps):
                 text = text.replace("\n", "")
                 if asr_type == 1:
                     text = text.split("<|withitn|>")
@@ -1701,7 +1701,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"],
                 label="ASR Model",
                 info="Model used for transcription.",
-                value="SenseVoiceSmall - Fast",
+                value="SenseVoiceSmall-Fast",
                 visible=True
             )
             model_whisper_custom_path = gr.Textbox(
@@ -1775,10 +1775,10 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_vad = gr.Dropdown(
-                choices=["Silero - Fast", "FSMN"],
+                choices=["Silero-Fast", "FSMN"],
                 label="VAD",
                 info="Select VAD for audio processing.",
-                value="Silero - Fast",
+                value="Silero-Fast",
                 visible=True
             )
 
