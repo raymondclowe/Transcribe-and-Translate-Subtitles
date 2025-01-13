@@ -19,7 +19,8 @@ pip install -r requirements.txt
 2. After downloading, unzip the file.
 
 ### 🤖 Step 3: Download a Preferred LLM Model
-Choose and download your preferred LLM model. LLM Supports: [ipex-llm](https://github.com/intel-analytics/ipex-llm).  For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+1. Choose and download your preferred LLM model. LLM Supports: [ipex-llm](https://github.com/intel-analytics/ipex-llm).  For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+2. The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B).
 
 ### 📂 Step 4: Place the LLM Model in the Correct Directory
 Move the downloaded LLM model to the following path:
@@ -93,7 +94,8 @@ pip install -r requirements.txt
 2. 下载完成后，解压文件。
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型  
-选择并下载你偏好的 LLM 模型。LLM支持: [ipex-llm](https://github.com/intel-analytics/ipex-llm)。 例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+1. 选择并下载你偏好的 LLM 模型。LLM支持: [ipex-llm](https://github.com/intel-analytics/ipex-llm)。 例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+2. 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录  
 将下载的 LLM 模型移动到以下路径：  
