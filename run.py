@@ -882,8 +882,7 @@ def handle_inputs(
                 'num_of_threads': parallel_threads,
                 'num_streams': 1,
                 'enable_opencl_throttling': True,
-                'enable_qdq_optimizer': False,
-                'cache_dir': './Cache'
+                'enable_qdq_optimizer': False
             }]
     else:
         provider_options = None
