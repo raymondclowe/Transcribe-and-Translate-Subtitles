@@ -85,6 +85,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 | Ubuntu-24.04 | CPU <br> i3-12300 | None              | Silero <br> f32      | SenseVoiceSmall      |        0.08      |
 | Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | Silero <br> f32      | SenseVoiceSmall      |        0.10      |
 | Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | FSMN <br> f32        | SenseVoiceSmall      |        0.054     |
+| Ubuntu-24.04 | CPU <br> i3-12300 | ZipEnhancer <br> f32 | FSMN <br> f32     | SenseVoiceSmall      |        0.39      |
 | Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | Silero <br> f32      | Whisper-Large-V3     |        0.20      |
 | Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | FSMN <br> f32        | Whisper-Large-V3-Turbo |        0.148   |
 
