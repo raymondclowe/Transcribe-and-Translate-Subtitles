@@ -88,7 +88,7 @@ def update_ui(dropdown_ui_language):
         )
         update_J = gr.update(
             label="自定义 Whisper 路径",
-            info="指定您微调的 Whisper 模型文件夹路径，包括 model.bin, config.json, tokenizer.json ..."
+            info="指定您微调的 Whisper 模型文件夹路径，包括 Whisper_Encoder.ort, Whisper_Decoder.ort, tokenizer.json ..."
         )
         update_K = gr.update(
             label="转录语言",
@@ -189,7 +189,7 @@ def update_ui(dropdown_ui_language):
         )
         update_J = gr.update(
             label="カスタム Whisper パス",
-            info="微調整したWhisperモデルフォルダのパスを指定します（model.bin, config.json, tokenizer.json などを含む）。"
+            info="微調整したWhisperモデルフォルダのパスを指定します（Whisper_Encoder.ort, Whisper_Decoder.ort, tokenizer.json ... などを含む）。"
         )
         update_K = gr.update(
             label="転写言語",
@@ -290,7 +290,7 @@ def update_ui(dropdown_ui_language):
         )
         update_J = gr.update(
             label="Custom Whisper Path",
-            info="Specify the path to the folder of your fine-tuned Whisper model, including model.bin, config.json, tokenizer.json ..."
+            info="Specify the path to the folder of your fine-tuned Whisper model, including Whisper_Encoder.ort, Whisper_Decoder.ort, tokenizer.json ..."
         )
         update_K = gr.update(
             label="Transcription Language",
@@ -1714,7 +1714,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
             model_whisper_custom_path = gr.Textbox(
                 label="Custom Whisper Path",
-                info="Path to your fine-tuned Whisper model.",
+                info="Path to your fine-tuned Whisper model. Including: Whisper_Encoder.ort, Whisper_Decoder.ort, tokenizer.json ...",
                 value="",
                 visible=False
             )
