@@ -1482,28 +1482,28 @@ def handle_inputs(
                 elif model_llm == "Gemma-2-9B-it":
                     model_llm = "./LLM/Gemma/9B"
                     MAX_TRANSLATE_LINES = 54
-                elif model_llm == "GLM-4-9b-chat":
+                elif model_llm == "GLM-4-9B-Chat":
                     llm_path = "./LLM/GLM/9B"
                     MAX_TRANSLATE_LINES = 54
                 elif model_llm == "MiniCPM3-4B":
                     llm_path = "./LLM/MiniCPM/4B"
                     MAX_TRANSLATE_LINES = 21
-                elif model_llm == "Phi-3.5-mini-instruct":
+                elif model_llm == "Phi-3.5-mini-Instruct":
                     llm_path = "./LLM/Phi/mini"
                     MAX_TRANSLATE_LINES = 21
-                elif model_llm == "Phi-3-medium-128k-instruct":
+                elif model_llm == "Phi-3-medium-128k-Instruct":
                     llm_path = "./LLM/Phi/medium"
                     MAX_TRANSLATE_LINES = 48
-                elif model_llm == "Qwen2.5-3B":
+                elif model_llm == "Qwen2.5-3B-Instruct":
                     llm_path = "./LLM/Qwen/3B"
                     MAX_TRANSLATE_LINES = 15
-                elif model_llm == "Qwen2.5-7B":
+                elif model_llm == "Qwen2.5-7B-Instruct":
                     llm_path = "./LLM/Qwen/7B"
                     MAX_TRANSLATE_LINES = 48
-                elif model_llm == "Qwen2.5-14B":
+                elif model_llm == "Qwen2.5-14B-Instruct":
                     llm_path = "./LLM/Qwen/14B"
                     MAX_TRANSLATE_LINES = 75
-                elif model_llm == "Qwen2.5-32B":
+                elif model_llm == "Qwen2.5-32B-Instruct":
                     llm_path = "./LLM/Qwen/32B"
                     MAX_TRANSLATE_LINES = 150
                 elif model_llm == "Whisper":
@@ -1684,10 +1684,10 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #fb7450;'>Model Selection</span>")
         with gr.Column():
             model_llm = gr.Dropdown(
-                choices=["Custom-GGUF-LLM", "Gemma-2-2B-it", "Gemma-2-9B-it", "GLM-4-9b-chat", "MiniCPM3-4B", "Phi-3.5-mini-instruct", "Phi-3-medium-128k-instruct", "Qwen2.5-3B", "Qwen2.5-7B", "Qwen2.5-14B", "Qwen2.5-32B", "Whisper"],
+                choices=["Custom-GGUF-LLM", "Gemma-2-2B-it", "Gemma-2-9B-it", "GLM-4-9B-Chat", "MiniCPM3-4B", "Phi-3.5-mini-Instruct", "Phi-3-medium-128k-Instruct", "Qwen2.5-3B-Instruct", "Qwen2.5-7B-Instruct", "Qwen2.5-14B-Instruct", "Qwen2.5-32B-Instruct", "Whisper"],
                 label="LLM Model",
                 info="Model used for translation.",
-                value="Qwen2.5-7B",
+                value="Qwen2.5-7B-Instruct",
                 visible=True
             )
             model_llm_custom_path = gr.Textbox(
