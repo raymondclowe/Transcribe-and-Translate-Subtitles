@@ -1427,11 +1427,11 @@ def handle_inputs(
                     text_combine = text
 
                 start_sec = t_stamp[0]
-                if t_stamp[1] - start_sec > 10.0:
+                if t_stamp[1] - start_sec > 8.0:
                     markers = re.split(r'([。、,.!?？;])', text_combine)  # Keep markers in results
                     text_chunks = ["".join(markers[i:i + 2]) for i in range(0, len(markers), 2)]
                     time_per_chunk = (t_stamp[1] - start_sec) / len(text_chunks)
-                    if len(text_chunks) > 3:
+                    if len(text_chunks) > 2:
                         for i, chunk in enumerate(text_chunks):
                             chunk_start = start_sec + i * time_per_chunk
                             chunk_end = chunk_start + time_per_chunk
