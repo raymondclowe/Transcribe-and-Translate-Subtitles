@@ -21,8 +21,14 @@ pip install -r requirements.txt
 - After downloading, unzip the file.
 
 ### 🤖 Step 3: Download a Preferred LLM Model (Optional, for translate task)
-- Choose and download your preferred LLM model. LLM Supports: [ipex-llm](https://github.com/intel-analytics/ipex-llm).  For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
-- The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B).
+- Choose and download your preferred LLM model.
+- LLM Supports: 
+  - Gemma2-it: 2B, 9B
+  - GLM4-Chat: 9B  
+  - MiniCPM3: 4B
+  - Phi3/3.5: mini, medium
+  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
+- The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B). For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 Step 4: Place the LLM Model in the Correct Directory (Optional, for translate task)
 - Move the downloaded LLM model to the following path:
@@ -106,8 +112,14 @@ pip install -r requirements.txt
 - 下载完成后，解压文件。
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型 （可选，用于翻译任务） 
-- 选择并下载你偏好的 LLM 模型。LLM支持: [ipex-llm](https://github.com/intel-analytics/ipex-llm)。 例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
-- 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。
+- 选择并下载你偏好的 LLM 模型。
+- LLM支持:
+  - Gemma2-it: 2B, 9B
+  - GLM4-Chat: 9B  
+  - MiniCPM3: 4B
+  - Phi3/3.5: mini, medium
+  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
+- 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录 （可选，用于翻译任务） 
 - 将下载的 LLM 模型移动到以下路径：  
