@@ -24,10 +24,11 @@ pip install -r requirements.txt
 - Choose and download your preferred LLM model.
 - LLM Supports: 
   - Gemma2-it: 2B, 9B
-  - GLM4-Chat: 9B  
+  - GLM4-Chat: 9B
   - MiniCPM3: 4B
   - Phi3/3.5: mini, medium
   - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
+  - GGUF Format: gguf_iq2_xxs, gguf_iq2_xs, gguf_iq1_s, gguf_q4k_s, gguf_q4k_m
 - The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B). For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 Step 4: Place the LLM Model in the Correct Directory (Optional, for translate task)
@@ -120,6 +121,7 @@ pip install -r requirements.txt
   - MiniCPM3: 4B
   - Phi3/3.5: mini, medium
   - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
+  - GGUF Format: gguf_iq2_xxs, gguf_iq2_xs, gguf_iq1_s, gguf_q4k_s, gguf_q4k_m
 - 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录 （可选，用于翻译任务） 
