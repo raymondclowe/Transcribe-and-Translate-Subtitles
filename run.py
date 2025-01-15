@@ -703,6 +703,7 @@ def handle_inputs(
         slider_vad_MIN_SILENCE_DURATION,
         slider_vad_ACTIVATE_THRESHOLD
 ):
+    total_process_time = time.time()
     task_queue = []
     if os.path.isfile(file_path_input):
         task_queue.append(file_path_input)
@@ -979,7 +980,6 @@ def handle_inputs(
             out_name_C0 = out_name_C[0].name
     print(f"\nASR - Usable Providers: {ort_session_C.get_providers()}")
 
-    total_process_time = time.time()
     for input_audio in task_queue:
         file_name = os.path.basename(input_audio).split(".")[0]
         if USE_DENOISED:
@@ -1362,11 +1362,11 @@ def handle_inputs(
             inv_audio_len = float(100.0 / aligned_len)
         del audio_for_asr
         results = []
+        start_time = time.time()
         if asr_type == 0:
             input_ids = np.array([50258, target_language_id, target_task_id], dtype=np.int32)
             past_key_de = np.zeros((ort_session_D._inputs_meta[3].shape[0], ort_session_D._inputs_meta[3].shape[1], 0, ort_session_D._inputs_meta[3].shape[-1]), dtype=np.float16)
             past_value_de = np.zeros((ort_session_D._inputs_meta[4].shape[0], ort_session_D._inputs_meta[4].shape[1], 0, ort_session_D._inputs_meta[4].shape[-1]), dtype=np.float16)
-            start_time = time.time()
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
                 futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, input_ids, past_key_de, past_value_de, audio) for start, end in timestamps]
                 for future in futures:
