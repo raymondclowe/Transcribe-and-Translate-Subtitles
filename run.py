@@ -488,7 +488,8 @@ def update_vad(dropdown_model_vad):
         update_F = gr.update(visible=False)
         update_G = gr.update(visible=False)
         update_H = gr.update(visible=False)
-        update_I = gr.update(value=0.5)
+        update_I = gr.update(value=0.5, visible=True)
+        update_J = gr.update(value=0.2, visible=True)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
@@ -498,8 +499,9 @@ def update_vad(dropdown_model_vad):
         update_F = gr.update(visible=True)
         update_G = gr.update(visible=True)
         update_H = gr.update(visible=True)
-        update_I = gr.update(value=0.2)
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I
+        update_I = gr.update(value=0.0, visible=True)
+        update_J = gr.update(value=0.0, visible=True)
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J
 
 
 def get_language_id(language_input, is_whisper):
@@ -1826,13 +1828,13 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 5, step=0.05, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
-                value=0,
+                value=0.0,
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
                 0, 2, step=0.025, label="Filter Short Voice",
                 info="Minimum duration for voice filtering. Unit: seconds.",
-                value=0,
+                value=0.0,
                 visible=True
             )
             slider_vad_MAX_SPEECH_DURATION = gr.Slider(
@@ -1962,7 +1964,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
             slider_vad_ACTIVATE_THRESHOLD,
-            slider_vad_FUSION_THRESHOLD
+            slider_vad_FUSION_THRESHOLD,
+            slider_vad_MIN_SPEECH_DURATION,
         ]
     )
 
