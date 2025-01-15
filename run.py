@@ -1824,15 +1824,15 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 visible=False
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
-                0, 5, step=0.05, label="Merge Timestamps",
+                0, 10, step=0.05, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
-                value=0.25,
+                value=0.5,
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
-                0.05, 2, step=0.05, label="Filter Short Voice",
+                0, 2, step=0.025, label="Filter Short Voice",
                 info="Minimum duration for voice filtering. Unit: seconds.",
-                value=0.2,
+                value=0,
                 visible=True
             )
             slider_vad_MAX_SPEECH_DURATION = gr.Slider(
@@ -1842,7 +1842,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 visible=True
             )
             slider_vad_MIN_SILENCE_DURATION = gr.Slider(
-                100, 3000, step=10, label="Silence Duration Judgment",
+                100, 3000, step=100, label="Silence Duration Judgment",
                 info="Minimum silence duration. Unit: ms.",
                 value=2000,
                 visible=True
@@ -1850,7 +1850,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_ACTIVATE_THRESHOLD = gr.Slider(
                 0, 1, step=0.05, label="Voice Activation Threshold",
                 info="The lower the value, the higher the sensitivity, but it may mistakenly classify noise as voice.",
-                value=0.4,
+                value=0.3,
                 visible=True
             )
 
