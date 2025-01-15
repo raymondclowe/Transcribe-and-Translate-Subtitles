@@ -1814,17 +1814,17 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_SPEAKING_SCORE = gr.Slider(
                 0, 1, step=0.05, label="Voice State Score",
                 info="A larger value makes activation more difficult.",
-                value=0.0,
+                value=0.5,
                 visible=False
             )
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.05, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
-                value=0.0,
+                value=0.5,
                 visible=False
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
-                0, 10, step=0.05, label="Merge Timestamps",
+                0, 5, step=0.05, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
                 value=0,
                 visible=True
