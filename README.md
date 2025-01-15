@@ -64,7 +64,7 @@ python run.py
 - This project currently supports both **Intel-CPU-GPU-NPU** and **AMD-CPU** users.
 
 ### 🔧 Step 10: Enable Intel-GPU or Intel-NPU (Optional)
-- The LLM integration is based on the [ipex-llm](https://github.com/intel-analytics/ipex-llm). To use Intel-GPU or Intel-NPU, follow the instructions in the `ipex-llm` repository to enable these devices. Without this setup, the application will not work on GPU/NPU hardware.
+- The LLM integration is based on the [ipex-llm](https://github.com/intel-analytics/ipex-llm). To use Intel-GPU or Intel-NPU, follow the instructions in the `ipex-llm` repository to enable these devices (now only support python3.11). Without this setup, the application will not work on GPU/NPU hardware.
 
 ---
 
@@ -157,7 +157,7 @@ python run.py
 - 此项目目前支持 **Intel-CPU-GPU-NPU** 和 **AMD-CPU** 用户。
 
 ### 🔧 第十步：启用 Intel-GPU 或 Intel-NPU（可选）  
-- 此项目的 LLM 集成基于 [ipex-llm](https://github.com/intel-analytics/ipex-llm)。若要使用 Intel-GPU 或 Intel-NPU，请按照 `ipex-llm` 仓库中的说明来启用这些设备。如果不进行此设置，应用程序将无法在 GPU/NPU 硬件上运行。
+- 此项目的 LLM 集成基于 [ipex-llm](https://github.com/intel-analytics/ipex-llm)。若要使用 Intel-GPU 或 Intel-NPU，请按照 `ipex-llm` 仓库中的说明来启用这些设备(现在只支持python3.11)。如果不进行此设置，应用程序将无法在 GPU/NPU 硬件上运行。
 
 ---
 
