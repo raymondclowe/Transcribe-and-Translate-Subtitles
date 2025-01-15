@@ -122,7 +122,7 @@ pip install -r requirements.txt
   - Phi3/3.5: mini, medium
   - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
   - GGUF Format: iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
-- 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+- 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录 （可选，用于翻译任务） 
 - 将下载的 LLM 模型移动到以下路径：  
