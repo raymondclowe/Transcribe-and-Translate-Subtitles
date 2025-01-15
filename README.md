@@ -81,14 +81,14 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 ### 性能 Performance  
-| OS           | Backend           | Denoiser          | VAD                  | ASR                  | Real-Time Factor<br>test_video.mp4 - 7602 seconds |
+| OS           | Backend           | Denoiser          | VAD                  | ASR                  | Real-Time Factor<br>test_video.mp4<br>7602 seconds |
 |:------------:|:-----------------:|:-----------------:|:--------------------:|:--------------------:|:----------------:|
-| Ubuntu-24.04 | CPU <br> i3-12300 | None              | Silero <br> f32      | SenseVoiceSmall      |        0.08      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | Silero <br> f32      | SenseVoiceSmall      |        0.10      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | FSMN <br> f32        | SenseVoiceSmall      |        0.054     |
-| Ubuntu-24.04 | CPU <br> i3-12300 | ZipEnhancer <br> f32 | FSMN <br> f32     | SenseVoiceSmall      |        0.39      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | Silero <br> f32      | Whisper-Large-V3     |        0.20      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN <br> f32    | FSMN <br> f32        | Whisper-Large-V3-Turbo |        0.148   |
+| Ubuntu-24.04 | CPU <br> i3-12300 | None              | Silero               | SenseVoiceSmall      |        0.08      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | SenseVoiceSmall      |        0.10      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | SenseVoiceSmall      |        0.054     |
+| Ubuntu-24.04 | CPU <br> i3-12300 | ZipEnhancer       | FSMN                 | SenseVoiceSmall      |        0.39      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | Whisper-Large-V3     |        0.20      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | Whisper-Large-V3-Turbo |        0.148   |
 
 ---
 # 转录和翻译字幕
