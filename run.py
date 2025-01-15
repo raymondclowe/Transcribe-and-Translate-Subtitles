@@ -1826,7 +1826,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 10, step=0.05, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
-                value=0.5,
+                value=0,
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
