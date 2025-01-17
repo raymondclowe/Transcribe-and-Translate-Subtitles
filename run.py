@@ -1199,7 +1199,7 @@ def handle_inputs(
                     _input_ids = np.array([_input_ids], dtype=np.int32)
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
-            save_token_array = remove_repeated_parts(save_token, 5)  # To handle "over-talking".
+            save_token_array = remove_repeated_parts(save_token, 4)  # To handle "over-talking".
             text, _ = tokenizer._decode_asr(
                 [{
                     "tokens": save_token_array
