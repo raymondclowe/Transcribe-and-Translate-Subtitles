@@ -23,6 +23,7 @@ from pydub import AudioSegment
 from transformers import AutoTokenizer
 from sentencepiece import SentencePieceProcessor
 from silero_vad import load_silero_vad, get_speech_timestamps
+from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
 from ipex_llm.transformers import AutoModelForCausalLM
 
 
@@ -42,10 +43,10 @@ MEDIA_EXTENSIONS = (
     '.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.alac', '.aiff', '.m4a'
 )
 
-SILERO_VAD_PYTHON_PACKAGE = site.getsitepackages()[-1]
-shutil.copyfile("./modeling_modified/utils_vad.py", SILERO_VAD_PYTHON_PACKAGE + "/silero_vad/utils_vad.py")
-shutil.copyfile("./modeling_modified/model.py", SILERO_VAD_PYTHON_PACKAGE + "/silero_vad/model.py")
-shutil.copyfile("./VAD/silero_vad.onnx", SILERO_VAD_PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
+PYTHON_PACKAGE = site.getsitepackages()[-1]
+shutil.copyfile("./modeling_modified/utils_vad.py", PYTHON_PACKAGE + "/silero_vad/utils_vad.py")
+shutil.copyfile("./modeling_modified/model.py", PYTHON_PACKAGE + "/silero_vad/model.py")
+shutil.copyfile("./VAD/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
 
 
 def update_ui(dropdown_ui_language):
@@ -718,6 +719,7 @@ def handle_inputs(
         return f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format."
 
     SAMPLE_RATE = 16000
+    inv_sample_rate = float(1.0 / SAMPLE_RATE)
     USE_DENOISED = True  # Init
     USE_V3 = False  # whisper
     FIRST_RUN = True
@@ -754,19 +756,27 @@ def handle_inputs(
         print("\nThis task is running without the denoiser.")
 
     if "FSMN" in model_vad:
-        USE_FSMN = True
+        vad_type = 0
         onnx_model_B = f"./VAD/FSMN.ort"
         if os.path.isfile(onnx_model_B):
             print("\nFound the FSMN-VAD.")
         else:
             print("\nThe FSMN-VAD doesn't exist.\nPlease export it first.")
-    else:
-        USE_FSMN = False
+
+    elif 'Faster_Whisper' in model_vad:
+        vad_type = 1
         onnx_model_B = None
-        if os.path.isdir(SILERO_VAD_PYTHON_PACKAGE):
-            print(f"\nFound the Silero-VAD.")
+        if os.path.isdir(PYTHON_PACKAGE + "/faster_whisper"):
+            print(f"\nFound the Faster_Whisper-Silero-VAD.")
         else:
-            print("\nThe Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
+            print("\nThe Faster_Whisper-Silero-VAD doesn't exist. Please run 'pip install faster-whisper --upgrade'")
+    else:
+        vad_type = 2
+        onnx_model_B = None
+        if os.path.isdir(PYTHON_PACKAGE + "/silero_vad"):
+            print(f"\nFound the Official Silero-VAD.")
+        else:
+            print("\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
 
     if "Whisper" in model_asr:
         asr_type = 0
@@ -903,7 +913,7 @@ def handle_inputs(
 
     print("----------------------------------------------------------------------------------------------------------")
     print("\nNow, loading all models.")
-    if USE_FSMN:
+    if vad_type == 0:
         ort_session_B = onnxruntime.InferenceSession(onnx_model_B, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         print(f"\nVAD - Usable Providers: {ort_session_B.get_providers()}")
         in_name_B = ort_session_B.get_inputs()
@@ -923,7 +933,10 @@ def handle_inputs(
         out_name_B5 = out_name_B[5].name
         silero_vad = None
     else:
-        silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        if vad_type == 2:
+            silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        else:
+            silero_vad = None
         ort_session_B = None
         in_name_B = None
         out_name_B = None
@@ -1267,7 +1280,7 @@ def handle_inputs(
         print("----------------------------------------------------------------------------------------------------------")
         print("\nNext, use the VAD model to extract key segments.")
         start_time = time.time()
-        if USE_FSMN:
+        if vad_type == 0:
             shape_value_in = ort_session_B._inputs_meta[0].shape[-1]
             if isinstance(shape_value_in, str):
                 INPUT_AUDIO_LENGTH = min(512, audio_len)  # You can adjust it.
@@ -1332,18 +1345,34 @@ def handle_inputs(
             aligned_len = audio_len
             audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
             print("\nThe Silero VAD model does not provide the running progress for visualization.")
-            timestamps = get_speech_timestamps(
-                torch.from_numpy(audio_float),
-                model=silero_vad,
-                threshold=slider_vad_ACTIVATE_THRESHOLD,
-                max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
-                min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
-                min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
-                return_seconds=True
-            )
+            if vad_type == 1:
+                vad_options = {
+                    'threshold': slider_vad_ACTIVATE_THRESHOLD,
+                    'neg_threshold': None,
+                    'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
+                    'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
+                    'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
+                    'speech_pad_ms': 400
+                }
+                timestamps = get_speech_timestamps_FW(
+                    audio_float,
+                    vad_options=VadOptions(**vad_options),
+                    sampling_rate=SAMPLE_RATE
+                )
+                timestamps = [(item['start'] * inv_sample_rate, item['end'] * inv_sample_rate) for item in timestamps]
+            else:
+                timestamps = get_speech_timestamps(
+                    torch.from_numpy(audio_float),
+                    model=silero_vad,
+                    threshold=slider_vad_ACTIVATE_THRESHOLD,
+                    max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
+                    min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
+                    min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
+                    return_seconds=True
+                )
+                timestamps = [(item['start'], item['end']) for item in timestamps]
             del audio_float
             gc.collect()
-            timestamps = [(item['start'], item['end']) for item in timestamps]
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
         print(f"VAD Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
 
@@ -1788,10 +1817,10 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_vad = gr.Dropdown(
-                choices=["Silero-Fast", "FSMN"],
+                choices=['Faster_Whisper-Silero', "Official-Silero", "FSMN"],
                 label="VAD",
                 info="Select VAD for audio processing.",
-                value="Silero-Fast",
+                value="Faster_Whisper-Silero",
                 visible=True
             )
 
