@@ -1621,8 +1621,9 @@ def handle_inputs(
                             parts = response_line.split("-")
                             if len(parts) > 1:
                                 line_index = int(parts[0])
-                                subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[1]}\n\n")
-                                idx += 1
+                                if line_index < min_len:
+                                    subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[1]}\n\n")
+                                    idx += 1
                 print(f"\nTranslate complete. Processing time: {time.time() - start_time:.2f} seconds")
     print(f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
     return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles"
