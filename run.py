@@ -1836,7 +1836,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.05, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
-                value=0.4,
+                value=0.3,
                 visible=True
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
