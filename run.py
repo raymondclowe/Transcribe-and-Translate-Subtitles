@@ -27,7 +27,7 @@ from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW
 from ipex_llm.transformers import AutoModelForCausalLM
 
 
-MAX_SEQ_LEN = 64
+MAX_SEQ_LEN = 50
 STOP_TOKEN = 50257
 MEDIA_EXTENSIONS = (
     # Audio formats
@@ -109,27 +109,27 @@ def update_ui(dropdown_ui_language):
         )
         update_O = gr.update(
             label="VAD",
-            info="选择用于音频处理的 VAD：Silero 在嘈杂音频中表现更好，而 FSMN 在清晰音频环境中表现出色。"
+            info="选择用于音频处理的 VAD：Silero 在嘈杂音频中表现更好，而 FSMN 在中文音频环境中表现出色。"
         )
         update_P = gr.update(
             label="语音状态阈值",
-            info="FSMN VAD 参数。值越高，灵敏度越高，但可能误将噪声分类为语音。"
+            info="值越高，灵敏度越高，但可能误将噪声分类为语音。"
         )
         update_Q = gr.update(
             label="SNR 阈值",
-            info="FSMN VAD 参数。值越低，灵敏度越高，但可能误将噪声分类为语音。单位：dB"
+            info="值越低，灵敏度越高，但可能误将噪声分类为语音。单位：dB"
         )
         update_R = gr.update(
             label="初始背景噪声",
-            info="FSMN VAD 参数。背景的初始值。较小的值表示更安静的环境。单位：dB。在使用降噪音频时，将此值设置为较小。"
+            info="背景的初始值。较小的值表示更安静的环境。单位：dB。在使用降噪音频时，将此值设置为较小。"
         )
         update_S = gr.update(
             label="语音状态评分",
-            info="FSMN VAD 参数。用于判断是否在讲话状态的判断因子。值越大，激活越困难。"
+            info="用于判断是否在讲话状态的判断因子。值越大，激活越困难。"
         )
         update_T = gr.update(
             label="静音状态评分",
-            info="FSMN VAD 参数。用于判断是否在静音状态的判断因子。值越大，越容易切断讲话。"
+            info="用于判断是否在静音状态的判断因子。值越大，越容易切断讲话。"
         )
         update_U = gr.update(
             label="融合时间戳",
@@ -141,15 +141,11 @@ def update_ui(dropdown_ui_language):
         )
         update_W = gr.update(
             label="过滤长语音",
-            info="Silero VAD 参数。最大语音持续时间。单位：秒。"
+            info="最大语音持续时间。单位：秒。"
         )
         update_X = gr.update(
             label="静音持续判断",
-            info="Silero VAD 参数。最小静音持续时间。单位：毫秒。"
-        )
-        update_Y = gr.update(
-            label="语音状态阈值",
-            info="Silero VAD 参数。值越低，灵敏度越高，但可能误将噪声分类为语音。"
+            info="最小静音持续时间。单位：毫秒。"
         )
     elif "日本語" in dropdown_ui_language:
         update_A = gr.update(
@@ -210,27 +206,27 @@ def update_ui(dropdown_ui_language):
         )
         update_O = gr.update(
             label="VAD",
-            info="音声処理に使用するVADを選択します：Sileroはノイズの多い音声でより優れたパフォーマンスを発揮し、FSMNはクリアな音声環境で優れています。"
+            info="音声処理に使用するVADを選択します：Sileroはノイズの多い音声でより優れたパフォーマンスを発揮し、FSMNは中国語音声環境で優れています。"
         )
         update_P = gr.update(
             label="音声しきい値",
-            info="FSMN VAD パラメータ。値が高いほど感度が高くなりますが、ノイズを音声と誤認する可能性があります。"
+            info="値が高いほど感度が高くなりますが、ノイズを音声と誤認する可能性があります。"
         )
         update_Q = gr.update(
             label="SNRしきい値",
-            info="FSMN VAD パラメータ。値が低いほど感度が高くなりますが、ノイズを音声と誤認する可能性があります。単位：dB"
+            info="値が低いほど感度が高くなりますが、ノイズを音声と誤認する可能性があります。単位：dB"
         )
         update_R = gr.update(
             label="初期バックグラウンドノイズ",
-            info="FSMN VAD パラメータ。バックグラウンドの初期値。小さい値はより静かな環境を示します。単位：dB。ノイズリダクションされた音声を使用する場合は、この値を小さく設定します。"
+            info="バックグラウンドの初期値。小さい値はより静かな環境を示します。単位：dB。ノイズリダクションされた音声を使用する場合は、この値を小さく設定します。"
         )
         update_S = gr.update(
             label="話者状態評価",
-            info="FSMN VAD パラメータ。話者状態であるかを判断する評価因子。値が大きいほど、活性化が困難になります。"
+            info="話者状態であるかを判断する評価因子。値が大きいほど、活性化が困難になります。"
         )
         update_T = gr.update(
             label="無音状態評価",
-            info="FSMN VAD パラメータ。無音状態であるかを判断する評価因子。値が大きいほど、話者を切断しやすくなります。"
+            info="無音状態であるかを判断する評価因子。値が大きいほど、話者を切断しやすくなります。"
         )
         update_U = gr.update(
             label="タイムスタンプ統合",
@@ -242,15 +238,11 @@ def update_ui(dropdown_ui_language):
         )
         update_W = gr.update(
             label="長い音声をフィルタリング",
-            info="Silero VAD パラメータ。最大音声継続時間。単位：秒。"
+            info="最大音声継続時間。単位：秒。"
         )
         update_X = gr.update(
             label="無音判断",
-            info="Silero VAD パラメータ。最小無音継続時間。単位：ミリ秒。"
-        )
-        update_Y = gr.update(
-            label="音声状態しきい値",
-            info="Silero VAD パラメータ。値が低いほど感度が高くなりますが、ノイズを音声と誤認する可能性があります。"
+            info="最小無音継続時間。単位：ミリ秒。"
         )
     else:
         update_A = gr.update(
@@ -311,27 +303,27 @@ def update_ui(dropdown_ui_language):
         )
         update_O = gr.update(
             label="VAD",
-            info="Select the VAD used for audio processing: Silero performs better in noisy audio, while FSMN excels in clear audio environments."
+            info="Select the VAD used for audio processing: Silero performs better in noisy audio, while FSMN excels in Chinese audio environments."
         )
         update_P = gr.update(
             label="Voice State Threshold",
-            info="FSMN VAD parameter. The higher the value, the higher the sensitivity, but it may mistakenly classify noise as voice."
+            info="The higher the value, the higher the sensitivity, but it may mistakenly classify noise as voice."
         )
         update_Q = gr.update(
             label="SNR Threshold",
-            info="FSMN VAD parameter. The lower the value, the higher the sensitivity, but it may mistakenly classify noise as voice. Unit: dB"
+            info="The lower the value, the higher the sensitivity, but it may mistakenly classify noise as voice. Unit: dB"
         )
         update_R = gr.update(
             label="Initial Background Noise",
-            info="FSMN VAD parameter. Initial value of the background. Smaller values indicate a quieter environment. Unit: dB. Set this to a smaller value when using denoised audio."
+            info="Initial value of the background. Smaller values indicate a quieter environment. Unit: dB. Set this to a smaller value when using denoised audio."
         )
         update_S = gr.update(
             label="Voice State Score",
-            info="FSMN VAD parameter. A factor used to determine whether in a speaking state. The larger the value, the harder it is to activate."
+            info="A factor used to determine whether in a speaking state. The larger the value, the harder it is to activate."
         )
         update_T = gr.update(
             label="Silence State Score",
-            info="FSMN VAD parameter. A factor used to determine whether in a silence state. The larger the value, the easier it is to cut off speech."
+            info="A factor used to determine whether in a silence state. The larger the value, the easier it is to cut off speech."
         )
         update_U = gr.update(
             label="Merge Timestamps",
@@ -343,17 +335,13 @@ def update_ui(dropdown_ui_language):
         )
         update_W = gr.update(
             label="Filter Long Voice",
-            info="Silero VAD parameter. Maximum voice duration. Unit: seconds."
+            info="Maximum voice duration. Unit: seconds."
         )
         update_X = gr.update(
             label="Silence Duration Judgment",
-            info="Silero VAD parameter. Minimum silence duration. Unit: milliseconds."
+            info="Minimum silence duration. Unit: milliseconds."
         )
-        update_Y = gr.update(
-            label="Voice State Threshold",
-            info="Silero VAD parameter. The lower the value, the higher the sensitivity, but it may mistakenly classify noise as voice."
-        )
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X, update_Y
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X
 
 
 def update_task(dropdown_task):
@@ -484,25 +472,19 @@ def update_vad(dropdown_model_vad):
         update_A = gr.update(visible=True)
         update_B = gr.update(visible=True)
         update_C = gr.update(visible=True)
-        update_D = gr.update(visible=True)
-        update_E = gr.update(visible=True)
-        update_F = gr.update(visible=False)
-        update_G = gr.update(visible=False)
-        update_H = gr.update(visible=False)
-        update_I = gr.update(value=0.5, visible=True)
-        update_J = gr.update(value=0.2, visible=True)
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(value=0.4)
+        update_G = gr.update(value=0.2)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
         update_C = gr.update(visible=False)
-        update_D = gr.update(visible=False)
-        update_E = gr.update(visible=False)
-        update_F = gr.update(visible=True)
-        update_G = gr.update(visible=True)
-        update_H = gr.update(visible=True)
-        update_I = gr.update(value=0.0, visible=True)
-        update_J = gr.update(value=0.0, visible=True)
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J
+        update_D = gr.update(visible=True)
+        update_E = gr.update(visible=True)
+        update_F = gr.update(value=0.0)
+        update_G = gr.update(value=0.1)
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G
 
 
 def get_language_id(language_input, is_whisper):
@@ -703,8 +685,7 @@ def handle_inputs(
         slider_vad_FUSION_THRESHOLD,
         slider_vad_MIN_SPEECH_DURATION,
         slider_vad_MAX_SPEECH_DURATION,
-        slider_vad_MIN_SILENCE_DURATION,
-        slider_vad_ACTIVATE_THRESHOLD
+        slider_vad_MIN_SILENCE_DURATION
 ):
     total_process_time = time.time()
     task_queue = []
@@ -719,7 +700,6 @@ def handle_inputs(
         return f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format."
 
     SAMPLE_RATE = 16000
-    inv_sample_rate = float(1.0 / SAMPLE_RATE)
     USE_DENOISED = True  # Init
     USE_V3 = False  # whisper
     FIRST_RUN = True
@@ -1347,8 +1327,8 @@ def handle_inputs(
             print("\nThe Silero VAD model does not provide the running progress for visualization.")
             if vad_type == 1:
                 vad_options = {
-                    'threshold': slider_vad_ACTIVATE_THRESHOLD,
-                    'neg_threshold': None,
+                    'threshold': slider_vad_SPEAKING_SCORE,
+                    'neg_threshold': slider_vad_SILENCE_SCORE,
                     'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
                     'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
@@ -1359,12 +1339,14 @@ def handle_inputs(
                     vad_options=VadOptions(**vad_options),
                     sampling_rate=SAMPLE_RATE
                 )
+                inv_sample_rate = float(1.0 / SAMPLE_RATE)
                 timestamps = [(item['start'] * inv_sample_rate, item['end'] * inv_sample_rate) for item in timestamps]
             else:
                 timestamps = get_speech_timestamps(
                     torch.from_numpy(audio_float),
                     model=silero_vad,
-                    threshold=slider_vad_ACTIVATE_THRESHOLD,
+                    threshold=slider_vad_SPEAKING_SCORE,
+                    neg_threshold=slider_vad_SILENCE_SCORE,
                     max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
                     min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
@@ -1508,45 +1490,45 @@ def handle_inputs(
             start_time = time.time()
             if FIRST_RUN:
                 if model_llm == "Custom-GGUF-LLM":
-                    MAX_TRANSLATE_LINES = 48  # Default
+                    MAX_TRANSLATE_LINES = 36  # Default
                 elif model_llm == "Gemma-2-2B-it":
                     llm_path = "./LLM/Gemma/2B"
-                    MAX_TRANSLATE_LINES = 15
+                    MAX_TRANSLATE_LINES = 12
                 elif model_llm == "Gemma-2-9B-it":
                     model_llm = "./LLM/Gemma/9B"
-                    MAX_TRANSLATE_LINES = 54
+                    MAX_TRANSLATE_LINES = 40
                 elif model_llm == "GLM-4-9B-Chat":
                     llm_path = "./LLM/GLM/9B"
-                    MAX_TRANSLATE_LINES = 54
+                    MAX_TRANSLATE_LINES = 40
                 elif model_llm == "MiniCPM3-4B":
                     llm_path = "./LLM/MiniCPM/4B"
-                    MAX_TRANSLATE_LINES = 21
+                    MAX_TRANSLATE_LINES = 16
                 elif model_llm == "Phi-3.5-mini-Instruct":
                     llm_path = "./LLM/Phi/mini"
-                    MAX_TRANSLATE_LINES = 21
+                    MAX_TRANSLATE_LINES = 20
                 elif model_llm == "Phi-3-medium-128k-Instruct":
                     llm_path = "./LLM/Phi/medium"
-                    MAX_TRANSLATE_LINES = 48
+                    MAX_TRANSLATE_LINES = 36
                 elif model_llm == "Qwen2.5-3B-Instruct":
                     llm_path = "./LLM/Qwen/3B"
-                    MAX_TRANSLATE_LINES = 15
+                    MAX_TRANSLATE_LINES = 12
                 elif model_llm == "Qwen2.5-7B-Instruct":
                     llm_path = "./LLM/Qwen/7B"
-                    MAX_TRANSLATE_LINES = 48
+                    MAX_TRANSLATE_LINES = 36
                 elif model_llm == "Qwen2.5-14B-Instruct":
                     llm_path = "./LLM/Qwen/14B"
-                    MAX_TRANSLATE_LINES = 75
+                    MAX_TRANSLATE_LINES = 56
                 elif model_llm == "Qwen2.5-32B-Instruct":
                     llm_path = "./LLM/Qwen/32B"
-                    MAX_TRANSLATE_LINES = 150
+                    MAX_TRANSLATE_LINES = 72
                 elif model_llm == "Whisper":
                     print(f"Translate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
                     continue
                 else:
                     return "Can not find the LLM model for translation task."
 
-                TRANSLATE_OVERLAP = MAX_TRANSLATE_LINES // 3
-                MAX_TOKENS_PER_CHUNK = MAX_TRANSLATE_LINES * 50
+                TRANSLATE_OVERLAP = MAX_TRANSLATE_LINES // 4
+                MAX_TOKENS_PER_CHUNK = MAX_TRANSLATE_LINES * MAX_SEQ_LEN
 
                 if translate_language == "中文":
                     translate_language = "chinese"
@@ -1642,15 +1624,15 @@ def handle_inputs(
                 merged_responses = "\n".join(translated_responses).split("\n")
                 with open(f"./Results/Subtitles/{file_name}_translated.vtt", "w", encoding='UTF-8') as subtitles_file:
                     subtitles_file.write("WEBVTT\n\n")
-                    min_len = min(len(timestamp_lines), len(merged_responses))
                     idx = 0
-                    for i in range(min_len):
+                    timestamp_len = len(timestamp_lines)
+                    for i in range(len(merged_responses)):
                         response_line = merged_responses[i]
                         if response_line:
                             parts = response_line.split("-")
                             if len(parts) > 1:
                                 line_index = int(parts[0])
-                                if line_index < min_len:
+                                if line_index < timestamp_len:
                                     subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[1]}\n\n")
                                     idx += 1
                 print(f"\nTranslate complete. Processing time: {time.time() - start_time:.2f} seconds")
@@ -1848,14 +1830,14 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_SPEAKING_SCORE = gr.Slider(
                 0, 1, step=0.05, label="Voice State Score",
                 info="A larger value makes activation more difficult.",
-                value=0.5,
-                visible=False
+                value=0.4,
+                visible=True
             )
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.05, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
-                value=0.5,
-                visible=False
+                value=0.4,
+                visible=True
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 5, step=0.05, label="Merge Timestamps",
@@ -1866,7 +1848,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
                 0, 2, step=0.025, label="Filter Short Voice",
                 info="Minimum duration for voice filtering. Unit: seconds.",
-                value=0.0,
+                value=0.1,
                 visible=True
             )
             slider_vad_MAX_SPEECH_DURATION = gr.Slider(
@@ -1878,13 +1860,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MIN_SILENCE_DURATION = gr.Slider(
                 100, 3000, step=100, label="Silence Duration Judgment",
                 info="Minimum silence duration. Unit: ms.",
-                value=2000,
-                visible=True
-            )
-            slider_vad_ACTIVATE_THRESHOLD = gr.Slider(
-                0, 1, step=0.05, label="Voice Activation Threshold",
-                info="The lower the value, the higher the sensitivity, but it may mistakenly classify noise as voice.",
-                value=0.3,
+                value=1500,
                 visible=True
             )
 
@@ -1923,8 +1899,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD,
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
-            slider_vad_MIN_SILENCE_DURATION,
-            slider_vad_ACTIVATE_THRESHOLD
+            slider_vad_MIN_SILENCE_DURATION
         ],
         outputs=task_state
     )
@@ -1955,8 +1930,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD,
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
-            slider_vad_MIN_SILENCE_DURATION,
-            slider_vad_ACTIVATE_THRESHOLD
+            slider_vad_MIN_SILENCE_DURATION
         ]
     )
     task.change(
@@ -1991,11 +1965,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_ONE_MINUS_SPEECH_THRESHOLD,
             slider_vad_SNR_THRESHOLD,
             slider_vad_BACKGROUND_NOISE_dB_INIT,
-            slider_vad_SPEAKING_SCORE,
-            slider_vad_SILENCE_SCORE,
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
-            slider_vad_ACTIVATE_THRESHOLD,
             slider_vad_FUSION_THRESHOLD,
             slider_vad_MIN_SPEECH_DURATION,
         ]
