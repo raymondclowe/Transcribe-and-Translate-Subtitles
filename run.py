@@ -785,6 +785,7 @@ def handle_inputs(
             folder_name = "Turbo"
         elif "Kotoba" in model_asr:
             folder_name = "Custom/kotoba-whisper-v2.0"
+            ver = "V3"
         elif "5k" in model_asr:
             folder_name = "Custom/whisper-large-v2-japanese-5k-steps"
         else:
