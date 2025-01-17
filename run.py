@@ -1351,6 +1351,7 @@ def handle_inputs(
         print("\nStart to transcribe task.")
         if reload_original_audio:
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+            audio = audio[:audio_len]
             audio = audio.reshape(1, 1, -1)
         else:
             if USE_DENOISED:
