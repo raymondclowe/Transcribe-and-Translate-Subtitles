@@ -3,6 +3,7 @@ torch>=2.5.1
 torchaudio>=2.5.1
 numpy==1.26.4
 sentencepiece>=0.2.0
+tiktoken>=0.8.0
 transformers==4.42.4   # Please note that different LLMs require specific transformers versions. Version 4.42.4 has been verified for Qwen2.5, GLM4, and MiniCPM3.
 trl<0.12.0
 accelerate>=1.2.1
@@ -15,7 +16,6 @@ ipex_llm>=2.1.0
 # Utilities
 psutil>=6.1.1
 py-cpuinfo>=9.0.0
-tiktoken>=0.8.0
 
 # Audio processing
 soundfile~=0.13.0
