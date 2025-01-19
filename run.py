@@ -1241,7 +1241,7 @@ def handle_inputs(
                 de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
                 audio_len = de_audio.shape[-1]
                 audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
