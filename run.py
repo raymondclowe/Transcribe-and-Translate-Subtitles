@@ -52,16 +52,16 @@ shutil.copyfile("./VAD/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/sile
 def update_ui(dropdown_ui_language):
     if "中文" in dropdown_ui_language:
         update_A = gr.update(
-            label="输入音频",
-            info="输入您想要转录的音频文件或文件夹的路径。"
+            label="输入视频/音频",
+            info="输入您想要转录的视频/音频文件或文件夹的路径。"
         )
         update_B = gr.update(
             label="选择任务",
-            info="选择要对所选音频执行的操作。"
+            info="选择要对所选视频/音频执行的操作。"
         )
         update_C = gr.update(
             label="运行测试",
-            info="对音频长度的10%运行短测试。"
+            info="对视频/音频长度的10%运行短测试。"
         )
         update_D = gr.update(
             label="并行线程数",
@@ -93,7 +93,7 @@ def update_ui(dropdown_ui_language):
         )
         update_K = gr.update(
             label="转录语言",
-            info="选择音频所属的语言。"
+            info="选择视频/音频所属的语言。"
         )
         update_L = gr.update(
             label="翻译语言",
@@ -101,7 +101,7 @@ def update_ui(dropdown_ui_language):
         )
         update_M = gr.update(
             label="降噪器",
-            info="选择用于音频处理的降噪器。虽然 ZipEnhancer 时间消耗较大，但它提供高质量的结果。"
+            info="选择用于视频/音频处理的降噪器。虽然 ZipEnhancer 时间消耗较大，但它提供高质量的结果。"
         )
         update_N = gr.update(
             label="使用缓存",
@@ -109,7 +109,7 @@ def update_ui(dropdown_ui_language):
         )
         update_O = gr.update(
             label="VAD",
-            info="选择用于音频处理的 VAD：Silero 在嘈杂音频中表现更好，而 FSMN 在中文音频环境中表现出色。"
+            info="选择用于视频/音频处理的 VAD：Silero 在嘈杂音频中表现更好，而 FSMN 在中文音频环境中表现出色。"
         )
         update_P = gr.update(
             label="语音状态阈值",
@@ -246,16 +246,16 @@ def update_ui(dropdown_ui_language):
         )
     else:
         update_A = gr.update(
-            label="Input Audio",
-            info="Enter the path of the audio file or folder you want to transcribe."
+            label="Input Video/Audio",
+            info="Enter the path of the video/audio file or folder you want to transcribe."
         )
         update_B = gr.update(
             label="Select Task",
-            info="Choose the operation to perform on the selected audio."
+            info="Choose the operation to perform on the selected video/audio."
         )
         update_C = gr.update(
             label="Run Test",
-            info="Run a short test on 10% of the audio length."
+            info="Run a short test on 10% of the video/audio length."
         )
         update_D = gr.update(
             label="Number of Parallel Threads",
@@ -287,7 +287,7 @@ def update_ui(dropdown_ui_language):
         )
         update_K = gr.update(
             label="Transcription Language",
-            info="Select the language the audio belongs to."
+            info="Select the language the video/audio belongs to."
         )
         update_L = gr.update(
             label="Translation Language",
@@ -295,7 +295,7 @@ def update_ui(dropdown_ui_language):
         )
         update_M = gr.update(
             label="Denoiser",
-            info="Select the denoiser used for audio processing. Although ZipEnhancer is time-consuming, it provides high-quality results."
+            info="Select the denoiser used for video/audio processing. Although ZipEnhancer is time-consuming, it provides high-quality results."
         )
         update_N = gr.update(
             label="Use Cache",
@@ -976,7 +976,7 @@ def handle_inputs(
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
-                print(f"\nThe denoised audio file already exists. Using the cache instead.\nLoading the Input Audio: {input_audio}")
+                print(f"\nThe denoised audio file already exists. Using the cache instead.\nLoading the Input Media: {input_audio}")
                 audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 if FIRST_RUN:
                     ort_session_A = None
@@ -985,7 +985,7 @@ def handle_inputs(
                     print(f"\nAll models have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
             else:
-                print(f"\nLoading the Input Audio: {input_audio}")
+                print(f"\nLoading the Input Media: {input_audio}")
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 if FIRST_RUN:
                     if "ZipEnhancer" in model_denoiser:
@@ -1000,7 +1000,7 @@ def handle_inputs(
                     print(f"\nAll models have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
         else:
-            print(f"\nLoading the Input Audio: {input_audio}")
+            print(f"\nLoading the Input Media: {input_audio}")
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
             if FIRST_RUN:
                 ort_session_A = None
@@ -1241,7 +1241,7 @@ def handle_inputs(
                 de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
                 audio_len = de_audio.shape[-1]
                 audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
@@ -1649,8 +1649,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #68fc1e;'>System Settings</span>")
         with gr.Column():
             file_path_input = gr.Textbox(
-                label="Audio File Path",
-                info="Enter the path of the audio file or folder you want to transcribe.",
+                label="Video/Audio File Path",
+                info="Enter the path of the video/audio file or folder you want to transcribe.",
                 value="./Media",
                 visible=True
             )
@@ -1718,7 +1718,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             transcribe_language = gr.Dropdown(
                 choices=["日本語", "中文", "English", "粤语", "한국인", "auto"],
                 label="Transcription Language",
-                info="Language of the input audio.",
+                info="Language of the input meidia.",
                 value="日本語",
                 visible=True
             )
@@ -1777,7 +1777,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             model_vad = gr.Dropdown(
                 choices=['Faster_Whisper-Silero', "Official-Silero", "FSMN"],
                 label="VAD",
-                info="Select VAD for audio processing.",
+                info="Select the VAD used for audio processing: Silero performs better in noisy audio, while FSMN excels in Chinese audio environments.",
                 value="Faster_Whisper-Silero",
                 visible=True
             )
