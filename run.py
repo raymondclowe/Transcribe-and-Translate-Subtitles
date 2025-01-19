@@ -448,15 +448,15 @@ def update_translate_language(dropdown_model_llm):
     if "Custom" in dropdown_model_llm:
         update_B = gr.update(visible=True, value=None)
         update_C = gr.update(choices=["gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="gguf_q4k_s")
-        update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
+        update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
     else:
         update_B = gr.update(visible=False, value=None)
         if "Whisper" in dropdown_model_llm:
             update_C = gr.update(choices=["asym_int8"], value="asym_int8")
-            update_D = gr.update(choices=["Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Whisper-Large-V2-japanese-5k-steps"], value="Whisper-Large-V3-Turbo")
+            update_D = gr.update(choices=["Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3"], value="Whisper-Large-V3-Turbo")
         else:
             update_C = gr.update(choices=["sym_int4", "asym_int4", "sym_int5", "asym_int5", "sym_int8", "gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="sym_int4")
-            update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"])
+            update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
     return update_A, update_B, update_C, update_D
 
 
@@ -773,11 +773,6 @@ def handle_inputs(
                 return "\nPlease assign your custom Whisper path which contains Encoder.ort and Decoder.ort"
         elif "Turbo" in model_asr:
             folder_name = "Turbo"
-        elif "Kotoba" in model_asr:
-            folder_name = "Custom/kotoba-whisper-v2.0"
-            ver = "V3"
-        elif "5k" in model_asr:
-            folder_name = "Custom/whisper-large-v2-japanese-5k-steps"
         else:
             folder_name = "General"
         path = f"./ASR/Whisper/{ver}/{folder_name}"
@@ -983,7 +978,6 @@ def handle_inputs(
                 USE_DENOISED = False
                 print(f"\nThe denoised audio file already exists. Using the cache instead.\nLoading the Input Audio: {input_audio}")
                 audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                reload_original_audio = True
                 if FIRST_RUN:
                     ort_session_A = None
                     in_name_A0 = None
@@ -993,7 +987,6 @@ def handle_inputs(
             else:
                 print(f"\nLoading the Input Audio: {input_audio}")
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                reload_original_audio = False
                 if FIRST_RUN:
                     if "ZipEnhancer" in model_denoiser:
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1009,7 +1002,6 @@ def handle_inputs(
         else:
             print(f"\nLoading the Input Audio: {input_audio}")
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-            reload_original_audio = False
             if FIRST_RUN:
                 ort_session_A = None
                 in_name_A0 = None
@@ -1197,13 +1189,6 @@ def handle_inputs(
             audio = audio[: audio_len]
         inv_audio_len = float(100.0 / audio_len)
         audio = audio.reshape(1, 1, -1)
-        if reload_original_audio:
-            audio_for_asr = None
-        else:
-            if USE_DENOISED:
-                audio_for_asr = np.copy(audio)
-            else:
-                audio_for_asr = None
         if USE_DENOISED:
             shape_value_in = ort_session_A._inputs_meta[0].shape[-1]
             shape_value_out = ort_session_A._outputs_meta[0].shape[-1]
@@ -1245,12 +1230,17 @@ def handle_inputs(
             saved = [result[1] for result in results]
             if "DFSMN" in denoiser_name:
                 # Down sampling, from 48kHz to 16kHz.
-                audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.int16).clip(min=-32768, max=32767).reshape(1, 1, -1)
-                audio_len = audio.shape[-1]
+                de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.int16).clip(min=-32768, max=32767).reshape(1, 1, -1)
+                audio_len = de_audio.shape[-1]
                 inv_audio_len = float(100.0 / audio_len)
                 SAMPLE_RATE = 16000
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                audio = audio.reshape(1, 1, -1)
+                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
             else:
-                audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
+                de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
+                audio_len = de_audio.shape[-1]
+                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
@@ -1360,22 +1350,9 @@ def handle_inputs(
 
         # ASR parts
         print("\nStart to transcribe task.")
-        if reload_original_audio:
-            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-            audio = audio[:audio_len]
-            audio = audio.reshape(1, 1, -1)
-        else:
-            if USE_DENOISED:
-                if "DFSMN" in denoiser_name:
-                    audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                    audio = audio[:audio_len]
-                    audio = audio.reshape(1, 1, -1)
-                else:
-                    audio = audio_for_asr
         if aligned_len > audio_len:
             audio = np.concatenate((audio, np.zeros((1, 1, aligned_len - audio_len), dtype=audio.dtype)), axis=-1)
             inv_audio_len = float(100.0 / aligned_len)
-        del audio_for_asr
         results = []
         start_time = time.time()
         if asr_type == 0:
@@ -1721,7 +1698,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_asr = gr.Dropdown(
-                choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Kotoba-Whisper-v2.0", "Whisper-Large-V2-japanese-5k-steps", "Paraformer-Small", "Paraformer-Large"],
+                choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"],
                 label="ASR Model",
                 info="Model used for transcription.",
                 value="SenseVoiceSmall-Fast",
