@@ -1236,12 +1236,12 @@ def handle_inputs(
                 SAMPLE_RATE = 16000
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 audio = audio.reshape(1, 1, -1)
-                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
             else:
                 de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
                 audio_len = de_audio.shape[-1]
-                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.1).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
@@ -1574,7 +1574,8 @@ def handle_inputs(
                         {
                             "role": "system",
                             "content": (
-                                f"Translate {transcribe_language} movie subtitles into fluent {translate_language} in 'ID-translation' format only. Use the input text to correct transcription errors, enrich emotional tone, and refine dialogues for logical, engaging, and natural delivery. Adapt phrasing to local usage for seamless and compelling transitions."                            )
+                                f"Translate {transcribe_language} movie subtitles into fluent {translate_language} in only 'ID-translation' format strictly. Use the input text to correct transcription errors, enrich emotional tone, and refine dialogues for logical, engaging, and natural delivery. Adapt phrasing to local usage for seamless and compelling transitions."
+                            )
                         },
                         {"role": "user", "content": translation_prompt},
                     ]
