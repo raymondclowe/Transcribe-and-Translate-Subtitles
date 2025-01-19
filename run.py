@@ -1574,8 +1574,7 @@ def handle_inputs(
                         {
                             "role": "system",
                             "content": (
-                                f"Translate {transcribe_language} movie subtitles into fluent {translate_language} in strictly 'ID-translation' format. Provide only the translations, with no extra text. Use all input text to fix transcription errors, preserve and add extra emotions, tone, and reconstruct dialogues. Adapt to local usage for engaging, natural transitions."
-                            )
+                                f"Translate {transcribe_language} movie subtitles into fluent {translate_language} in 'ID-translation' format only. Use the input text to correct transcription errors, enrich emotional tone, and refine dialogues for logical, engaging, and natural delivery. Adapt phrasing to local usage for seamless and compelling transitions."                            )
                         },
                         {"role": "user", "content": translation_prompt},
                     ]
