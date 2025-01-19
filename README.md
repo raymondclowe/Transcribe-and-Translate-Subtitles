@@ -18,6 +18,7 @@ pip install -r requirements.txt
 
 ### 📥 Step 2: Download Necessary Models
 - Download the required models from Google Drive: [Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)
+- Or [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake)
 - After downloading, unzip the file.
 
 ### 🤖 Step 3: Download a Preferred LLM Model (Optional, for translate task)
@@ -110,7 +111,8 @@ pip install -r requirements.txt
 ```
 
 ### 📥 第二步：下载必要的模型  
-- 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)  
+- 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)
+- Or [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake)
 - 下载完成后，解压文件。
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型 （可选，用于翻译任务） 
