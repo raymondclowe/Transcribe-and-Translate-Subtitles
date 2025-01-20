@@ -52,8 +52,8 @@ shutil.copyfile("./VAD/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/sile
 def update_ui(dropdown_ui_language):
     if "中文" in dropdown_ui_language:
         update_A = gr.update(
-            label="输入视频 / 音频",
-            info="输入您想要转录的视频/音频档或文件夹的路径。"
+            label="输入视频/音频",
+            info="输入您想要转录的视频/音频文件或文件夹的路径。"
         )
         update_B = gr.update(
             label="选择任务",
@@ -246,8 +246,8 @@ def update_ui(dropdown_ui_language):
         )
     else:
         update_A = gr.update(
-            label="Input Video / Audio Path",
-            info="Enter the path of the video / audio file or folder you want to transcribe."
+            label="Input Video/Audio",
+            info="Enter the path of the video/audio file or folder you want to transcribe."
         )
         update_B = gr.update(
             label="Select Task",
@@ -739,17 +739,17 @@ def handle_inputs(
         vad_type = 0
         onnx_model_B = f"./VAD/FSMN.ort"
         if os.path.isfile(onnx_model_B):
-            print("\nFound the FSMN-VAD.")
+            print("\nFound the VAD-FSMN.")
         else:
-            print("\nThe FSMN-VAD doesn't exist.\nPlease export it first.")
+            print("\nThe VAD-FSMN doesn't exist.\nPlease export it first.")
 
     elif 'Faster_Whisper' in model_vad:
         vad_type = 1
         onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/faster_whisper"):
-            print(f"\nFound the Faster_Whisper-Silero-VAD.")
+            print(f"\nFound the VAD-Faster_Whisper-Silero.")
         else:
-            print("\nThe Faster_Whisper-Silero-VAD doesn't exist. Please run 'pip install faster-whisper --upgrade'")
+            print("\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'")
     else:
         vad_type = 2
         onnx_model_B = None
@@ -785,9 +785,9 @@ def handle_inputs(
         else:
             target_task_id = get_task_id('transcribe', USE_V3)[0]
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
-            print("\nFound the Whisper.")
+            print("\nFound the ASR-Whisper.")
         else:
-            print("\nThe Whisper doesn't exist.\nPlease export it first.")
+            print("\nThe ASR-Whisper doesn't exist.\nPlease export it first.")
     elif "SenseVoiceSmall" in model_asr:
         asr_type = 1
         tokenizer = SentencePieceProcessor()
@@ -797,9 +797,9 @@ def handle_inputs(
         onnx_model_C = f"./ASR/SenseVoiceSmall/SenseVoiceSmall.ort"
         onnx_model_D = None
         if os.path.isfile(onnx_model_C):
-            print("\nFound the SenseVoiceSmall.")
+            print("\nFound the ASR-SenseVoiceSmall.")
         else:
-            print("\nThe SenseVoiceSmall doesn't exist.\nPlease export it first.")
+            print("\nThe ASR-SenseVoiceSmall doesn't exist.\nPlease export it first.")
     else:
         if "Large" in model_asr:
             if "English" in transcribe_language:
@@ -820,9 +820,9 @@ def handle_inputs(
         target_task_id = None
         onnx_model_D = None
         if os.path.isfile(onnx_model_C):
-            print("\nFound the SenseVoiceSmall.")
+            print("\nFound the ASR-Paraformer.")
         else:
-            print("\nThe SenseVoiceSmall doesn't exist.\nPlease export it first.")
+            print("\nThe ASR-Paraformer doesn't exist.\nPlease export it first.")
 
     # ONNX Runtime settings
     session_opts = onnxruntime.SessionOptions()
@@ -973,11 +973,19 @@ def handle_inputs(
 
     for input_audio in task_queue:
         file_name = os.path.basename(input_audio).split(".")[0]
+        audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
                 print(f"\nThe denoised audio file already exists. Using the cache instead.\nLoading the Input Media: {input_audio}")
-                audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                min_len = min(de_audio.shape[-1], audio.shape[-1])
+                de_audio = de_audio[:min_len]
+                audio_plus_denoised = ((audio[:min_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                if switcher_run_test:
+                    audio_plus_denoised = audio_plus_denoised[: min_len // 10]
+                audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
+                audio = de_audio
                 if FIRST_RUN:
                     ort_session_A = None
                     in_name_A0 = None
@@ -986,7 +994,7 @@ def handle_inputs(
                     print("----------------------------------------------------------------------------------------------------------")
             else:
                 print(f"\nLoading the Input Media: {input_audio}")
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                audio_plus_denoised = None
                 if FIRST_RUN:
                     if "ZipEnhancer" in model_denoiser:
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1001,7 +1009,7 @@ def handle_inputs(
                     print("----------------------------------------------------------------------------------------------------------")
         else:
             print(f"\nLoading the Input Media: {input_audio}")
-            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+            audio_plus_denoised = None
             if FIRST_RUN:
                 ort_session_A = None
                 in_name_A0 = None
@@ -1193,7 +1201,7 @@ def handle_inputs(
             shape_value_in = ort_session_A._inputs_meta[0].shape[-1]
             shape_value_out = ort_session_A._outputs_meta[0].shape[-1]
             if isinstance(shape_value_in, str):
-                INPUT_AUDIO_LENGTH = min(30720, audio_len)  # You can adjust it.
+                INPUT_AUDIO_LENGTH = min(32000, audio_len)  # You can adjust it.
             else:
                 INPUT_AUDIO_LENGTH = shape_value_in
             stride_step = INPUT_AUDIO_LENGTH
@@ -1225,28 +1233,26 @@ def handle_inputs(
                 for future in futures:
                     results.append(future.result())
                     print(f"Denoising: {results[-1][0]:.3f}%")
+            end_time = time.time()
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
             if "DFSMN" in denoiser_name:
                 # Down sampling, from 48kHz to 16kHz.
                 de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.int16).clip(min=-32768, max=32767).reshape(1, 1, -1)
-                audio_len = de_audio.shape[-1]
-                inv_audio_len = float(100.0 / audio_len)
                 SAMPLE_RATE = 16000
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 audio = audio.reshape(1, 1, -1)
-                audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                audio_len = min(audio.shape[-1], de_audio.shape[-1])
             else:
-                de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
-                audio_len = de_audio.shape[-1]
-                audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                de_audio = np.concatenate(saved, axis=-1)
+                audio_len = min(audio_len, de_audio.shape[-1])
+            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio[:, :, :audio_len]).clip(min=-32768, max=32767)
             audio = de_audio
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
+            print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
-        else:
-            audio_plus_denoised = None
+
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1353,9 +1359,11 @@ def handle_inputs(
 
         # ASR parts
         print("\nStart to transcribe task.")
-        if USE_DENOISED:
+        if audio_plus_denoised is not None:
             audio = audio_plus_denoised
-        del audio_plus_denoised
+            audio_len = audio.shape[-1]
+            inv_audio_len = float(100.0 / audio_len)
+            del audio_plus_denoised
         if aligned_len > audio_len:
             audio = np.concatenate((audio, np.zeros((1, 1, aligned_len - audio_len), dtype=audio.dtype)), axis=-1)
             inv_audio_len = float(100.0 / aligned_len)
@@ -1580,7 +1588,7 @@ def handle_inputs(
                         {
                             "role": "system",
                             "content": (
-                                f"Translate {transcribe_language} movie subtitles into fluent {translate_language} in only 'ID-translation' format strictly. Use the input text to correct transcription errors, enrich emotional tone, and refine dialogues for logical, engaging, and natural delivery. Adapt phrasing to local usage for seamless and compelling transitions."
+                                f"Translate the {transcribe_language} movie subtitles into fluent {translate_language}, following the defined 'ID-translation' format strictly and return it only. Correct any transcription errors, such as missing words, missing punctuation and disorganized phrasing. Split long or run-on sentences, reassign sentence parts under appropriate IDs to refine the dialogue structure. Enrich the emotions and tone and ensure the translation is logical, natural, and engaging. Adapt the phrasing to fit local usage while ensuring smooth transitions between sentences."
                             )
                         },
                         {"role": "user", "content": translation_prompt},
@@ -1655,8 +1663,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #68fc1e;'>System Settings</span>")
         with gr.Column():
             file_path_input = gr.Textbox(
-                label="Input Video / Audio Folder Path",
-                info="Enter the path of the video / audio file or folder you want to transcribe.",
+                label="Video / Audio File Path",
+                info="Enter the path of the video/audio file or folder you want to transcribe.",
                 value="./Media",
                 visible=True
             )
@@ -1950,7 +1958,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
             slider_vad_FUSION_THRESHOLD,
-            slider_vad_MIN_SPEECH_DURATION,
+            slider_vad_MIN_SPEECH_DURATION
         ]
     )
 
