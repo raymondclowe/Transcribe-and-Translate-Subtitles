@@ -2,27 +2,28 @@
 
 ## 🚨 Important Note
 - **This project is for non-commercial use only!**
-- **Every task runs locally without internet, ensuring maximum privacy**
+- **Every task runs locally without internet, ensuring maximum privacy.**
 
 ---
 
-## 📋 Setup Instructions
+## ✨ Features  
+- VAD Support:
+  - Faster_Whisper - Silero
+  - Official - Silero
+  - FSMN
 
-### ✅ Step 1: Install Dependencies
-- Run the following command in your terminal to install the latest required Python packages:
-```bash
-conda install ffmpeg
+- Deoiser Support:
+  - ZipEnhancer
+  - GTCRN
+  - DFSMN
 
-pip install -r requirements.txt
-```
+- ASR Support:
+  - SenseVoiceSmall
+  - Paraformer
+  - Whisper-Large-V3
+  - Whisper-Large-V3-Turbo
+  - Custom-Whisper (The model must be exported using this [tool](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX))
 
-### 📥 Step 2: Download Necessary Models
-- Download the required models from Google Drive: [Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)
-- Or [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake)
-- After downloading, unzip the file.
-
-### 🤖 Step 3: Download a Preferred LLM Model (Optional, for translate task)
-- Choose and download your preferred LLM model.
 - LLM Supports: 
   - Gemma2-it: 2B, 9B
   - GLM4-Chat: 9B
@@ -30,6 +31,28 @@ pip install -r requirements.txt
   - Phi3/3.5: mini, medium
   - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
   - GGUF Format: iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
+
+
+---
+
+## 📋 Setup Instructions
+
+### ✅ Step 1: Install Dependencies
+- Run the following command in your terminal to install the latest required Python packages:
+- For Apple Silicon M-series chips, avoid installing `onnxruntime-openvino`, as it will cause errors.
+```bash
+conda install ffmpeg
+
+pip install -r requirements.txt
+```
+
+### 📥 Step 2: Download Necessary Models
+- Download the required models from Google Drive: [Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link). After downloading, unzip the file.
+- Or [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake) (This link lacks a zip package; download files individually as Baidu Cloud doesn't support packages over 4GB.)
+
+
+### 🤖 Step 3: Download a Preferred LLM Model (Optional, for translate task)
+- Choose and download your preferred LLM model.
 - The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B). For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 Step 4: Place the LLM Model in the Correct Directory (Optional, for translate task)
@@ -100,10 +123,39 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 
+## ✨ 功能
+- **语音活动检测（VAD）支持**：
+  - Faster_Whisper - Silero  
+  - 官方 - Silero  
+  - FSMN  
+
+- **去噪器支持**：
+  - ZipEnhancer  
+  - GTCRN  
+  - DFSMN  
+
+- **语音识别（ASR）支持**：
+  - SenseVoiceSmall  
+  - Paraformer  
+  - Whisper-Large-V3  
+  - Whisper-Large-V3-Turbo  
+  - 自定义 Whisper（需要使用此[工具](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX)导出模型）
+
+- **大语言模型（LLM）支持**：  
+  - Gemma2-it: 2B, 9B  
+  - GLM4-Chat: 9B  
+  - MiniCPM3: 4B  
+  - Phi3/3.5: mini, medium  
+  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B  
+  - GGUF 格式：iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m  
+
+---
+
 ## 📋 设置指南
 
 ### ✅ 第一步：安装依赖项  
-- 在终端中运行以下命令来安装所需的最新 Python 包：  
+- 在终端中运行以下命令来安装所需的最新 Python 包：
+- 对于苹果 M 系列芯片，请不要安装 `onnxruntime-openvino`，否则会导致错误。
 ```bash
 conda install ffmpeg
 
@@ -111,19 +163,11 @@ pip install -r requirements.txt
 ```
 
 ### 📥 第二步：下载必要的模型  
-- 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link)
-- Or [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake)
-- 下载完成后，解压文件。
+- 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link), 下载完成后，解压文件。
+- 或 [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake) (该链接没有提供压缩包；需要逐个下载文件夹，因为百度云不支持超过 4GB 的压缩包。)
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型 （可选，用于翻译任务） 
 - 选择并下载你偏好的 LLM 模型。
-- LLM支持:
-  - Gemma2-it: 2B, 9B
-  - GLM4-Chat: 9B  
-  - MiniCPM3: 4B
-  - Phi3/3.5: mini, medium
-  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
-  - GGUF Format: iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
 - 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录 （可选，用于翻译任务） 
