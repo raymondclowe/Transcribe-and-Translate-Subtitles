@@ -131,7 +131,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
   - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
 
-- **去噪器支持**：
+- **去噪器 (Denoiser) 支持**：
   - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
@@ -166,7 +166,7 @@ pip install -r requirements.txt
 
 ### 📥 第二步：下载必要的模型  
 - 从 Google Drive 下载所需模型：[Transcribe_and_Translate_Subtitles](https://drive.google.com/drive/folders/1W5yqPm-FYD2r1KR7JrDwJ8jzuFALNr9O?usp=drive_link), 下载完成后，解压文件。
-- 或 [Baidu Cloud](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake) (该链接没有提供压缩包；需要逐个下载文件夹，因为百度云不支持超过 4GB 的压缩包。)
+- 或 [百度云](https://pan.baidu.com/s/1DSAYmbMX5lKj9oz8Uhmmwg?pwd=dake) (该链接没有提供压缩包；需要逐个下载文件夹，因为百度云不支持超过 4GB 的压缩包。)
 
 ### 🤖 第三步：下载你喜欢的 LLM 模型 （可选，用于翻译任务） 
 - 选择并下载你偏好的 LLM 模型。
