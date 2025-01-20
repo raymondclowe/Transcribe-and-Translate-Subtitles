@@ -1588,11 +1588,12 @@ def handle_inputs(
                     conversation_context = [
                         {
                             "role": "system",
-                            "content": (
-                                f"Translate subtitles from {transcribe_language} to {translate_language} in ID-translation result format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Adhere strictly to the input format and preserve the intended meaning and tone."
-                            )
+                            "content": f"Translate the given {transcribe_language} subtitles into {translate_language} in strictly 'ID-text' format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Preserve and enrich the intended meaning and tone."
                         },
-                        {"role": "user", "content": translation_prompt},
+                        {
+                            "role": "user",
+                            "content": translation_prompt
+                        }
                     ]
                     tokenized_input = tokenizer_llm.apply_chat_template(
                         conversation=conversation_context,
@@ -1609,6 +1610,9 @@ def handle_inputs(
                     translated_responses.append(decoded_response)
                     print(f"\nTranslating - {chunk_start * inv_total_lines:.3f}%")
                     print(decoded_response)
+
+                    if chunk_end == total_lines - 1:
+                        break
 
                 # Combine all translated responses and match timestamps
                 print(f"\nTranslating - 100.00%")
