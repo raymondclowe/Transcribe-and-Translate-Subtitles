@@ -31,7 +31,7 @@ This project is built on ONNX Runtime and the IPEX-LLM framework.
   - MiniCPM3: [4B](https://github.com/OpenBMB/MiniCPM)  
   - Phi3/3.5: [mini](https://huggingface.co/microsoft/Phi-3.5-mini-instruct), [medium](https://huggingface.co/microsoft/Phi-3-medium-4k-instruct)  
   - Qwen2.5-Instruct: [3B](https://modelscope.cn/models/Qwen/Qwen2.5-3B-Instruct), [7B](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct), [14B](https://modelscope.cn/models/Qwen/Qwen2.5-14B-Instruct), [32B](https://www.modelscope.cn/models/Qwen/Qwen2.5-32B-Instruct)  
-  - GGUF 格式：iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
+  - GGUF format：iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
 
 
 ---
