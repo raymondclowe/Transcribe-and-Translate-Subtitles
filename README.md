@@ -84,8 +84,8 @@ python run.py
 ### 🛠️ Step 8: Fix Silero-VAD Error (if encountered)
 - On the first run, you might encounter a **Silero-VAD error**. Simply restart the application, and it should be resolved.
 
-### 💻 Step 9: Intel and AMD Device Support
-- This project currently supports both **Intel-CPU-GPU-NPU** and **AMD-CPU** users.
+### 💻 Step 9: Device Support
+- This project currently supports: **Intel-CPU-GPU-NPU**, **AMD-CPU** and **Apple-CPU** users.
 
 ### 🔧 Step 10: Enable Intel-GPU or Intel-NPU (Optional)
 - The LLM integration is based on the [ipex-llm](https://github.com/intel-analytics/ipex-llm). To use Intel-GPU or Intel-NPU, follow the instructions in the `ipex-llm` repository to enable these devices (now only support python3.11). Without this setup, the application will not work on GPU/NPU hardware.
@@ -199,8 +199,8 @@ python run.py
 ### 🛠️ 第八步：修复 Silero-VAD 错误（如有）  
 - 首次运行时，你可能会遇到 **Silero-VAD 错误**。只需重启应用程序即可解决该问题。
 
-### 💻 第九步：支持 Intel 和 AMD 设备  
-- 此项目目前支持 **Intel-CPU-GPU-NPU** 和 **AMD-CPU** 用户。
+### 💻 第九步：支持设备  
+- 此项目目前支持 **Intel-CPU-GPU-NPU**, **AMD-CPU** 和 **Apple-CPU** 用户。
 
 ### 🔧 第十步：启用 Intel-GPU 或 Intel-NPU（可选）  
 - 此项目的 LLM 集成基于 [ipex-llm](https://github.com/intel-analytics/ipex-llm)。若要使用 Intel-GPU 或 Intel-NPU，请按照 `ipex-llm` 仓库中的说明来启用这些设备(现在只支持python3.11)。如果不进行此设置，应用程序将无法在 GPU/NPU 硬件上运行。
