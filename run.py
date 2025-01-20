@@ -52,8 +52,8 @@ shutil.copyfile("./VAD/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/sile
 def update_ui(dropdown_ui_language):
     if "中文" in dropdown_ui_language:
         update_A = gr.update(
-            label="输入视频/音频",
-            info="输入您想要转录的视频/音频文件或文件夹的路径。"
+            label="输入视频 / 音频",
+            info="输入您想要转录的视频/音频档或文件夹的路径。"
         )
         update_B = gr.update(
             label="选择任务",
@@ -246,8 +246,8 @@ def update_ui(dropdown_ui_language):
         )
     else:
         update_A = gr.update(
-            label="Input Video/Audio",
-            info="Enter the path of the video/audio file or folder you want to transcribe."
+            label="Input Video / Audio Path",
+            info="Enter the path of the video / audio file or folder you want to transcribe."
         )
         update_B = gr.update(
             label="Select Task",
@@ -1656,8 +1656,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #68fc1e;'>System Settings</span>")
         with gr.Column():
             file_path_input = gr.Textbox(
-                label="Video/Audio File Path",
-                info="Enter the path of the video/audio file or folder you want to transcribe.",
+                label="Input Video / Audio Folder Path",
+                info="Enter the path of the video / audio file or folder you want to transcribe.",
                 value="./Media",
                 visible=True
             )
