@@ -7,6 +7,7 @@
 ---
 
 ## ✨ Features  
+This project is built on ONNX Runtime and the IPEX-LLM framework.
 - VAD Support:
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [Official - Silero](https://github.com/snakers4/silero-vad)
@@ -124,6 +125,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 
 ## ✨ 功能
+这个项目基于ONNX Runtime和IPEX-LLM框架。
 - **语音活动检测（VAD）支持**：
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
