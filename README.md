@@ -106,14 +106,14 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 ### 性能 Performance  
-| OS           | Backend           | Denoiser          | VAD                  | ASR                  | Real-Time Factor<br>test_video.mp4<br>7602 seconds |
-|:------------:|:-----------------:|:-----------------:|:--------------------:|:--------------------:|:----------------:|
-| Ubuntu-24.04 | CPU <br> i3-12300 | None              | Silero               | SenseVoiceSmall      |        0.08      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | SenseVoiceSmall      |        0.10      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | SenseVoiceSmall      |        0.054     |
-| Ubuntu-24.04 | CPU <br> i3-12300 | ZipEnhancer       | FSMN                 | SenseVoiceSmall      |        0.39      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | Whisper-Large-V3     |        0.20      |
-| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | Whisper-Large-V3-Turbo |        0.148   |
+| OS           | Backend           | Denoiser          | VAD                  | ASR                  | LLM | Real-Time Factor<br>test_video.mp4<br>7602 seconds |
+|:------------:|:-----------------:|:-----------------:|:--------------------:|:--------------------:|:----------------:|:----------------:|
+| Ubuntu-24.04 | CPU <br> i3-12300 | -                 | Silero               | SenseVoiceSmall      |        -      |        0.08      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | SenseVoiceSmall      | Qwen2.5-7B-Instruct | 0.50       |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | SenseVoiceSmall      |        -      |       0.054      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | ZipEnhancer       | FSMN                 | SenseVoiceSmall      |        -      |        0.39      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | Silero               | Whisper-Large-V3     |        -      |        0.20      |
+| Ubuntu-24.04 | CPU <br> i3-12300 | GTCRN             | FSMN                 | Whisper-Large-V3-Turbo |      -      |        0.148     |
 
 ---
 # 转录和翻译字幕
