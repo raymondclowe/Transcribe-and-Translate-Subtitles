@@ -912,6 +912,7 @@ def handle_inputs(
             silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         else:
             silero_vad = None
+        print(f"\nVAD - Usable Providers: ['CPUExecutionProvider']")
         ort_session_B = None
         in_name_B = None
         out_name_B = None
@@ -1588,7 +1589,7 @@ def handle_inputs(
                         {
                             "role": "system",
                             "content": (
-                                f"Translate the {transcribe_language} movie subtitles into fluent {translate_language}, following the defined 'ID-translation' format strictly and return it only. Correct any transcription errors, such as missing words, missing punctuation and disorganized phrasing. Split long or run-on sentences, reassign sentence parts under appropriate IDs to refine the dialogue structure. Enrich the emotions and tone and ensure the translation is logical, natural, and engaging. Adapt the phrasing to fit local usage while ensuring smooth transitions between sentences."
+                                f"Translate the {transcribe_language} movie subtitles into fluent {translate_language}, following the defined 'ID-translation' format strictly and return it only. Correct any transcription errors, such as missing words, missing punctuation and disorganized phrasing. Split long or run-on sentences, moving sentence parts under appropriate IDs to refine the dialogue structure. Enrich the emotions and tone and ensure the translation is logical, natural, and engaging. Adapt the phrasing to fit local usage while ensuring smooth transitions between sentences."
                             )
                         },
                         {"role": "user", "content": translation_prompt},
