@@ -1608,7 +1608,7 @@ def handle_inputs(
                         decoded_response = "\n".join(decoded_response.split("\n")[TRANSLATE_OVERLAP + 1:])
 
                     translated_responses.append(decoded_response)
-                    print(f"\nTranslating - {chunk_start * inv_total_lines:.3f}%")
+                    print(f"\nTranslating - {chunk_end * inv_total_lines:.3f}%")
                     print(decoded_response)
 
                     if chunk_end == total_lines - 1:
