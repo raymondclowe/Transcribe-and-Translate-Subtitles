@@ -1589,7 +1589,7 @@ def handle_inputs(
                         {
                             "role": "system",
                             "content": (
-                                f"Translate the {transcribe_language} movie subtitles into fluent {translate_language}, following the defined 'ID-translation' format strictly and return it only. Correct any transcription errors, such as missing words, missing punctuation and disorganized phrasing. Split long or run-on sentences, moving sentence parts under appropriate IDs to refine the dialogue structure. Enrich the emotions and tone and ensure the translation is logical, natural, and engaging. Adapt the phrasing to fit local usage while ensuring smooth transitions between sentences."
+                                f"Translate the {transcribe_language} movie subtitles into fluent {translate_language}, following the defined 'ID-translation' format strictly and return it only. Correct any transcription errors, such as missing words, missing punctuation and disorganized phrasing. Split long or run-on sentences, rearrange input text parts under appropriate IDs to refine the dialogue structure. Enrich the emotions and tone and ensure the translation is logical, natural, and engaging. Adapt the phrasing to fit local usage while ensuring smooth transitions between sentences."
                             )
                         },
                         {"role": "user", "content": translation_prompt},
