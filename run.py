@@ -1225,7 +1225,6 @@ def handle_inputs(
                 for future in futures:
                     results.append(future.result())
                     print(f"Denoising: {results[-1][0]:.3f}%")
-            end_time = time.time()
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
             if "DFSMN" in denoiser_name:
@@ -1243,7 +1242,7 @@ def handle_inputs(
                 audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
             audio = de_audio
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
+            print(f"Denoising Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
             del saved
             del results
         else:
