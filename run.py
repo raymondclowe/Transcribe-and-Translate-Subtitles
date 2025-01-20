@@ -474,7 +474,7 @@ def update_vad(dropdown_model_vad):
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
-        update_F = gr.update(value=0.4)
+        update_F = gr.update(value=0.8)
         update_G = gr.update(value=0.2)
     else:
         update_A = gr.update(visible=False)
@@ -483,7 +483,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True)
         update_F = gr.update(value=0.0)
-        update_G = gr.update(value=0.1)
+        update_G = gr.update(value=0.05)
     return update_A, update_B, update_C, update_D, update_E, update_F, update_G
 
 
@@ -1236,15 +1236,18 @@ def handle_inputs(
                 SAMPLE_RATE = 16000
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 audio = audio.reshape(1, 1, -1)
-                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
             else:
                 de_audio = np.concatenate(saved, axis=-1)[:, :, :audio_len]
                 audio_len = de_audio.shape[-1]
-                audio = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+                audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+            audio = de_audio
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
+        else:
+            audio_plus_denoised = None
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1340,6 +1343,7 @@ def handle_inputs(
                     max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
                     min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
+                    speech_pad_ms=400,
                     return_seconds=True
                 )
                 timestamps = [(item['start'], item['end']) for item in timestamps]
@@ -1350,6 +1354,9 @@ def handle_inputs(
 
         # ASR parts
         print("\nStart to transcribe task.")
+        if USE_DENOISED:
+            audio = audio_plus_denoised
+        del audio_plus_denoised
         if aligned_len > audio_len:
             audio = np.concatenate((audio, np.zeros((1, 1, aligned_len - audio_len), dtype=audio.dtype)), axis=-1)
             inv_audio_len = float(100.0 / aligned_len)
@@ -1760,7 +1767,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #f968f3;'>Audio Processor</span>")
         with gr.Column():
             model_denoiser = gr.Dropdown(
-                choices=["None", "ZipEnhancer-Time Consume", "GTCRN-Fast", "DFSMN-Fast & Chinese"],
+                choices=["None", "ZipEnhancer-Time Consume", "GTCRN-Fast", "DFSMN-Fast"],
                 label="Denoiser",
                 info="Choose a denoiser for audio processing.",
                 value="None",
@@ -1822,9 +1829,9 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
-                0, 2, step=0.025, label="Filter Short Voice",
+                0.025, 2, step=0.025, label="Filter Short Voice",
                 info="Minimum duration for voice filtering. Unit: seconds.",
-                value=0.1,
+                value=0.05,
                 visible=True
             )
             slider_vad_MAX_SPEECH_DURATION = gr.Slider(
