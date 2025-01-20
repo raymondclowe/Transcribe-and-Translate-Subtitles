@@ -8,29 +8,29 @@
 
 ## ✨ Features  
 - VAD Support:
-  - Faster_Whisper - Silero
-  - Official - Silero
-  - FSMN
+  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
+  - [Official - Silero](https://github.com/snakers4/silero-vad)
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
 
 - Deoiser Support:
-  - ZipEnhancer
-  - GTCRN
-  - DFSMN
+  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
+  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
+  - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
 
 - ASR Support:
-  - SenseVoiceSmall
-  - Paraformer
-  - Whisper-Large-V3
-  - Whisper-Large-V3-Turbo
-  - Custom-Whisper (The model must be exported using this [tool](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX))
+  - [SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall)
+  - [Paraformer](https://modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+  - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
+  - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
+  - Custom-Whisper-V2/V3/Distil/Turbo (The model must be exported using this [tool](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX))
 
 - LLM Supports: 
-  - Gemma2-it: 2B, 9B
-  - GLM4-Chat: 9B
-  - MiniCPM3: 4B
-  - Phi3/3.5: mini, medium
-  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B
-  - GGUF Format: iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
+  - Gemma-2-it: [2B](https://huggingface.co/google/gemma-2-2b-it), [9B](https://huggingface.co/google/gemma-2-9b-it)  
+  - GLM4-Chat: [9B](https://github.com/THUDM/GLM-4)  
+  - MiniCPM3: [4B](https://github.com/OpenBMB/MiniCPM)  
+  - Phi3/3.5: [mini](https://huggingface.co/microsoft/Phi-3.5-mini-instruct), [medium](https://huggingface.co/microsoft/Phi-3-medium-4k-instruct)  
+  - Qwen2.5-Instruct: [3B](https://modelscope.cn/models/Qwen/Qwen2.5-3B-Instruct), [7B](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct), [14B](https://modelscope.cn/models/Qwen/Qwen2.5-14B-Instruct), [32B](https://www.modelscope.cn/models/Qwen/Qwen2.5-32B-Instruct)  
+  - GGUF 格式：iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m
 
 
 ---
@@ -125,28 +125,28 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## ✨ 功能
 - **语音活动检测（VAD）支持**：
-  - Faster_Whisper - Silero  
-  - 官方 - Silero  
-  - FSMN  
+  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
+  - [官方 - Silero](https://github.com/snakers4/silero-vad)
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
 
 - **去噪器支持**：
-  - ZipEnhancer  
-  - GTCRN  
-  - DFSMN  
+  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
+  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
+  - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
 
 - **语音识别（ASR）支持**：
-  - SenseVoiceSmall  
-  - Paraformer  
-  - Whisper-Large-V3  
-  - Whisper-Large-V3-Turbo  
-  - 自定义 Whisper（需要使用此[工具](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX)导出模型）
+  - [SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall)
+  - [Paraformer](https://modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+  - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
+  - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
+  - 自定义 Whisper-V2/V3/Distil/Turbo（需要使用此[工具](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX)导出模型）
 
 - **大语言模型（LLM）支持**：  
-  - Gemma2-it: 2B, 9B  
-  - GLM4-Chat: 9B  
-  - MiniCPM3: 4B  
-  - Phi3/3.5: mini, medium  
-  - Qwen2.5-Instruct: 3B, 7B, 14B, 32B  
+  - Gemma-2-it: [2B](https://huggingface.co/google/gemma-2-2b-it), [9B](https://huggingface.co/google/gemma-2-9b-it)  
+  - GLM4-Chat: [9B](https://github.com/THUDM/GLM-4)  
+  - MiniCPM3: [4B](https://github.com/OpenBMB/MiniCPM)  
+  - Phi3/3.5: [mini](https://huggingface.co/microsoft/Phi-3.5-mini-instruct), [medium](https://huggingface.co/microsoft/Phi-3-medium-4k-instruct)  
+  - Qwen2.5-Instruct: [3B](https://modelscope.cn/models/Qwen/Qwen2.5-3B-Instruct), [7B](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct), [14B](https://modelscope.cn/models/Qwen/Qwen2.5-14B-Instruct), [32B](https://www.modelscope.cn/models/Qwen/Qwen2.5-32B-Instruct)  
   - GGUF 格式：iq1_s, iq2_xs, iq2_xxs, q4k_s, q4k_m  
 
 ---
