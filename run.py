@@ -101,7 +101,7 @@ def update_ui(dropdown_ui_language):
         )
         update_M = gr.update(
             label="降噪器",
-            info="选择用于视频/音频处理的降噪器。虽然 ZipEnhancer 时间消耗较大，但它提供高质量的结果。"
+            info="选择用于视频/音频处理的降噪器。"
         )
         update_N = gr.update(
             label="使用缓存",
@@ -198,7 +198,7 @@ def update_ui(dropdown_ui_language):
         )
         update_M = gr.update(
             label="ノイズリダクション",
-            info="音声処理に使用するノイズリダクションを選択します。ZipEnhancerは時間がかかりますが、高品質の結果を提供します。"
+            info="音声処理に使用するノイズリダクションを選択します。"
         )
         update_N = gr.update(
             label="キャッシュを使用",
@@ -295,7 +295,7 @@ def update_ui(dropdown_ui_language):
         )
         update_M = gr.update(
             label="Denoiser",
-            info="Select the denoiser used for video/audio processing. Although ZipEnhancer is time-consuming, it provides high-quality results."
+            info="Select the denoiser used for video/audio processing."
         )
         update_N = gr.update(
             label="Use Cache",
