@@ -1607,7 +1607,7 @@ def handle_inputs(
                     conversation_context = [
                         {
                             "role": "system",
-                            "content": f"Translate the provided subtitles from {transcribe_language} to {translate_language}. Ensure that the translated text is returned strictly in the 'ID-translation' format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Preserve and enrich the intended meaning and tone."
+                            "content": f"Translate the provided subtitles from {transcribe_language} to {translate_language}, and return them strictly in the 'ID-translation' format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Preserve and enrich the intended meaning and tone."
                         },
                         {
                             "role": "user",
