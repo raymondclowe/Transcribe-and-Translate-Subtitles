@@ -977,6 +977,10 @@ def handle_inputs(
         print(f"\nLoading the Input Media: {input_audio}")
         audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
         if USE_DENOISED:
+            if "ZipEnhancer" in denoiser_name:
+                vad_pad = 1000
+            else:
+                vad_pad = 400
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
                 print("\nThe denoised audio file already exists. Using the cache instead.")
@@ -1009,6 +1013,7 @@ def handle_inputs(
                     print(f"\nModels have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
         else:
+            vad_pad = 400
             audio_plus_denoised = None
             if FIRST_RUN:
                 ort_session_A = None
@@ -1330,7 +1335,7 @@ def handle_inputs(
                     'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
                     'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
-                    'speech_pad_ms': 400
+                    'speech_pad_ms': vad_pad
                 }
                 timestamps = get_speech_timestamps_FW(
                     audio_float,
@@ -1348,7 +1353,7 @@ def handle_inputs(
                     max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
                     min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
-                    speech_pad_ms=400,
+                    speech_pad_ms=vad_pad,
                     return_seconds=True
                 )
                 timestamps = [(item['start'], item['end']) for item in timestamps]
