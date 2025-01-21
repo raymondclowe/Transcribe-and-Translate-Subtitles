@@ -887,7 +887,7 @@ def handle_inputs(
         provider_options = None
 
     print("----------------------------------------------------------------------------------------------------------")
-    print("\nNow, loading all models.")
+    print("\nNow loading the required models.")
     if vad_type == 0:
         ort_session_B = onnxruntime.InferenceSession(onnx_model_B, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         print(f"\nVAD - Usable Providers: {ort_session_B.get_providers()}")
