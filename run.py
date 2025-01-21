@@ -978,7 +978,7 @@ def handle_inputs(
         audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
         if USE_DENOISED:
             if "ZipEnhancer" in denoiser_name:
-                vad_pad = 1000
+                vad_pad = 800
             else:
                 vad_pad = 400
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
