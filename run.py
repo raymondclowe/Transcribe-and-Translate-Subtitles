@@ -1643,7 +1643,16 @@ def handle_inputs(
                     for i in range(len(merged_responses)):
                         response_line = merged_responses[i]
                         if response_line:
-                            parts = response_line.split("-")
+                            if "-ID-" in response_line:
+                                parts = response_line.split("-ID-")
+                            elif "- ID -" in response_line:
+                                parts = response_line.split("- ID -")
+                            elif "-id-" in response_line:
+                                parts = response_line.split("-id-")
+                            elif "- id -" in response_line:
+                                parts = response_line.split("- id -")
+                            else: 
+                                parts = response_line.split("-")
                             if len(parts) > 1:
                                 line_index = int(parts[0])
                                 if line_index < timestamp_len:
