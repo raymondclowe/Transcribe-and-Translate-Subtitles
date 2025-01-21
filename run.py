@@ -1560,9 +1560,9 @@ def handle_inputs(
                         optimize_model=True,
                         cpu_embedding=True,
                         speculative=False,
-                        disk_embedding=True if system_ram < 8 else False,
+                        disk_embedding=True if system_ram < 9 else False,
                         lightweight_bmm=True if special_set else False,
-                        embedding_qtype='q2_k' if system_ram < 8 else 'q4_k',  # [q2_k, q4_k]
+                        embedding_qtype='q2_k' if system_ram < 9 else 'q4_k',  # [q2_k, q4_k]
                         mixed_precision=False,
                         pipeline_parallel_stages=1
                     )
