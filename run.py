@@ -974,11 +974,12 @@ def handle_inputs(
 
     for input_audio in task_queue:
         file_name = os.path.basename(input_audio).split(".")[0]
+        print(f"\nLoading the Input Media: {input_audio}")
         audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
-                print(f"\nThe denoised audio file already exists. Using the cache instead.\nLoading the Input Media: {input_audio}")
+                print("\nThe denoised audio file already exists. Using the cache instead.")
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
@@ -991,10 +992,9 @@ def handle_inputs(
                     ort_session_A = None
                     in_name_A0 = None
                     out_name_A0 = None
-                    print(f"\nAll models have been successfully loaded.")
+                    print(f"\nModels have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
             else:
-                print(f"\nLoading the Input Media: {input_audio}")
                 audio_plus_denoised = None
                 if FIRST_RUN:
                     if "ZipEnhancer" in model_denoiser:
@@ -1006,16 +1006,15 @@ def handle_inputs(
                     in_name_A0 = in_name_A[0].name
                     out_name_A0 = out_name_A[0].name
                     print(f"\nDenoise - Usable Providers: {ort_session_A.get_providers()}")
-                    print(f"\nAll models have been successfully loaded.")
+                    print(f"\nModels have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
         else:
-            print(f"\nLoading the Input Media: {input_audio}")
             audio_plus_denoised = None
             if FIRST_RUN:
                 ort_session_A = None
                 in_name_A0 = None
                 out_name_A0 = None
-                print(f"\nAll models have been successfully loaded.")
+                print(f"\nModels have been successfully loaded.")
                 print("----------------------------------------------------------------------------------------------------------")
 
         def process_segment_A(_inv_audio_len, _slice_start, _slice_end, _audio):
@@ -1474,7 +1473,7 @@ def handle_inputs(
             del save_text
             del save_timestamps
         print("\nSave completed for timestamps, transcribe text, and original language subtitles.")
-        print(f"Transcribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
+        print(f"\nTranscribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
 
         if "Translate" not in task:
             continue
@@ -1514,7 +1513,7 @@ def handle_inputs(
                     llm_path = "./LLM/Qwen/32B"
                     MAX_TRANSLATE_LINES = 60
                 elif model_llm == "Whisper":
-                    print(f"Translate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
+                    print(f"\nTranslate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
                     continue
                 else:
                     return "Can not find the LLM model for translation task."
@@ -1631,8 +1630,8 @@ def handle_inputs(
                                     subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[1]}\n\n")
                                     idx += 1
                 print(f"\nTranslate complete. Processing time: {time.time() - start_time:.2f} seconds")
-    print(f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles")
-    return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles"
+    print(f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
+    return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n"
 
 
 with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height=False, fill_width=False, theme=gr.themes.Citrus(text_size=sizes.text_lg)) as GUI:
