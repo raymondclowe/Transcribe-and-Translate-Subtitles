@@ -1485,17 +1485,28 @@ def handle_inputs(
         else:
             start_time = time.time()
             if FIRST_RUN:
+                system_ram = psutil.virtual_memory().total / (1024 ** 3)
+                if system_ram < 16:
+                    if ("8" in model_llm_accuracy) or ("16" in model_llm_accuracy):
+                        print("\nWarning for the low memory system with 8 bit or 16 bit LLM accuracy. Try to using the 4 bit or lower bit instead.")
+                low_mem = False
                 if model_llm == "Custom-GGUF-LLM":
                     MAX_TRANSLATE_LINES = 30  # Default
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "Gemma-2-2B-it":
                     llm_path = "./LLM/Gemma/2B"
                     MAX_TRANSLATE_LINES = 9
                 elif model_llm == "Gemma-2-9B-it":
                     model_llm = "./LLM/Gemma/9B"
                     MAX_TRANSLATE_LINES = 36
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "GLM-4-9B-Chat":
                     llm_path = "./LLM/GLM/9B"
                     MAX_TRANSLATE_LINES = 36
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "MiniCPM3-4B":
                     llm_path = "./LLM/MiniCPM/4B"
                     MAX_TRANSLATE_LINES = 15
@@ -1505,18 +1516,26 @@ def handle_inputs(
                 elif model_llm == "Phi-3-medium-128k-Instruct":
                     llm_path = "./LLM/Phi/medium"
                     MAX_TRANSLATE_LINES = 30
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "Qwen2.5-3B-Instruct":
                     llm_path = "./LLM/Qwen/3B"
                     MAX_TRANSLATE_LINES = 12
                 elif model_llm == "Qwen2.5-7B-Instruct":
                     llm_path = "./LLM/Qwen/7B"
                     MAX_TRANSLATE_LINES = 30
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "Qwen2.5-14B-Instruct":
                     llm_path = "./LLM/Qwen/14B"
                     MAX_TRANSLATE_LINES = 42
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "Qwen2.5-32B-Instruct":
                     llm_path = "./LLM/Qwen/32B"
                     MAX_TRANSLATE_LINES = 60
+                    if system_ram < 9:
+                        low_mem = True
                 elif model_llm == "Whisper":
                     print(f"\nTranslate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
                     continue
@@ -1544,10 +1563,6 @@ def handle_inputs(
                     transcribe_language = None
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
-                system_ram = psutil.virtual_memory().total / (1024 ** 3)
-                if system_ram < 16:
-                    if ("8" in model_llm_accuracy) or ("16" in model_llm_accuracy):
-                        print("\nWarning for the low memory system with 8 bit or 16 bit LLM accuracy. Try to using the 4 bit or lower bit instead.")
                 if os.path.isfile(model_llm_custom_path) and (
                         ("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
                     translation_model = AutoModelForCausalLM.from_gguf(llm_path, cpu_embedding=True)
@@ -1560,9 +1575,9 @@ def handle_inputs(
                         optimize_model=True,
                         cpu_embedding=True,
                         speculative=False,
-                        disk_embedding=True if system_ram < 9 else False,
+                        disk_embedding=low_mem,
                         lightweight_bmm=True if special_set else False,
-                        embedding_qtype='q2_k' if system_ram < 9 else 'q4_k',  # [q2_k, q4_k]
+                        embedding_qtype='q2_k' if low_mem else 'q4_k',  # [q2_k, q4_k]
                         mixed_precision=False,
                         pipeline_parallel_stages=1
                     )
