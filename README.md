@@ -8,15 +8,15 @@
 
 ## ✨ Features  
 This project is built on ONNX Runtime and the IPEX-LLM framework.
-- VAD Support:
-  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
-  - [Official - Silero](https://github.com/snakers4/silero-vad)
-  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
-
 - Deoiser Support:
   - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
+
+- VAD Support:
+  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
+  - [Official - Silero](https://github.com/snakers4/silero-vad)
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
 
 - ASR Support:
   - [SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall)
@@ -126,15 +126,15 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## ✨ 功能
 这个项目基于ONNX Runtime和IPEX-LLM框架。
-- **语音活动检测（VAD）支持**：
-  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
-  - [官方 - Silero](https://github.com/snakers4/silero-vad)
-  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
-
 - **去噪器 (Denoiser) 支持**：
   - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
+ 
+- **语音活动检测（VAD）支持**：
+  - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
+  - [官方 - Silero](https://github.com/snakers4/silero-vad)
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
 
 - **语音识别（ASR）支持**：
   - [SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall)
