@@ -396,7 +396,7 @@ def update_asr(dropdown_model_asr):
             ]
         )
     elif "SenseVoiceSmall" in dropdown_model_asr:
-        update_B = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "auto"])
+        update_B = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "Auto"])
     else:
         if "Small" in dropdown_model_asr:  # Paraformer
             update_B = gr.update(value="中文", choices=["中文"])
@@ -1635,7 +1635,7 @@ def handle_inputs(
                     transcribe_language = 'japanese'
                 elif transcribe_language == '한국인':
                     transcribe_language = 'korean'
-                elif transcribe_language == 'auto':
+                elif transcribe_language == 'Auto':
                     transcribe_language = None
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
