@@ -25,6 +25,8 @@ from sentencepiece import SentencePieceProcessor
 from silero_vad import load_silero_vad, get_speech_timestamps
 from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
 from ipex_llm.transformers import AutoModelForCausalLM
+from pyannote.audio.pipelines import VoiceActivityDetection
+from pyannote.audio import Model
 
 
 MAX_SEQ_LEN = 64
@@ -369,7 +371,7 @@ def update_asr(dropdown_model_asr):
     if "Whisper" in dropdown_model_asr:
         update_B = gr.update(
             choices=[
-                "日本語", "中文", "english", "한국인",
+                "日本語", "中文", "English", "한국인",
                 "afrikaans", "amharic", "arabic", "assamese", "azerbaijani",
                 "bashkir", "belarusian", "bulgarian", "bengali", "tibetan",
                 "breton", "bosnian", "catalan", "czech", "welsh",
@@ -417,11 +419,11 @@ def update_model_llm_accuracy(dropdown_hardware):
 
 def update_translate_language(dropdown_model_llm):
     if "Whisper" in dropdown_model_llm:
-        update_A = gr.update(choices=["english"], value="english")
+        update_A = gr.update(choices=["English"], value="English")
     else:
         update_A = gr.update(
             choices=[
-                "中文", "english", "日本語", "한국인",
+                "中文", "English", "日本語", "한국인",
                 "afrikaans", "amharic", "arabic", "assamese", "azerbaijani",
                 "bashkir", "belarusian", "bulgarian", "bengali", "tibetan",
                 "breton", "bosnian", "catalan", "czech", "welsh",
@@ -472,19 +474,33 @@ def update_vad(dropdown_model_vad):
         update_A = gr.update(visible=True)
         update_B = gr.update(visible=True)
         update_C = gr.update(visible=True)
-        update_D = gr.update(visible=False)
-        update_E = gr.update(visible=False)
-        update_F = gr.update(value=0.8)
-        update_G = gr.update(value=0.2)
-    else:
+        update_D = gr.update(visible=True)
+        update_E = gr.update(visible=True)
+        update_F = gr.update(visible=False)
+        update_G = gr.update(visible=False)
+        update_H = gr.update(value=0.8)
+        update_I = gr.update(value=0.2)
+    elif "Pyannote" in dropdown_model_vad:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
         update_C = gr.update(visible=False)
-        update_D = gr.update(visible=True)
-        update_E = gr.update(visible=True)
-        update_F = gr.update(value=0.0)
-        update_G = gr.update(value=0.05)
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(visible=False)
+        update_G = gr.update(visible=False)
+        update_H = gr.update(value=0.1)
+        update_I = gr.update(value=0.05)
+    else:
+        update_A = gr.update(visible=True)
+        update_B = gr.update(visible=True)
+        update_C = gr.update(visible=False)
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(visible=True)
+        update_G = gr.update(visible=True)
+        update_H = gr.update(value=0.1)
+        update_I = gr.update(value=0.05)
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I
 
 
 def get_language_id(language_input, is_whisper):
@@ -737,7 +753,7 @@ def handle_inputs(
 
     if "FSMN" in model_vad:
         vad_type = 0
-        onnx_model_B = f"./VAD/FSMN.ort"
+        onnx_model_B = "./VAD/FSMN.ort"
         if os.path.isfile(onnx_model_B):
             print("\nFound the VAD-FSMN.")
         else:
@@ -750,13 +766,20 @@ def handle_inputs(
             print(f"\nFound the VAD-Faster_Whisper-Silero.")
         else:
             print("\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'")
-    else:
+    elif 'Official' in model_vad:
         vad_type = 2
         onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/silero_vad"):
             print(f"\nFound the Official Silero-VAD.")
         else:
             print("\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
+    else:
+        vad_type = 3
+        onnx_model_B = None
+        if os.path.isdir(PYTHON_PACKAGE + "/pyannote") and os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
+            print(f"\nFound the Pyannote-VAD.")
+        else:
+            print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the model from https://huggingface.co/pyannote/segmentation-3.0'")
 
     if "Whisper" in model_asr:
         asr_type = 0
@@ -908,10 +931,18 @@ def handle_inputs(
         out_name_B5 = out_name_B[5].name
         silero_vad = None
     else:
-        if vad_type == 2:
+        if vad_type == 1:
+            silero_vad = None
+        elif vad_type == 2:
             silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         else:
-            silero_vad = None
+            pyannote_vad = Model.from_pretrained("./VAD/pyannote_segmentation_3/pytorch_model.bin")
+            pyannote_vad_pipeline = VoiceActivityDetection(segmentation=pyannote_vad)
+            HYPER_PARAMETERS = {
+                "min_duration_on": slider_vad_MIN_SPEECH_DURATION,
+                "min_duration_off": slider_vad_FUSION_THRESHOLD
+            }
+            pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
         print(f"\nVAD - Usable Providers: ['CPUExecutionProvider']")
         ort_session_B = None
         in_name_B = None
@@ -976,18 +1007,26 @@ def handle_inputs(
         file_name = os.path.basename(input_audio).split(".")[0]
         print(f"\nLoading the Input Media: {input_audio}")
         audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+        if vad_type == 3:
+            sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
         if USE_DENOISED:
             if "ZipEnhancer" in denoiser_name:
-                vad_pad = 800
+                if "Pyannote" in model_vad:
+                    vad_pad = 1000
+                else:
+                    vad_pad = 800
             else:
-                vad_pad = 400
+                if "Pyannote" in model_vad:
+                    vad_pad = 800
+                else:
+                    vad_pad = 400
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
-                audio_plus_denoised = ((audio[:min_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio).clip(min=-32768, max=32767)
+                audio_plus_denoised = ((audio[:min_len].astype(np.float32) * 0.5) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 if switcher_run_test:
                     audio_plus_denoised = audio_plus_denoised[: min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
@@ -1013,7 +1052,10 @@ def handle_inputs(
                     print(f"\nModels have been successfully loaded.")
                     print("----------------------------------------------------------------------------------------------------------")
         else:
-            vad_pad = 400
+            if "Pyannote" in model_vad:
+                vad_pad = 800
+            else:
+                vad_pad = 400
             audio_plus_denoised = None
             if FIRST_RUN:
                 ort_session_A = None
@@ -1251,13 +1293,12 @@ def handle_inputs(
             else:
                 de_audio = np.concatenate(saved, axis=-1)
                 audio_len = min(audio_len, de_audio.shape[-1])
-            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.33).astype(np.int16) + de_audio[:, :, :audio_len]).clip(min=-32768, max=32767)
+            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * 0.5) + de_audio[:, :, :audio_len].astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
             audio = de_audio
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
-
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1326,9 +1367,9 @@ def handle_inputs(
             gc.collect()
         else:
             aligned_len = audio_len
-            audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
-            print("\nThe Silero VAD model does not provide the running progress for visualization.")
             if vad_type == 1:
+                audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
+                print("\nThe Faster_Whisper-Silero VAD model does not provide the running progress for visualization.")
                 vad_options = {
                     'threshold': slider_vad_SPEAKING_SCORE,
                     'neg_threshold': slider_vad_SILENCE_SCORE,
@@ -1342,9 +1383,12 @@ def handle_inputs(
                     vad_options=VadOptions(**vad_options),
                     sampling_rate=SAMPLE_RATE
                 )
+                del audio_float
                 inv_sample_rate = float(1.0 / SAMPLE_RATE)
                 timestamps = [(item['start'] * inv_sample_rate, item['end'] * inv_sample_rate) for item in timestamps]
-            else:
+            elif vad_type == 2:
+                audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
+                print("\nThe Official-Silero VAD model does not provide the running progress for visualization.")
                 timestamps = get_speech_timestamps(
                     torch.from_numpy(audio_float),
                     model=silero_vad,
@@ -1356,8 +1400,27 @@ def handle_inputs(
                     speech_pad_ms=vad_pad,
                     return_seconds=True
                 )
+                del audio_float
                 timestamps = [(item['start'], item['end']) for item in timestamps]
-            del audio_float
+            else:
+                print("\nThe Pyannote-3.0 VAD model does not provide the running progress for visualization.")
+                if audio_plus_denoised is None:
+                    audio_path = f"./Cache/{file_name}_vad.wav"
+                else:
+                    audio_path = f"./Cache/{file_name}_{denoiser_name}.wav"
+                timestamps = pyannote_vad_pipeline(audio_path)
+                segments = list(timestamps._tracks.keys())
+                total_seconds = audio_len / SAMPLE_RATE
+                timestamps = []
+                vad_pad = vad_pad * 0.001
+                for segment in segments:
+                    segment_start = segment.start - vad_pad
+                    segment_end = segment.end + vad_pad
+                    if segment_start < 0:
+                        segment_start = 0
+                    if segment_end > total_seconds:
+                        segment_end = total_seconds
+                    timestamps.append((segment_start, segment_end))
             gc.collect()
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
         print(f"VAD Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
@@ -1755,9 +1818,9 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #50ccfb;'>Target Language</span>")
         with gr.Column():
             transcribe_language = gr.Dropdown(
-                choices=["日本語", "中文", "English", "粤语", "한국인", "auto"],
+                choices=["日本語", "中文", "English", "粤语", "한국인", "Auto"],
                 label="Transcription Language",
-                info="Language of the input meidia.",
+                info="Language of the input media.",
                 value="日本語",
                 visible=True
             )
@@ -1766,7 +1829,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
         with gr.Column():
             translate_language = gr.Dropdown(
                 choices=[
-                    "中文", "english", "日本語", "한국인",
+                    "中文", "English", "日本語", "한국인",
                     "afrikaans", "amharic", "arabic", "assamese", "azerbaijani",
                     "bashkir", "belarusian", "bulgarian", "bengali", "tibetan",
                     "breton", "bosnian", "catalan", "czech", "welsh",
@@ -1814,10 +1877,10 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_vad = gr.Dropdown(
-                choices=['Faster_Whisper-Silero', "Official-Silero", "FSMN"],
+                choices=["FSMN", 'Faster_Whisper-Silero', "Official-Silero", "Pyannote-3.0"],
                 label="VAD",
                 info="Select the VAD used for audio processing: Silero performs better in noisy audio, while FSMN excels in Chinese audio environments.",
-                value="Faster_Whisper-Silero",
+                value="Pyannote-3.0",
                 visible=True
             )
 
@@ -1846,18 +1909,18 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 0, 1, step=0.025, label="Voice State Score",
                 info="A larger value makes activation more difficult.",
                 value=0.4,
-                visible=True
+                visible=False
             )
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.025, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
                 value=0.3,
-                visible=True
+                visible=False
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 5, step=0.025, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
-                value=0.0,
+                value=0.1,
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
@@ -1870,13 +1933,13 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 1, 30, step=1, label="Filter Long Voice",
                 info="Maximum voice duration. Unit: seconds.",
                 value=20,
-                visible=True
+                visible=False
             )
             slider_vad_MIN_SILENCE_DURATION = gr.Slider(
                 100, 3000, step=50, label="Silence Duration Judgment",
                 info="Minimum silence duration. Unit: ms.",
                 value=1500,
-                visible=True
+                visible=False
             )
 
     task_state = gr.Textbox(
@@ -1977,6 +2040,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
         fn=update_vad,
         inputs=model_vad,
         outputs=[
+            slider_vad_SPEAKING_SCORE,
+            slider_vad_SILENCE_SCORE,
             slider_vad_ONE_MINUS_SPEECH_THRESHOLD,
             slider_vad_SNR_THRESHOLD,
             slider_vad_BACKGROUND_NOISE_dB_INIT,
