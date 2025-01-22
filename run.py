@@ -1890,10 +1890,10 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_vad = gr.Dropdown(
-                choices=["FSMN", 'Faster_Whisper-Silero', "Official-Silero", "Pyannote-3.0"],
+                choices=["FSMN", 'Faster_Whisper-Silero', "Official-Silero", "Pyannote_3.0-Time Consume"],
                 label="VAD",
                 info="Select the VAD used for audio processing: Silero performs better in noisy audio, while FSMN excels in Chinese audio environments.",
-                value="Pyannote-3.0",
+                value="Faster_Whisper-Silero",
                 visible=True
             )
 
@@ -1922,13 +1922,13 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 0, 1, step=0.025, label="Voice State Score",
                 info="A larger value makes activation more difficult.",
                 value=0.4,
-                visible=False
+                visible=True
             )
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.025, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
                 value=0.3,
-                visible=False
+                visible=True
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 5, step=0.025, label="Merge Timestamps",
@@ -1946,13 +1946,13 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 1, 30, step=1, label="Filter Long Voice",
                 info="Maximum voice duration. Unit: seconds.",
                 value=20,
-                visible=False
+                visible=True
             )
             slider_vad_MIN_SILENCE_DURATION = gr.Slider(
                 100, 3000, step=50, label="Silence Duration Judgment",
                 info="Minimum silence duration. Unit: ms.",
                 value=1500,
-                visible=False
+                visible=True
             )
 
     task_state = gr.Textbox(
