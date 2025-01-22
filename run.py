@@ -1607,7 +1607,7 @@ def handle_inputs(
                     conversation_context = [
                         {
                             "role": "system",
-                            "content": f"Translate the provided subtitles from {transcribe_language} to {translate_language}, and return them strictly in the 'ID-translation' format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Preserve and enrich the intended meaning and tone."
+                            "content": f"Translate the provided subtitles from {transcribe_language} to {translate_language}, and return them strictly in the defined 'ID-translation_results' format. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines. Preserve and enrich the intended meaning and tone."
                         },
                         {
                             "role": "user",
@@ -1643,21 +1643,13 @@ def handle_inputs(
                     for i in range(len(merged_responses)):
                         response_line = merged_responses[i]
                         if response_line:
-                            if "-ID-" in response_line:
-                                parts = response_line.split("-ID-")
-                            elif "- ID -" in response_line:
-                                parts = response_line.split("- ID -")
-                            elif "-id-" in response_line:
-                                parts = response_line.split("-id-")
-                            elif "- id -" in response_line:
-                                parts = response_line.split("- id -")
-                            else: 
-                                parts = response_line.split("-")
+                            parts = response_line.split("-")
                             if len(parts) > 1:
-                                line_index = int(parts[0])
-                                if line_index < timestamp_len:
-                                    subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[1]}\n\n")
-                                    idx += 1
+                                if parts[0].isdigit():
+                                    line_index = int(parts[0])
+                                    if line_index < timestamp_len:
+                                        subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[-1]}\n\n")
+                                        idx += 1
                 print(f"\nTranslate complete. Processing time: {time.time() - start_time:.2f} seconds")
     print(f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
     return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n"
