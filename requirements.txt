@@ -22,6 +22,7 @@ soundfile~=0.13.0
 pydub>=0.25.1
 silero_vad>=5.1.2
 faster-whisper>=1.1.1  # Use the VAD only.
+pyannote.audio>=3.3.2
 
 # Web interface
 gradio>=5.12.0
