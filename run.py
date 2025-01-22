@@ -27,7 +27,7 @@ from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW
 from ipex_llm.transformers import AutoModelForCausalLM
 
 
-MAX_SEQ_LEN = 50
+MAX_SEQ_LEN = 64
 STOP_TOKEN = 50257
 MEDIA_EXTENSIONS = (
     # Audio formats
