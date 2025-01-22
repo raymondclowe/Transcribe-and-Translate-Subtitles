@@ -1027,10 +1027,10 @@ def handle_inputs(
                 SAMPLE_RATE = 16000
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
-                audio_plus_denoised = ((audio[:min_len].astype(np.float32) * DENOISE_FACTOR) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio_plus_denoised = ((audio[:min_len] * DENOISE_FACTOR) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 if switcher_run_test:
                     audio_plus_denoised = audio_plus_denoised[: min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
