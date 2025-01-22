@@ -778,7 +778,7 @@ def handle_inputs(
         if os.path.isdir(PYTHON_PACKAGE + "/pyannote") and os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
             print(f"\nFound the Pyannote-VAD.")
         else:
-            print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the model from https://huggingface.co/pyannote/segmentation-3.0'")
+            print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
 
     if "Whisper" in model_asr:
         asr_type = 0
