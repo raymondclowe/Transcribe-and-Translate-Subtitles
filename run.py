@@ -1293,6 +1293,8 @@ def handle_inputs(
                 # Down sampling, from 48kHz to 16kHz.
                 de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.int32).clip(min=-32768, max=32767).astype(np.int16).reshape(1, 1, -1)
                 SAMPLE_RATE = 16000
+                if vad_type == 3:
+                    input_audio = f"./Cache/{file_name}_vad.wav"
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 audio = audio.reshape(1, 1, -1)
                 audio_len = min(audio.shape[-1], de_audio.shape[-1])
