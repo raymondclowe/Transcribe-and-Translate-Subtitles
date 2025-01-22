@@ -29,7 +29,7 @@ from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.audio import Model
 
 
-DENOISE_FACTOR = 0.5
+DENOISE_FACTOR = 0.33
 MAX_SEQ_LEN = 64
 STOP_TOKEN = 50257
 MEDIA_EXTENSIONS = (
@@ -624,25 +624,23 @@ def process_timestamps(timestamps, fusion_threshold=1.0, min_duration=0.5):
         filtered_timestamps = [(start, end) for start, end in timestamps if (end - start) >= min_duration]
     else:
         filtered_timestamps = timestamps
-    del timestamps
+    del timestamps  # Free memory if necessary
+
     # Fuse and filter timestamps
     if fusion_threshold > 0.0:
-        fused_timestamps_1st = []
+        fused_timestamps = []
         for start, end in filtered_timestamps:
-            # Merge with the previous segment if within the fusion threshold
-            if fused_timestamps_1st and (start - fused_timestamps_1st[-1][1] <= fusion_threshold):
-                fused_timestamps_1st[-1] = (fused_timestamps_1st[-1][0], end)
+            # Check if the current segment can be merged with the previous one
+            if fused_timestamps and (start - fused_timestamps[-1][1] <= fusion_threshold):
+                # Merge the overlapping or close segments
+                fused_timestamps[-1] = (
+                    fused_timestamps[-1][0],
+                    max(end, fused_timestamps[-1][1])
+                )
             else:
-                fused_timestamps_1st.append((start, end))
-        del filtered_timestamps
-        fused_timestamps_2nd = []
-        for start, end in fused_timestamps_1st:
-            # Merge with the previous segment if within the fusion threshold
-            if fused_timestamps_2nd and (start - fused_timestamps_2nd[-1][1] <= fusion_threshold):
-                fused_timestamps_2nd[-1] = (fused_timestamps_2nd[-1][0], end)
-            else:
-                fused_timestamps_2nd.append((start, end))
-        return fused_timestamps_2nd
+                fused_timestamps.append((start, end))
+        del filtered_timestamps  # Free memory if necessary
+        return fused_timestamps
     else:
         return filtered_timestamps
 
@@ -1016,12 +1014,12 @@ def handle_inputs(
         if USE_DENOISED:
             if "ZipEnhancer" in denoiser_name:
                 if "Pyannote" in model_vad:
-                    vad_pad = 1000
-                else:
                     vad_pad = 800
+                else:
+                    vad_pad = 600
             else:
                 if "Pyannote" in model_vad:
-                    vad_pad = 800
+                    vad_pad = 600
                 else:
                     vad_pad = 400
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
@@ -1061,7 +1059,7 @@ def handle_inputs(
                     print("----------------------------------------------------------------------------------------------------------")
         else:
             if "Pyannote" in model_vad:
-                vad_pad = 800
+                vad_pad = 600
             else:
                 vad_pad = 400
             audio_plus_denoised = None
