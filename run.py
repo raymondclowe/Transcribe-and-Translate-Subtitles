@@ -1875,7 +1875,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #f968f3;'>Audio Processor</span>")
         with gr.Column():
             model_denoiser = gr.Dropdown(
-                choices=["None", "ZipEnhancer-Time Consume", "GTCRN-Fast", "DFSMN-Fast"],
+                choices=["None", "ZipEnhancer-Time Consume", "GTCRN", "DFSMN"],
                 label="Denoiser",
                 info="Choose a denoiser for audio processing.",
                 value="None",
