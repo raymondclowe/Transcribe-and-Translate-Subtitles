@@ -479,8 +479,8 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=True)
         update_F = gr.update(visible=False)
         update_G = gr.update(visible=False)
-        update_H = gr.update(value=0.8)
-        update_I = gr.update(value=0.2)
+        update_H = gr.update(value=1.0)
+        update_I = gr.update(value=0.05)
     elif "Pyannote" in dropdown_model_vad:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
@@ -499,7 +499,7 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=True)
         update_G = gr.update(visible=True)
-        update_H = gr.update(value=0.1)
+        update_H = gr.update(value=0.0)
         update_I = gr.update(value=0.05)
     return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I
 
@@ -1014,25 +1014,23 @@ def handle_inputs(
         if USE_DENOISED:
             if "ZipEnhancer" in denoiser_name:
                 if "Pyannote" in model_vad:
-                    vad_pad = 800
+                    vad_pad = 1000
                 else:
-                    vad_pad = 600
+                    vad_pad = 400
             else:
                 if "Pyannote" in model_vad:
-                    vad_pad = 600
+                    vad_pad = 800
                 else:
                     vad_pad = 400
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 USE_DENOISED = False
+                SAMPLE_RATE = 16000
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
                 audio_plus_denoised = ((audio[:min_len].astype(np.float32) * DENOISE_FACTOR) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
-                if "DFSMN" in denoiser_name:
-                    min_len = min_len // 3
-                    audio_plus_denoised = np.sum(audio_plus_denoised[:min_len * 3].reshape(-1, 3), axis=1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16).reshape(1, 1, -1)
-                    SAMPLE_RATE = 16000
                 if switcher_run_test:
                     audio_plus_denoised = audio_plus_denoised[: min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
@@ -1059,7 +1057,7 @@ def handle_inputs(
                     print("----------------------------------------------------------------------------------------------------------")
         else:
             if "Pyannote" in model_vad:
-                vad_pad = 600
+                vad_pad = 800
             else:
                 vad_pad = 400
             audio_plus_denoised = None
@@ -1291,7 +1289,7 @@ def handle_inputs(
             saved = [result[1] for result in results]
             if "DFSMN" in denoiser_name:
                 # Down sampling, from 48kHz to 16kHz.
-                de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.int32).clip(min=-32768, max=32767).astype(np.int16).reshape(1, 1, -1)
+                de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.float32).reshape(1, 1, -1)
                 SAMPLE_RATE = 16000
                 if vad_type == 3:
                     input_audio = f"./Cache/{file_name}_vad.wav"
@@ -1299,14 +1297,15 @@ def handle_inputs(
                 audio = audio.reshape(1, 1, -1)
                 audio_len = min(audio.shape[-1], de_audio.shape[-1])
             else:
-                de_audio = np.concatenate(saved, axis=-1)
+                de_audio = (np.concatenate(saved, axis=-1)).astype(np.float32)
                 audio_len = min(audio_len, de_audio.shape[-1])
-            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * DENOISE_FACTOR) + de_audio[:, :, :audio_len].astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
-            audio = de_audio
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
+            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * DENOISE_FACTOR) + de_audio[:, :, :audio_len]).clip(min=-32768.0, max=32767.0).astype(np.int16)
+            audio = de_audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
             del saved
             del results
+            del de_audio
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+            print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1927,13 +1926,13 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.025, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
-                value=0.3,
+                value=0.2,
                 visible=True
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
                 0, 5, step=0.025, label="Merge Timestamps",
                 info="If two voice segments are too close, they will be merged into one. Unit: seconds.",
-                value=0.1,
+                value=0.0,
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
