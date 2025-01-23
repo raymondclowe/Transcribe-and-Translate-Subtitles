@@ -774,18 +774,18 @@ def handle_inputs(
         if os.path.isdir(PYTHON_PACKAGE + "/silero_vad"):
             vad_type = 2
             onnx_model_B = None
-            print(f"\nFound the Official Silero-VAD.")
+            print(f"\nFound the VAD-Official_Silero.")
         else:
-            print("\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
-            return "\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'"
+            print("\nThe VAD-Official_Silero doesn't exist. Please run 'pip install silero-vad --upgrade'")
+            return "\nThe VAD-Official_Silero doesn't exist. Please run 'pip install silero-vad --upgrade'"
     else:
         if os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
             vad_type = 3
             onnx_model_B = None
-            print(f"\nFound the Pyannote-VAD.")
+            print(f"\nFound the VAD-Pyannote_Segmentation_3.0.")
         else:
-            print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
-            return "\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'"
+            print("\nThe VAD-Pyannote_Segmentation_3.0 doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
+            return "\nThe VAD-Pyannote_Segmentation_3.0 doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'"
 
     if "Whisper" in model_asr:
         asr_type = 0
