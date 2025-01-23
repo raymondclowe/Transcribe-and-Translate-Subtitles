@@ -1592,7 +1592,7 @@ def handle_inputs(
                 elif transcribe_language == '한국인':
                     transcribe_language = 'korean'
                 elif transcribe_language == 'Auto':
-                    transcribe_language = None
+                    transcribe_language = "unknown language"
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
                 if os.path.isfile(model_llm_custom_path) and (("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
