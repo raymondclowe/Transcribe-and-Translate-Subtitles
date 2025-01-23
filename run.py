@@ -1596,7 +1596,7 @@ def handle_inputs(
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
                 if os.path.isfile(model_llm_custom_path) and (("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
-                    translation_model = AutoModelForCausalLM.from_gguf(model_llm_custom_path, cpu_embedding=True if llm_special_set else False)
+                    translation_model = AutoModelForCausalLM.from_gguf(model_llm_custom_path, cpu_embedding=False if llm_special_set else True)
                 else:
                     translation_model = AutoModelForCausalLM.from_pretrained(
                         llm_path,
@@ -1604,7 +1604,7 @@ def handle_inputs(
                         use_cache=True,
                         load_in_low_bit=model_llm_accuracy,
                         optimize_model=True,
-                        cpu_embedding=True if llm_special_set else False,
+                        cpu_embedding=False if llm_special_set else True,
                         speculative=False,
                         disk_embedding=low_mem,
                         lightweight_bmm=True if llm_special_set else False,
