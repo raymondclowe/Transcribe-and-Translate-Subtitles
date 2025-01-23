@@ -14,9 +14,9 @@ This project is built on ONNX Runtime and the IPEX-LLM framework.
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
 
 - VAD Support:
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [Official - Silero](https://github.com/snakers4/silero-vad)
-  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - You need to download the Pyannote `pytorch_model.bin` file yourself and place it in the `VAD/pyannote_segmentation_3` folder.
 
@@ -134,9 +134,9 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
  
 - **语音活动检测（VAD）支持**：
+  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
-  - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - 需要自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation_3` 文件夹中。
 
