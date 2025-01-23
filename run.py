@@ -620,25 +620,22 @@ def handle_sentence(text_list):
 def process_timestamps(timestamps, fusion_threshold=1.0, min_duration=0.5):
     # Filter out short durations
     if min_duration > 0.0:
-        filtered_timestamps = [(start, end) for start, end in timestamps if (end - start) >= min_duration]
+        filtered_timestamps = [(start, end) for start, end in timestamps if (end - start) > min_duration]
     else:
         filtered_timestamps = timestamps
-    del timestamps  # Free memory if necessary
-
+    del timestamps 
+    
     # Fuse and filter timestamps
     if fusion_threshold > 0.0:
         fused_timestamps = []
         for start, end in filtered_timestamps:
-            # Check if the current segment can be merged with the previous one
             if fused_timestamps and (start - fused_timestamps[-1][1] <= fusion_threshold):
-                # Merge the overlapping or close segments
                 fused_timestamps[-1] = (
                     fused_timestamps[-1][0],
                     max(end, fused_timestamps[-1][1])
                 )
             else:
                 fused_timestamps.append((start, end))
-        del filtered_timestamps  # Free memory if necessary
         return fused_timestamps
     else:
         return filtered_timestamps
