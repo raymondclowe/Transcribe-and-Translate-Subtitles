@@ -156,6 +156,10 @@ def update_ui(dropdown_ui_language):
             label="降噪因子",
             info="较大的值可以增强降噪效果。"
         )
+        update_Z = gr.update(
+            label="VAD 填充",
+            info="为时间戳的起始和结束添加填充。单位：毫秒。"
+        )
     elif "日本語" in dropdown_ui_language:
         update_A = gr.update(
             label="音声を入力",
@@ -256,6 +260,10 @@ def update_ui(dropdown_ui_language):
         update_Y = gr.update(
             label="ノイズ除去係数",
             info="大きな値はノイズ除去効果を高めます。"
+        )
+        update_Z = gr.update(
+            label="VAD パディング",
+            info="タイムスタンプの開始と終了にパディングを追加します。 単位：ミリ秒。"
         )
     else:
         update_A = gr.update(
@@ -358,7 +366,11 @@ def update_ui(dropdown_ui_language):
             label="Denoise Factor",
             info="A larger value enhances the denoising effect."
         )
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X, update_Y
+        update_Z = gr.update(
+            label="VAD Padding",
+            info="Add padding to the start and end of the timestamps. Unit: milliseconds."
+        )
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X, update_Y, update_Z
 
 
 def update_task(dropdown_task):
@@ -711,7 +723,8 @@ def handle_inputs(
         slider_vad_MIN_SPEECH_DURATION,
         slider_vad_MAX_SPEECH_DURATION,
         slider_vad_MIN_SILENCE_DURATION,
-        slider_denoise_factor
+        slider_denoise_factor,
+        slider_vad_pad
 ):
     total_process_time = time.time()
 
@@ -1017,13 +1030,8 @@ def handle_inputs(
                 sf.write(f"./Cache/{file_name}_vad.wav", np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(16000).get_array_of_samples()), 16000, format='WAVEX')
             else:
                 sf.write(f"./Cache/{file_name}_vad.wav", audio, 16000, format='WAVEX')
-        if "Pyannote" in model_vad:
-            vad_pad = 800
-        else:
-            vad_pad = 400
+
         if USE_DENOISED:
-            if (denoiser_name == "ZipEnhancer") and ("Pyannote" in model_vad):
-                vad_pad = 1000
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
@@ -1317,7 +1325,7 @@ def handle_inputs(
             cache_1 = cache_0
             cache_2 = cache_0
             cache_3 = cache_0
-            slider_vad_SNR_THRESHOLD = slider_vad_SNR_THRESHOLD * 0.5
+            slider_vad_SNR_THRESHOLD_half = slider_vad_SNR_THRESHOLD * 0.5
             silence = True
             saved = []
             slice_start = 0
@@ -1341,7 +1349,7 @@ def handle_inputs(
                     if score <= slider_vad_SILENCE_SCORE:
                         silence = True
                 saved.append(silence)
-                noise_average_dB = 0.5 * (noise_average_dB + noisy_dB) + slider_vad_SNR_THRESHOLD
+                noise_average_dB = 0.5 * (noise_average_dB + noisy_dB) + slider_vad_SNR_THRESHOLD_half
                 print(f"VAD: {slice_start * inv_audio_len:.3f}%")
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
@@ -1362,7 +1370,7 @@ def handle_inputs(
                     'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
                     'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
-                    'speech_pad_ms': vad_pad
+                    'speech_pad_ms': slider_vad_pad
                 }
                 timestamps = get_speech_timestamps_FW(
                     (audio.reshape(-1).astype(np.float32) * 0.000030517578),  # 1/32768
@@ -1380,7 +1388,7 @@ def handle_inputs(
                     max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
                     min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
                     min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
-                    speech_pad_ms=vad_pad,
+                    speech_pad_ms=slider_vad_pad,
                     return_seconds=True
                 )
                 timestamps = [(item['start'], item['end']) for item in timestamps]
@@ -1395,10 +1403,10 @@ def handle_inputs(
                     segments = list(timestamps._tracks.keys())
                     total_seconds = audio_len * inv_16k
                     timestamps = []
-                    vad_pad = vad_pad * 0.001
+                    slider_vad_pad_s = slider_vad_pad * 0.001
                     for segment in segments:
-                        segment_start = segment.start - vad_pad
-                        segment_end = segment.end + vad_pad
+                        segment_start = segment.start - slider_vad_pad_s
+                        segment_end = segment.end + slider_vad_pad_s
                         if segment_start < 0:
                             segment_start = 0
                         if segment_end > total_seconds:
@@ -1870,6 +1878,12 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
     with gr.Row():
         with gr.Column():
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #fdfefe;'>VAD Configurations</span>")
+            slider_vad_pad = gr.Slider(
+                0, 1000, step=10, label="VAD Padding",
+                info="Add padding to the start and end of the timestamps. Unit: milliseconds.",
+                value=400,
+                visible=True
+            )
             slider_vad_ONE_MINUS_SPEECH_THRESHOLD = gr.Slider(
                 0, 1, step=0.025, label="Voice State Threshold",
                 info="FSMN VAD parameter for sensitivity.",
@@ -1920,7 +1934,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
             slider_vad_MIN_SILENCE_DURATION = gr.Slider(
                 100, 3000, step=50, label="Silence Duration Judgment",
-                info="Minimum silence duration. Unit: ms.",
+                info="Minimum silence duration. Unit: milliseconds.",
                 value=1500,
                 visible=True
             )
@@ -1961,7 +1975,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
-            slider_denoise_factor
+            slider_denoise_factor,
+            slider_vad_pad
         ],
         outputs=task_state
     )
@@ -1993,7 +2008,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
-            slider_denoise_factor
+            slider_denoise_factor,
+            slider_vad_pad
         ]
     )
     task.change(
