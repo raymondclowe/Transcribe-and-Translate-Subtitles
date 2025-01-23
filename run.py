@@ -29,7 +29,6 @@ from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.audio import Model
 
 
-DENOISE_FACTOR = 0.33
 MAX_SEQ_LEN = 64
 STOP_TOKEN = 50257
 MEDIA_EXTENSIONS = (
@@ -153,6 +152,10 @@ def update_ui(dropdown_ui_language):
             label="静音持续判断",
             info="最小静音持续时间。单位：毫秒。"
         )
+        update_Y = gr.update(
+            label="降噪因子",
+            info="较大的值可以增强降噪效果。"
+        )
     elif "日本語" in dropdown_ui_language:
         update_A = gr.update(
             label="音声を入力",
@@ -249,6 +252,10 @@ def update_ui(dropdown_ui_language):
         update_X = gr.update(
             label="無音判断",
             info="最小無音継続時間。単位：ミリ秒。"
+        )
+        update_Y = gr.update(
+            label="ノイズ除去係数",
+            info="大きな値はノイズ除去効果を高めます。"
         )
     else:
         update_A = gr.update(
@@ -347,7 +354,11 @@ def update_ui(dropdown_ui_language):
             label="Silence Duration Judgment",
             info="Minimum silence duration. Unit: milliseconds."
         )
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X
+        update_Y = gr.update(
+            label="Denoise Factor",
+            info="A larger value enhances the denoising effect."
+        )
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J, update_K, update_L, update_M, update_N, update_O, update_P, update_Q, update_R, update_S, update_T, update_U, update_V, update_W, update_X, update_Y
 
 
 def update_task(dropdown_task):
@@ -468,9 +479,9 @@ def update_translate_language(dropdown_model_llm):
 
 def update_denoiser(dropdown_model_denoiser):
     if "None" == dropdown_model_denoiser:
-        return gr.update(visible=False)
+        return gr.update(visible=False), gr.update(visible=False)
     else:
-        return gr.update(visible=True)
+        return gr.update(visible=True), gr.update(visible=True)
 
 
 def update_vad(dropdown_model_vad):
@@ -699,7 +710,8 @@ def handle_inputs(
         slider_vad_FUSION_THRESHOLD,
         slider_vad_MIN_SPEECH_DURATION,
         slider_vad_MAX_SPEECH_DURATION,
-        slider_vad_MIN_SILENCE_DURATION
+        slider_vad_MIN_SILENCE_DURATION,
+        slider_denoise_factor
 ):
     total_process_time = time.time()
 
@@ -726,6 +738,7 @@ def handle_inputs(
     USE_V3 = False
     FIRST_RUN = True
 
+    slider_denoise_factor = float(1.0 - slider_denoise_factor)
     if "ZipEnhancer" in model_denoiser:
         denoiser_name = "ZipEnhancer"
     elif "GTCRN" in model_denoiser:
@@ -1020,7 +1033,7 @@ def handle_inputs(
                     audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
-                audio_plus_denoised = ((audio[:min_len] * DENOISE_FACTOR) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio_plus_denoised = ((audio[:min_len] * slider_denoise_factor) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 if switcher_run_test:
                     audio_plus_denoised = audio_plus_denoised[:min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
@@ -1261,7 +1274,7 @@ def handle_inputs(
             saved = [result[1] for result in results]
             de_audio = (np.concatenate(saved, axis=-1))
             de_audio = de_audio[:, :, :audio_len].astype(np.float32)
-            audio_plus_denoised = (audio[:, :, :audio_len].astype(np.float32) * DENOISE_FACTOR + de_audio)
+            audio_plus_denoised = (audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor + de_audio)
             if denoiser_name == "DFSMN":
                 SAMPLE_RATE = 16000
                 audio_len = audio_len // 3
@@ -1848,7 +1861,12 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 value="Faster_Whisper-Silero",
                 visible=True
             )
-
+        slider_denoise_factor = gr.Slider(
+            0.1, 1.0, step=0.025, label="Denoise Factor",
+            info="A larger value enhances the denoising effect.",
+            value=0.6,
+            visible=False
+        )
     with gr.Row():
         with gr.Column():
             gr.Markdown("<span style='font-size: 24px; font-weight: bold; color: #fdfefe;'>VAD Configurations</span>")
@@ -1942,7 +1960,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD,
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
-            slider_vad_MIN_SILENCE_DURATION
+            slider_vad_MIN_SILENCE_DURATION,
+            slider_denoise_factor
         ],
         outputs=task_state
     )
@@ -1973,7 +1992,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_FUSION_THRESHOLD,
             slider_vad_MIN_SPEECH_DURATION,
             slider_vad_MAX_SPEECH_DURATION,
-            slider_vad_MIN_SILENCE_DURATION
+            slider_vad_MIN_SILENCE_DURATION,
+            slider_denoise_factor
         ]
     )
     task.change(
@@ -1999,7 +2019,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
     model_denoiser.change(
         fn=update_denoiser,
         inputs=model_denoiser,
-        outputs=switcher_denoiser_cache
+        outputs=[switcher_denoiser_cache, slider_denoise_factor]
     )
     model_vad.change(
         fn=update_vad,
