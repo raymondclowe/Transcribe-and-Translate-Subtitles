@@ -714,10 +714,10 @@ def handle_inputs(
                 print(f"The specified path or file '{file_path_input}/{file}' does not exist or is not in a legal media format.")
     else:
         print(f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format.")
-    
+
     if len(task_queue) < 1:
         return f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format."
-    
+
     SAMPLE_RATE = 16000
     USE_DENOISED = True
     USE_V3 = False
@@ -735,13 +735,13 @@ def handle_inputs(
         USE_DENOISED = False
 
     if os.name == 'nt':
-        if "CPU" not in hardware:
-            special_set = True
+        if hardware == "CPU":
+            llm_special_set = False
         else:
-            special_set = False
+            llm_special_set = True
         denoiser_os = "Windows"
     else:
-        special_set = False
+        llm_special_set = False
         denoiser_os = "Linux"
 
     if USE_DENOISED:
@@ -755,34 +755,37 @@ def handle_inputs(
         print("\nThis task is running without the denoiser.")
 
     if "FSMN" in model_vad:
-        vad_type = 0
         onnx_model_B = "./VAD/FSMN.ort"
         if os.path.isfile(onnx_model_B):
+            vad_type = 0
             print("\nFound the VAD-FSMN.")
         else:
             print("\nThe VAD-FSMN doesn't exist.\nPlease export it first.")
-
+            return "\nThe VAD-FSMN doesn't exist.\nPlease export it first."
     elif 'Faster_Whisper' in model_vad:
-        vad_type = 1
-        onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/faster_whisper"):
+            vad_type = 1
+            onnx_model_B = None
             print(f"\nFound the VAD-Faster_Whisper-Silero.")
         else:
             print("\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'")
+            return "\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'"
     elif 'Official' in model_vad:
-        vad_type = 2
-        onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/silero_vad"):
+            vad_type = 2
+            onnx_model_B = None
             print(f"\nFound the Official Silero-VAD.")
         else:
             print("\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
+            return "\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'"
     else:
-        vad_type = 3
-        onnx_model_B = None
-        if os.path.isdir(PYTHON_PACKAGE + "/pyannote") and os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
+        if os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
+            vad_type = 3
+            onnx_model_B = None
             print(f"\nFound the Pyannote-VAD.")
         else:
             print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
+            return "\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'"
 
     if "Whisper" in model_asr:
         asr_type = 0
@@ -793,27 +796,27 @@ def handle_inputs(
             ver = "V2"
         if "Custom" in model_asr:
             if model_whisper_custom_path:
-                folder_name = "Custom/" + model_whisper_custom_path.split("/")[-1].replace("/", "")
+                path = model_whisper_custom_path
             else:
                 print("\nPlease assign your custom Whisper path which contains Encoder.ort and Decoder.ort")
                 return "\nPlease assign your custom Whisper path which contains Encoder.ort and Decoder.ort"
         elif "Turbo" in model_asr:
-            folder_name = "Turbo"
+            path = f"./ASR/Whisper/{ver}/Turbo"
         else:
-            folder_name = "General"
-        path = f"./ASR/Whisper/{ver}/{folder_name}"
-        onnx_model_C = f"{path}/Whisper_Encoder.ort"
-        onnx_model_D = f"{path}/Whisper_Decoder.ort"
+            path = f"./ASR/Whisper/{ver}/General"
         tokenizer = AutoTokenizer.from_pretrained(path)
         target_language_id = get_language_id(transcribe_language, True)
         if "Whisper" in model_llm:
             target_task_id = get_task_id('translate', USE_V3)[0]
         else:
             target_task_id = get_task_id('transcribe', USE_V3)[0]
+        onnx_model_C = f"{path}/Whisper_Encoder.ort"
+        onnx_model_D = f"{path}/Whisper_Decoder.ort"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print("\nFound the ASR-Whisper.")
         else:
             print("\nThe ASR-Whisper doesn't exist.\nPlease export it first.")
+            return "\nThe ASR-Whisper doesn't exist.\nPlease export it first."
     elif "SenseVoiceSmall" in model_asr:
         asr_type = 1
         tokenizer = SentencePieceProcessor()
@@ -826,6 +829,7 @@ def handle_inputs(
             print("\nFound the ASR-SenseVoiceSmall.")
         else:
             print("\nThe ASR-SenseVoiceSmall doesn't exist.\nPlease export it first.")
+            return "\nThe ASR-SenseVoiceSmall doesn't exist.\nPlease export it first."
     else:
         if "Large" in model_asr:
             if "English" in transcribe_language:
@@ -849,13 +853,14 @@ def handle_inputs(
             print("\nFound the ASR-Paraformer.")
         else:
             print("\nThe ASR-Paraformer doesn't exist.\nPlease export it first.")
+            return "\nThe ASR-Paraformer doesn't exist.\nPlease export it first."
 
     # ONNX Runtime settings
     session_opts = onnxruntime.SessionOptions()
-    session_opts.log_severity_level = 3                 # error level, it an adjustable value.
+    session_opts.log_severity_level = 3                      # error level, it an adjustable value.
     session_opts.inter_op_num_threads = parallel_threads     # Run different nodes with num_threads. Set 0 for auto.
     session_opts.intra_op_num_threads = parallel_threads     # Under the node, execute the operators with num_threads. Set 0 for auto.
-    session_opts.enable_cpu_mem_arena = True            # True for execute speed; False for less memory usage.
+    session_opts.enable_cpu_mem_arena = True                 # True for execute speed; False for less memory usage.
     session_opts.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
     session_opts.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
     session_opts.add_session_config_entry("session.intra_op.allow_spinning", "1")
@@ -1653,7 +1658,7 @@ def handle_inputs(
                         cpu_embedding=True,
                         speculative=False,
                         disk_embedding=low_mem,
-                        lightweight_bmm=True if special_set else False,
+                        lightweight_bmm=True if llm_special_set else False,
                         embedding_qtype='q2_k' if low_mem else 'q4_k',  # [q2_k, q4_k]
                         mixed_precision=False,
                         pipeline_parallel_stages=1
