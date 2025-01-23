@@ -1367,7 +1367,6 @@ def handle_inputs(
             del cache_1
             del cache_2
             del cache_3
-            gc.collect()
         else:
             aligned_len = audio_len
             if vad_type == 1:
@@ -1416,21 +1415,22 @@ def handle_inputs(
                     sf.write(audio_path, audio, SAMPLE_RATE, format='WAVEX')
                     del audio
                     del de_audio
-                timestamps = pyannote_vad_pipeline(audio_path)
-                segments = list(timestamps._tracks.keys())
-                total_seconds = audio_len / SAMPLE_RATE
-                timestamps = []
-                vad_pad = vad_pad * 0.001
-                for segment in segments:
-                    segment_start = segment.start - vad_pad
-                    segment_end = segment.end + vad_pad
-                    if segment_start < 0:
-                        segment_start = 0
-                    if segment_end > total_seconds:
-                        segment_end = total_seconds
-                    timestamps.append((segment_start, segment_end))
-            gc.collect()
+                with torch.inference_mode():
+                    timestamps = pyannote_vad_pipeline(audio_path)
+                    segments = list(timestamps._tracks.keys())
+                    total_seconds = audio_len / SAMPLE_RATE
+                    timestamps = []
+                    vad_pad = vad_pad * 0.001
+                    for segment in segments:
+                        segment_start = segment.start - vad_pad
+                        segment_end = segment.end + vad_pad
+                        if segment_start < 0:
+                            segment_start = 0
+                        if segment_end > total_seconds:
+                            segment_end = total_seconds
+                        timestamps.append((segment_start, segment_end))
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
+        gc.collect()
         print(f"VAD Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
 
         # ASR parts
