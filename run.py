@@ -699,20 +699,28 @@ def handle_inputs(
         slider_vad_MIN_SILENCE_DURATION
 ):
     total_process_time = time.time()
+
     task_queue = []
     if os.path.isfile(file_path_input):
-        task_queue.append(file_path_input)
+        if file_path_input.endswith(MEDIA_EXTENSIONS):
+            task_queue.append(file_path_input)
+        else:
+            print(f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format.")
     elif os.path.isdir(file_path_input):
         for file in os.listdir(file_path_input):
             if file.endswith(MEDIA_EXTENSIONS):
                 task_queue.append(f"{file_path_input}/{file}")
+            else:
+                print(f"The specified path or file '{file_path_input}/{file}' does not exist or is not in a legal media format.")
     else:
         print(f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format.")
+    
+    if len(task_queue) < 1:
         return f"The specified path or file '{file_path_input}' does not exist or is not in a legal media format."
-
+    
     SAMPLE_RATE = 16000
-    USE_DENOISED = True  # Init
-    USE_V3 = False  # whisper
+    USE_DENOISED = True
+    USE_V3 = False
     FIRST_RUN = True
 
     if "ZipEnhancer" in model_denoiser:
