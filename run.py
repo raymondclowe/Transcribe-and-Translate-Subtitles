@@ -364,9 +364,9 @@ def update_task(dropdown_task):
 def update_asr(dropdown_model_asr):
     if "Custom" in dropdown_model_asr:
         if "V2" in dropdown_model_asr:
-            update_A = gr.update(visible=True, value="")
+            update_A = gr.update(visible=True, value="/ASR/Whisper/V2/Custom/")
         else:
-            update_A = gr.update(visible=True, value="")
+            update_A = gr.update(visible=True, value="/ASR/Whisper/V3/Custom/")
     else:
         update_A = gr.update(visible=False)
     if "Whisper" in dropdown_model_asr:
