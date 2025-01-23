@@ -51,6 +51,9 @@ shutil.copyfile("./modeling_modified/utils_vad.py", PYTHON_PACKAGE + "/silero_va
 shutil.copyfile("./modeling_modified/model.py", PYTHON_PACKAGE + "/silero_vad/model.py")
 shutil.copyfile("./VAD/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
 
+inv_16k = float(1.0 / 16000)
+inv_1024 = float(1.0 / (1024 ** 3))
+
 
 def update_ui(dropdown_ui_language):
     if "中文" in dropdown_ui_language:
@@ -937,11 +940,8 @@ def handle_inputs(
         out_name_B3 = out_name_B[3].name
         out_name_B4 = out_name_B[4].name
         out_name_B5 = out_name_B[5].name
-        silero_vad = None
     else:
-        if vad_type == 1:
-            silero_vad = None
-        elif vad_type == 2:
+        if vad_type == 2:
             silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         else:
             pyannote_vad = Model.from_pretrained("./VAD/pyannote_segmentation_3/pytorch_model.bin")
@@ -952,23 +952,7 @@ def handle_inputs(
             }
             pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
         print(f"\nVAD - Usable Providers: ['CPUExecutionProvider']")
-        ort_session_B = None
-        in_name_B = None
-        out_name_B = None
-        in_name_B0 = None
-        in_name_B1 = None
-        in_name_B2 = None
-        in_name_B3 = None
-        in_name_B4 = None
-        in_name_B5 = None
-        in_name_B6 = None
-        out_name_B0 = None
-        out_name_B1 = None
-        out_name_B2 = None
-        out_name_B3 = None
-        out_name_B4 = None
-        out_name_B5 = None
-
+        
     if asr_type == 0:
         ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)  # Use CPUExecutionProvider is better for ORT-int8
         ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)  # Use CPUExecutionProvider is better for ORT-int8
@@ -1012,48 +996,39 @@ def handle_inputs(
     print(f"\nASR - Usable Providers: {ort_session_C.get_providers()}")
 
     for input_audio in task_queue:
-        file_name = os.path.basename(input_audio).split(".")[0]
         print(f"\nLoading the Input Media: {input_audio}")
+        file_name = os.path.basename(input_audio).split(".")[0]
         audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
         if vad_type == 3:
-            if "DFSMN" in denoiser_name:
+            if denoiser_name == "DFSMN":
                 sf.write(f"./Cache/{file_name}_vad.wav", np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(16000).get_array_of_samples()), 16000, format='WAVEX')
             else:
-                sf.write(f"./Cache/{file_name}_vad.wav", audio,16000, format='WAVEX')
+                sf.write(f"./Cache/{file_name}_vad.wav", audio, 16000, format='WAVEX')
+        if "Pyannote" in model_vad:
+            vad_pad = 800
+        else:
+            vad_pad = 400
         if USE_DENOISED:
-            if "ZipEnhancer" in denoiser_name:
-                if "Pyannote" in model_vad:
-                    vad_pad = 1000
-                else:
-                    vad_pad = 400
-            else:
-                if "Pyannote" in model_vad:
-                    vad_pad = 800
-                else:
-                    vad_pad = 400
+            if (denoiser_name == "ZipEnhancer") and ("Pyannote" in model_vad):
+                vad_pad = 1000
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
+                print("\nThe denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
                 SAMPLE_RATE = 16000
-                print("\nThe denoised audio file already exists. Using the cache instead.")
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
+                if denoiser_name == "DFSMN":
+                    audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
                 audio_plus_denoised = ((audio[:min_len] * DENOISE_FACTOR) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 if switcher_run_test:
-                    audio_plus_denoised = audio_plus_denoised[: min_len // 10]
+                    audio_plus_denoised = audio_plus_denoised[:min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
                 audio = de_audio
-                if FIRST_RUN:
-                    ort_session_A = None
-                    in_name_A0 = None
-                    out_name_A0 = None
-                    print(f"\nModels have been successfully loaded.")
-                    print("----------------------------------------------------------------------------------------------------------")
             else:
                 audio_plus_denoised = None
                 if FIRST_RUN:
-                    if "ZipEnhancer" in model_denoiser:
+                    if denoiser_name == "ZipEnhancer":
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                     else:
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
@@ -1062,27 +1037,18 @@ def handle_inputs(
                     in_name_A0 = in_name_A[0].name
                     out_name_A0 = out_name_A[0].name
                     print(f"\nDenoise - Usable Providers: {ort_session_A.get_providers()}")
-                    print(f"\nModels have been successfully loaded.")
-                    print("----------------------------------------------------------------------------------------------------------")
         else:
-            if "Pyannote" in model_vad:
-                vad_pad = 800
-            else:
-                vad_pad = 400
             audio_plus_denoised = None
-            if FIRST_RUN:
-                ort_session_A = None
-                in_name_A0 = None
-                out_name_A0 = None
-                print(f"\nModels have been successfully loaded.")
-                print("----------------------------------------------------------------------------------------------------------")
+        if FIRST_RUN:
+            print(f"\nModels have been successfully loaded.")
+            print("----------------------------------------------------------------------------------------------------------")
 
         def process_segment_A(_inv_audio_len, _slice_start, _slice_end, _audio):
             return _slice_start * _inv_audio_len, ort_session_A.run([out_name_A0], {in_name_A0: _audio[:, :, _slice_start: _slice_end]})[0]
 
-        def process_segment_C_sensevoice(_start, _end, _inv_audio_len, _audio):
-            start_indices = _start * SAMPLE_RATE
-            audio_segment = _audio[:, :, int(start_indices): int(_end * SAMPLE_RATE)]
+        def process_segment_C_sensevoice(_start, _end, _inv_audio_len, _audio, sample_rate, _language_idx):
+            start_indices = _start * sample_rate
+            audio_segment = _audio[:, :, int(start_indices): int(_end * sample_rate)]
             audio_len = audio_segment.shape[-1]
             if isinstance(input_shape_C, str):
                 INPUT_AUDIO_LENGTH = min(320000, audio_len)  # You can adjust it.
@@ -1102,18 +1068,17 @@ def handle_inputs(
             aligned_len = audio_segment.shape[-1]
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            language_idx = np.array([target_language_id], dtype=np.int32)
             text = ""
             while slice_end <= aligned_len:
-                token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end], in_name_C1: language_idx})[0]
+                token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end], in_name_C1: _language_idx})[0]
                 text += tokenizer.decode(token_ids.tolist())[0]
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
             return start_indices * _inv_audio_len, text.strip() + ";", (_start, _end)
 
-        def process_segment_C_paraformer_chinese(_start, _end, _inv_audio_len, _audio):
-            start_indices = _start * SAMPLE_RATE
-            audio_segment = _audio[:, :, int(start_indices): int(_end * SAMPLE_RATE)]
+        def process_segment_C_paraformer_chinese(_start, _end, _inv_audio_len, _audio, sample_rate):
+            start_indices = _start * sample_rate
+            audio_segment = _audio[:, :, int(start_indices): int(_end * sample_rate)]
             audio_len = audio_segment.shape[-1]
             if isinstance(input_shape_C, str):
                 INPUT_AUDIO_LENGTH = min(320000, audio_len)  # You can adjust it.
@@ -1133,20 +1098,20 @@ def handle_inputs(
             aligned_len = audio_segment.shape[-1]
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            text = ""
+            save_text = ""
             while slice_end <= aligned_len:
                 token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
                 text = tokenizer[token_ids[0]].tolist()
                 if '</s>' in text:
                     text.remove('</s>')
-                text = ''.join(text)
+                save_text += ''.join(text)
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
+            return start_indices * _inv_audio_len, save_text + ";", (_start, _end)
 
-        def process_segment_C_paraformer_english(_start, _end, _inv_audio_len, _audio):
-            start_indices = _start * SAMPLE_RATE
-            audio_segment = _audio[:, :, int(start_indices): int(_end * SAMPLE_RATE)]
+        def process_segment_C_paraformer_english(_start, _end, _inv_audio_len, _audio, sample_rate):
+            start_indices = _start * sample_rate
+            audio_segment = _audio[:, :, int(start_indices): int(_end * sample_rate)]
             audio_len = audio_segment.shape[-1]
             if isinstance(input_shape_C, str):
                 INPUT_AUDIO_LENGTH = min(320000, audio_len)  # You can adjust it.
@@ -1166,7 +1131,7 @@ def handle_inputs(
             aligned_len = audio_segment.shape[-1]
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            text = ""
+            save_text = ""
             while slice_end <= aligned_len:
                 token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
                 text = tokenizer[token_ids[0]].tolist()
@@ -1175,14 +1140,14 @@ def handle_inputs(
                 text, do_again = handle_sentence(text)
                 while do_again:
                     text, do_again = handle_sentence(text)
-                text = ' '.join(text)
+                save_text += ' '.join(text)
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
+            return start_indices * _inv_audio_len, save_text + ";", (_start, _end)
 
-        def process_segment_CD(_start, _end, _inv_audio_len, input_ids, past_key_de, past_value_de, _audio):
-            start_indices = _start * SAMPLE_RATE
-            audio_segment = _audio[:, :, int(start_indices): int(_end * SAMPLE_RATE)]
+        def process_segment_CD(_start, _end, _inv_audio_len, input_ids_, past_key_de_, past_value_de_, _audio, sample_rate):
+            start_indices = _start * sample_rate
+            audio_segment = _audio[:, :, int(start_indices): int(_end * sample_rate)]
             audio_len = audio_segment.shape[-1]
             if isinstance(input_shape_C, str):
                 INPUT_AUDIO_LENGTH = min(327680, audio_len)  # You can adjust it.
@@ -1204,10 +1169,10 @@ def handle_inputs(
             slice_end = INPUT_AUDIO_LENGTH
             save_token = []
             while slice_end <= aligned_len:
-                _input_ids = input_ids
-                _past_key_de = past_key_de
-                _past_value_de = past_value_de
-                _ids_len = np.array([input_ids.shape[0]], dtype=np.int64)
+                _input_ids = input_ids_
+                _past_key_de = past_key_de_
+                _past_value_de = past_value_de_
+                _ids_len = np.array([input_ids_.shape[0]], dtype=np.int64)
                 _history_len = np.array([0], dtype=np.int64)
                 _attention_mask = np.array([-65504.0], dtype=np.float32)
                 first_run = True
@@ -1229,7 +1194,7 @@ def handle_inputs(
                     if first_run:
                         _history_len += _ids_len
                         _ids_len[0] = 1
-                        _attention_mask[0] = 0
+                        _attention_mask[0] = 0.0
                         first_run = False
                     else:
                         _history_len += 1
@@ -1249,10 +1214,10 @@ def handle_inputs(
             return start_indices * _inv_audio_len, text + ";", (_start, _end)
 
         # Process audio
-        audio_len = len(audio)
+        audio_len = audio.shape[-1]
         if switcher_run_test:
             audio_len = audio_len // 10
-            audio = audio[: audio_len]
+            audio = audio[:audio_len]
         inv_audio_len = float(100.0 / audio_len)
         audio = audio.reshape(1, 1, -1)
         if USE_DENOISED:
@@ -1294,25 +1259,22 @@ def handle_inputs(
             end_time = time.time()
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
-            if "DFSMN" in denoiser_name:
-                # Down sampling, from 48kHz to 16kHz.
-                de_audio = np.sum(np.concatenate(saved, axis=-1)[:, :, :(audio_len // 3) * 3].reshape(-1, 3), axis=1, dtype=np.float32).reshape(1, 1, -1)
+            de_audio = (np.concatenate(saved, axis=-1))
+            de_audio = de_audio[:, :, :audio_len].astype(np.float32)
+            audio_plus_denoised = (audio[:, :, :audio_len].astype(np.float32) * DENOISE_FACTOR + de_audio)
+            if denoiser_name == "DFSMN":
                 SAMPLE_RATE = 16000
-                if vad_type == 3:
-                    input_audio = f"./Cache/{file_name}_vad.wav"
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                audio = audio.reshape(1, 1, -1)
-                audio_len = min(audio.shape[-1], de_audio.shape[-1])
-            else:
-                de_audio = (np.concatenate(saved, axis=-1)).astype(np.float32)
-                audio_len = min(audio_len, de_audio.shape[-1])
-            audio_plus_denoised = ((audio[:, :, :audio_len].astype(np.float32) * DENOISE_FACTOR) + de_audio[:, :, :audio_len]).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio_len = audio_len // 3
+                audio_len_3 = audio_len + audio_len + audio_len
+                de_audio = np.sum(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
+                audio_plus_denoised = np.mean(audio_plus_denoised[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
             audio = de_audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
+            audio_plus_denoised = audio_plus_denoised.clip(min=-32768.0, max=32767.0).astype(np.int16)
             del saved
             del results
             del de_audio
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising Complete.\nTime Cost: {(end_time - start_time):.3f} seconds.")
+            print(f"Denoising Complete 100.00%.\nTime Cost: {(end_time - start_time):.3f} seconds.")
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1342,11 +1304,11 @@ def handle_inputs(
             cache_1 = cache_0
             cache_2 = cache_0
             cache_3 = cache_0
-            slice_start = 0
-            slice_end = INPUT_AUDIO_LENGTH
             slider_vad_SNR_THRESHOLD = slider_vad_SNR_THRESHOLD * 0.5
             silence = True
             saved = []
+            slice_start = 0
+            slice_end = INPUT_AUDIO_LENGTH
             while slice_end <= aligned_len:
                 score, cache_0, cache_1, cache_2, cache_3, noisy_dB = ort_session_B.run(
                     [out_name_B0, out_name_B1, out_name_B2, out_name_B3, out_name_B4, out_name_B5],
@@ -1379,10 +1341,8 @@ def handle_inputs(
             del cache_2
             del cache_3
         else:
-            aligned_len = audio_len
             if vad_type == 1:
-                audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
-                print("\nThe Faster_Whisper-Silero VAD model does not provide the running progress for visualization.")
+                print("\nThe VAD-Faster_Whisper-Silero does not provide the running progress for visualization.")
                 vad_options = {
                     'threshold': slider_vad_SPEAKING_SCORE,
                     'neg_threshold': slider_vad_SILENCE_SCORE,
@@ -1392,18 +1352,15 @@ def handle_inputs(
                     'speech_pad_ms': vad_pad
                 }
                 timestamps = get_speech_timestamps_FW(
-                    audio_float,
+                    (audio.reshape(-1).astype(np.float32) * 0.000030517578),  # 1/32768
                     vad_options=VadOptions(**vad_options),
                     sampling_rate=SAMPLE_RATE
                 )
-                del audio_float
-                inv_sample_rate = float(1.0 / SAMPLE_RATE)
-                timestamps = [(item['start'] * inv_sample_rate, item['end'] * inv_sample_rate) for item in timestamps]
+                timestamps = [(item['start'] * inv_16k, item['end'] * inv_16k) for item in timestamps]
             elif vad_type == 2:
-                audio_float = audio.reshape(-1).astype(np.float32) * 0.000030517578  # 1/32768
-                print("\nThe Official-Silero VAD model does not provide the running progress for visualization.")
+                print("\nThe VAD-Official-Silero does not provide the running progress for visualization.")
                 timestamps = get_speech_timestamps(
-                    torch.from_numpy(audio_float),
+                    torch.from_numpy(audio.reshape(-1).astype(np.float32) * 0.000030517578),  # 1/32768
                     model=silero_vad,
                     threshold=slider_vad_SPEAKING_SCORE,
                     neg_threshold=slider_vad_SILENCE_SCORE,
@@ -1413,23 +1370,17 @@ def handle_inputs(
                     speech_pad_ms=vad_pad,
                     return_seconds=True
                 )
-                del audio_float
                 timestamps = [(item['start'], item['end']) for item in timestamps]
             else:
-                print("\nThe Pyannote-3.0 VAD model does not provide the running progress for visualization.")
-                audio_path = f"./Cache/{file_name}_vad.wav"
-                if audio_plus_denoised is not None:
-                    audio = np.array(AudioSegment.from_file(audio_path).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                    de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                    audio_len = min(audio_len, de_audio.shape[-1])
-                    audio = ((audio[:audio_len].astype(np.float32) * 0.5) + de_audio[:audio_len].astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
-                    sf.write(audio_path, audio, SAMPLE_RATE, format='WAVEX')
-                    del audio
-                    del de_audio
+                print("\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.")
+                if audio_plus_denoised is None:
+                    audio_path = f"./Cache/{file_name}_vad.wav"
+                else:
+                    audio_path = f"./Cache/{file_name}_{denoiser_name}.wav"
                 with torch.inference_mode():
                     timestamps = pyannote_vad_pipeline(audio_path)
                     segments = list(timestamps._tracks.keys())
-                    total_seconds = audio_len / SAMPLE_RATE
+                    total_seconds = audio_len * inv_16k
                     timestamps = []
                     vad_pad = vad_pad * 0.001
                     for segment in segments:
@@ -1442,7 +1393,7 @@ def handle_inputs(
                         timestamps.append((segment_start, segment_end))
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
         gc.collect()
-        print(f"VAD Complete.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
+        print(f"VAD Complete 100.00%.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
 
         # ASR parts
         print("\nStart to transcribe task.")
@@ -1451,9 +1402,6 @@ def handle_inputs(
             audio_len = audio.shape[-1]
             inv_audio_len = float(100.0 / audio_len)
             del audio_plus_denoised
-        if aligned_len > audio_len:
-            audio = np.concatenate((audio, np.zeros((1, 1, aligned_len - audio_len), dtype=audio.dtype)), axis=-1)
-            inv_audio_len = float(100.0 / aligned_len)
         results = []
         start_time = time.time()
         if asr_type == 0:
@@ -1461,25 +1409,26 @@ def handle_inputs(
             past_key_de = np.zeros((ort_session_D._inputs_meta[3].shape[0], ort_session_D._inputs_meta[3].shape[1], 0, ort_session_D._inputs_meta[3].shape[-1]), dtype=np.float16)
             past_value_de = np.zeros((ort_session_D._inputs_meta[4].shape[0], ort_session_D._inputs_meta[4].shape[1], 0, ort_session_D._inputs_meta[4].shape[-1]), dtype=np.float16)
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, input_ids, past_key_de, past_value_de, audio) for start, end in timestamps]
+                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, input_ids, past_key_de, past_value_de, audio, SAMPLE_RATE) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 1:
+            language_idx = np.array([target_language_id], dtype=np.int32)
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_C_sensevoice, start, end, inv_audio_len, audio) for start, end in timestamps]
+                futures = [executor.submit(process_segment_C_sensevoice, start, end, inv_audio_len, audio, SAMPLE_RATE, language_idx) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 2:
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_C_paraformer_english, start, end, inv_audio_len, audio) for start, end in timestamps]
+                futures = [executor.submit(process_segment_C_paraformer_english, start, end, inv_audio_len, audio, SAMPLE_RATE) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         else:
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_C_paraformer_chinese, start, end, inv_audio_len, audio) for start, end in timestamps]
+                futures = [executor.submit(process_segment_C_paraformer_chinese, start, end, inv_audio_len, audio, SAMPLE_RATE) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
@@ -1491,7 +1440,7 @@ def handle_inputs(
         del timestamps
         gc.collect()
         print("----------------------------------------------------------------------------------------------------------")
-        print(f"\nSave results.")
+        print(f"\nSaving Results.")
 
         with open(f"./Results/Timestamps/{file_name}.txt", "w", encoding='UTF-8') as time_file, \
                 open(f"./Results/Text/{file_name}.txt", "w", encoding='UTF-8') as text_file, \
@@ -1503,7 +1452,7 @@ def handle_inputs(
                 text = text.replace("\n", "")
                 if asr_type == 1:
                     text = text.split("<|withitn|>")
-                    text_combine = ""
+                    transcription = ""
                     for i in range(1, len(text)):
                         if "<|zh|>" in text[i]:
                             text[i] = text[i].split("<|zh|>")[0]
@@ -1515,13 +1464,13 @@ def handle_inputs(
                             text[i] = text[i].split("<|ja|>")[0]
                         elif "<|ko|>" in text[i]:
                             text[i] = text[i].split("<|ko|>")[0]
-                        text_combine += text[i]
+                        transcription += text[i]
                 else:
-                    text_combine = text
+                    transcription = text
 
                 start_sec = t_stamp[0]
                 if t_stamp[1] - start_sec > 8.0:
-                    markers = re.split(r'([。、,.!?？;])', text_combine)  # Keep markers in results
+                    markers = re.split(r'([。、,.!?？;])', transcription)  # Keep markers in results
                     text_chunks = ["".join(markers[i:i + 2]) for i in range(0, len(markers), 2)]
                     time_per_chunk = (t_stamp[1] - start_sec) / len(text_chunks)
                     if len(text_chunks) > 2:
@@ -1538,79 +1487,79 @@ def handle_inputs(
                                 subtitles_file.write(f"{idx}\n{timestamp}{chunk}\n\n")
                                 idx += 1
                     else:
-                        text_combine = text_combine.replace(";", "")
-                        if text_combine and text_combine != "。" and text_combine != ".":
+                        transcription = transcription.replace(";", "")
+                        if transcription and transcription != "。" and transcription != ".":
                             start_time = format_time(start_sec)
                             end_time = format_time(t_stamp[1])
                             timestamp = f"{start_time} --> {end_time}\n"
                             time_file.write(timestamp)
-                            text_file.write(f"{text_combine}\n")
-                            subtitles_file.write(f"{idx}\n{timestamp}{text_combine}\n\n")
+                            text_file.write(f"{transcription}\n")
+                            subtitles_file.write(f"{idx}\n{timestamp}{transcription}\n\n")
                             idx += 1
                 else:
-                    text_combine = text_combine.replace(";", "")
-                    if text_combine and text_combine != "。" and text_combine != ".":
+                    transcription = transcription.replace(";", "")
+                    if transcription and transcription != "。" and transcription != ".":
                         start_time = format_time(start_sec)
                         end_time = format_time(t_stamp[1])
                         timestamp = f"{start_time} --> {end_time}\n"
                         time_file.write(timestamp)
-                        text_file.write(f"{text_combine}\n")
-                        subtitles_file.write(f"{idx}\n{timestamp}{text_combine}\n\n")
+                        text_file.write(f"{transcription}\n")
+                        subtitles_file.write(f"{idx}\n{timestamp}{transcription}\n\n")
                         idx += 1
             del save_text
             del save_timestamps
-        print("\nSave completed for timestamps, transcribe text, and original language subtitles.")
-        print(f"\nTranscribe tasks complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
+        print(f"\nTranscribe Tasks Complete.\n\nTranscribe Time: {(time.time() - total_process_time):.3f} Seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
 
         if "Translate" not in task:
             continue
         else:
             start_time = time.time()
             if FIRST_RUN:
-                system_ram = psutil.virtual_memory().total / (1024 ** 3)
-                if system_ram < 16:
+                system_ram = psutil.virtual_memory().total * inv_1024
+                low_mem = False
+                if system_ram < 17:
                     if ("8" in model_llm_accuracy) or ("16" in model_llm_accuracy):
                         print("\nWarning for the low memory system with 8 bit or 16 bit LLM accuracy. Try to using the 4 bit or lower bit instead.")
-                low_mem = False
+                        low_mem = True
                 if model_llm == "Custom-GGUF-LLM":
-                    MAX_TRANSLATE_LINES = 30  # Default
+                    MAX_TRANSLATE_LINES = 28  # Default
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "Gemma-2-2B-it":
                     llm_path = "./LLM/Gemma/2B"
-                    MAX_TRANSLATE_LINES = 9
+                    MAX_TRANSLATE_LINES = 8
                 elif model_llm == "Gemma-2-9B-it":
                     model_llm = "./LLM/Gemma/9B"
-                    MAX_TRANSLATE_LINES = 36
+                    MAX_TRANSLATE_LINES = 28
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "GLM-4-9B-Chat":
                     llm_path = "./LLM/GLM/9B"
-                    MAX_TRANSLATE_LINES = 36
+                    MAX_TRANSLATE_LINES = 28
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "MiniCPM3-4B":
                     llm_path = "./LLM/MiniCPM/4B"
-                    MAX_TRANSLATE_LINES = 15
+                    MAX_TRANSLATE_LINES = 12
                 elif model_llm == "Phi-3.5-mini-Instruct":
                     llm_path = "./LLM/Phi/mini"
-                    MAX_TRANSLATE_LINES = 15
+                    MAX_TRANSLATE_LINES = 12
                 elif model_llm == "Phi-3-medium-128k-Instruct":
                     llm_path = "./LLM/Phi/medium"
-                    MAX_TRANSLATE_LINES = 30
+                    MAX_TRANSLATE_LINES = 24
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "Qwen2.5-3B-Instruct":
                     llm_path = "./LLM/Qwen/3B"
-                    MAX_TRANSLATE_LINES = 12
+                    MAX_TRANSLATE_LINES = 8
                 elif model_llm == "Qwen2.5-7B-Instruct":
                     llm_path = "./LLM/Qwen/7B"
-                    MAX_TRANSLATE_LINES = 30
+                    MAX_TRANSLATE_LINES = 24
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "Qwen2.5-14B-Instruct":
                     llm_path = "./LLM/Qwen/14B"
-                    MAX_TRANSLATE_LINES = 42
+                    MAX_TRANSLATE_LINES = 36
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "Qwen2.5-32B-Instruct":
@@ -1619,12 +1568,13 @@ def handle_inputs(
                     if system_ram < 9:
                         low_mem = True
                 elif model_llm == "Whisper":
-                    print(f"\nTranslate tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
+                    print(f"\nTranslate tasks complete.")
                     continue
                 else:
+                    print("Can not find the LLM model for translation task.")
                     return "Can not find the LLM model for translation task."
 
-                TRANSLATE_OVERLAP = MAX_TRANSLATE_LINES // 3
+                TRANSLATE_OVERLAP = MAX_TRANSLATE_LINES // 4
                 MAX_TOKENS_PER_CHUNK = MAX_TRANSLATE_LINES * MAX_SEQ_LEN
 
                 if translate_language == "中文":
@@ -1645,9 +1595,8 @@ def handle_inputs(
                     transcribe_language = None
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
-                if os.path.isfile(model_llm_custom_path) and (
-                        ("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
-                    translation_model = AutoModelForCausalLM.from_gguf(llm_path, cpu_embedding=True)
+                if os.path.isfile(model_llm_custom_path) and (("gguf" in model_llm_custom_path) or ("GGUF" in model_llm_custom_path)):
+                    translation_model = AutoModelForCausalLM.from_gguf(model_llm_custom_path, cpu_embedding=True if llm_special_set else False)
                 else:
                     translation_model = AutoModelForCausalLM.from_pretrained(
                         llm_path,
@@ -1655,11 +1604,11 @@ def handle_inputs(
                         use_cache=True,
                         load_in_low_bit=model_llm_accuracy,
                         optimize_model=True,
-                        cpu_embedding=True,
+                        cpu_embedding=True if llm_special_set else False,
                         speculative=False,
                         disk_embedding=low_mem,
                         lightweight_bmm=True if llm_special_set else False,
-                        embedding_qtype='q2_k' if low_mem else 'q4_k',  # [q2_k, q4_k]
+                        embedding_qtype='q2_k' if low_mem else 'q4_k',
                         mixed_precision=False,
                         pipeline_parallel_stages=1
                     )
@@ -1668,19 +1617,21 @@ def handle_inputs(
 
             with open(f"./Results/Text/{file_name}.txt", 'r', encoding='utf-8') as asr_file:
                 asr_lines = asr_file.readlines()
+
             with open(f"./Results/Timestamps/{file_name}.txt", 'r', encoding='utf-8') as timestamp_file:
                 timestamp_lines = timestamp_file.readlines()
+
             for line_index in range(len(asr_lines)):
                 asr_lines[line_index] = f"{line_index}-{asr_lines[line_index]}"
 
-            step_size = MAX_TRANSLATE_LINES - TRANSLATE_OVERLAP
             total_lines = len(asr_lines)
-            if total_lines == 0:
+            if total_lines < 1:
                 print("\nEmpty content for translation task.")
                 continue
-            inv_total_lines = float(100.0 / total_lines)
 
-            print("\nStart to translate.\n")
+            print("\nStart to LLM Translate.\n")
+            inv_total_lines = float(100.0 / total_lines)
+            step_size = MAX_TRANSLATE_LINES - TRANSLATE_OVERLAP
             translated_responses = []
             with torch.inference_mode():
                 for chunk_start in range(0, total_lines, step_size):
@@ -1704,18 +1655,13 @@ def handle_inputs(
                     model_inputs = tokenizer_llm([tokenized_input], return_tensors="pt")
                     generated_ids = translation_model.generate(model_inputs.input_ids, max_new_tokens=MAX_TOKENS_PER_CHUNK)
                     decoded_response = tokenizer_llm.batch_decode(generated_ids, skip_special_tokens=True)[0].split("assistant", 1)[-1]
-                    # Handle overlapping chunks
                     if chunk_start > 0:
                         decoded_response = "\n".join(decoded_response.split("\n")[TRANSLATE_OVERLAP + 1:])
-
                     translated_responses.append(decoded_response)
                     print(f"\nTranslating - {chunk_end * inv_total_lines:.3f}%")
                     print(decoded_response)
-
                     if chunk_end == total_lines - 1:
                         break
-
-                # Combine all translated responses and match timestamps
                 print(f"\nTranslating - 100.00%")
                 merged_responses = "\n".join(translated_responses).split("\n")
                 with open(f"./Results/Subtitles/{file_name}_translated.vtt", "w", encoding='UTF-8') as subtitles_file:
@@ -1732,7 +1678,7 @@ def handle_inputs(
                                     if line_index < timestamp_len:
                                         subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{parts[-1]}\n\n")
                                         idx += 1
-                print(f"\nTranslate complete. Processing time: {time.time() - start_time:.2f} seconds")
+            print(f"\nLLM Translate Complete. Processing time: {time.time() - start_time:.3f} seconds")
     print(f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n")
     return f"All tasks complete.\n\nTotal Time: {(time.time() - total_process_time):.3f} seconds.\n\nThe subtitles are saved in the folder ./Result/Subtitles\n"
 
