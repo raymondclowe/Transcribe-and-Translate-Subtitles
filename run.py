@@ -765,16 +765,16 @@ def handle_inputs(
         vad_type = 2
         onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/silero_vad"):
-            print(f"\nFound the VAD-Official Silero.")
+            print(f"\nFound the Official Silero-VAD.")
         else:
-            print("\nThe VAD-Official Silero doesn't exist. Please run 'pip install silero-vad --upgrade'")
+            print("\nThe Official Silero-VAD doesn't exist. Please run 'pip install silero-vad --upgrade'")
     else:
         vad_type = 3
         onnx_model_B = None
         if os.path.isdir(PYTHON_PACKAGE + "/pyannote") and os.path.isfile("./VAD/pyannote_segmentation_3/pytorch_model.bin"):
-            print(f"\nFound the VAD-Pyannote-Segmentation-3.0.")
+            print(f"\nFound the Pyannote-VAD.")
         else:
-            print("\nThe VAD-Pyannote-Segmentation-3.0 doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
+            print("\nThe Pyannote-Segmentation-VAD doesn't exist. Please run 'pip install pyannote.audio --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0'")
 
     if "Whisper" in model_asr:
         asr_type = 0
@@ -1120,7 +1120,6 @@ def handle_inputs(
             aligned_len = audio_segment.shape[-1]
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            language_idx = np.array([target_language_id], dtype=np.int32)
             text = ""
             while slice_end <= aligned_len:
                 token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
@@ -1154,7 +1153,6 @@ def handle_inputs(
             aligned_len = audio_segment.shape[-1]
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            language_idx = np.array([target_language_id], dtype=np.int32)
             text = ""
             while slice_end <= aligned_len:
                 token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
