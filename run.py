@@ -1030,10 +1030,14 @@ def handle_inputs(
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
                 SAMPLE_RATE = 16000
-                audio_plus_denoised = True
-                audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                min_len = min(audio.shape[-1], de_audio.shape[-1])
+                audio = (audio[:min_len].astype(np.float32) * slider_denoise_factor_minus + de_audio[:min_len].astype(np.float32) * slider_denoise_factor).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                del de_audio
+                if vad_type == 3:
+                    sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
             else:
-                audio_plus_denoised = True
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 if FIRST_RUN:
                     if denoiser_name == "ZipEnhancer":
@@ -1046,7 +1050,6 @@ def handle_inputs(
                     out_name_A0 = out_name_A[0].name
                     print(f"\nDenoise - Usable Providers: {ort_session_A.get_providers()}")
         else:
-            audio_plus_denoised = False
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
             if vad_type == 3:
                 sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
@@ -1271,17 +1274,22 @@ def handle_inputs(
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
             de_audio = (np.concatenate(saved, axis=-1))
-            audio = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor
+            de_audio = de_audio[:, :, :audio_len]
+            audio = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio.astype(np.float32) * slider_denoise_factor
             if denoiser_name == "DFSMN":
                 SAMPLE_RATE = 16000
                 audio_len = audio_len // 3
-                audio = np.sum(audio[:, :, :(audio_len + audio_len + audio_len)].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
+                audio_len_3 = audio_len + audio_len + audio_len
+                audio = np.sum(audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
+                de_audio = np.sum(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
             audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
+            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+            if vad_type == 3:
+                sf.write(f"./Cache/{file_name}_vad.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
+            print(f"Denoising Complete 100.00%.\nTime Cost: {(end_time - start_time):.3f} seconds.")
             del saved
             del results
             del de_audio
-            sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising Complete 100.00%.\nTime Cost: {(end_time - start_time):.3f} seconds.")
 
         # VAD parts.
         print("----------------------------------------------------------------------------------------------------------")
@@ -1381,12 +1389,8 @@ def handle_inputs(
                 timestamps = [(item['start'], item['end']) for item in timestamps]
             else:
                 print("\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.")
-                if audio_plus_denoised:
-                    audio_path = f"./Cache/{file_name}_{denoiser_name}.wav"
-                else:
-                    audio_path = f"./Cache/{file_name}_vad.wav"
                 with torch.inference_mode():
-                    timestamps = pyannote_vad_pipeline(audio_path)
+                    timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_vad.wav")
                     segments = list(timestamps._tracks.keys())
                     total_seconds = audio_len * inv_16k
                     timestamps = []
