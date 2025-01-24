@@ -477,7 +477,7 @@ def update_translate_language(dropdown_model_llm):
     if "Custom" in dropdown_model_llm:
         update_B = gr.update(visible=True, value=None)
         update_C = gr.update(choices=["gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="gguf_q4k_s")
-        update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
+        update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
     else:
         update_B = gr.update(visible=False, value=None)
         if "Whisper" in dropdown_model_llm:
@@ -485,7 +485,7 @@ def update_translate_language(dropdown_model_llm):
             update_D = gr.update(choices=["Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3"], value="Whisper-Large-V3-Turbo")
         else:
             update_C = gr.update(choices=["sym_int4", "asym_int4", "sym_int5", "asym_int5", "sym_int8", "gguf_iq2_xxs", "gguf_iq2_xs", "gguf_iq1_s", "gguf_q4k_s", "gguf_q4k_m"], value="sym_int4")
-            update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
+            update_D = gr.update(choices=["SenseVoiceSmall-Fast", "Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"])
     return update_A, update_B, update_C, update_D
 
 
@@ -507,6 +507,7 @@ def update_vad(dropdown_model_vad):
         update_G = gr.update(visible=False)
         update_H = gr.update(value=1.0)
         update_I = gr.update(value=0.05)
+        update_J = gr.update(value=400)
     elif "Pyannote" in dropdown_model_vad:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
@@ -517,6 +518,7 @@ def update_vad(dropdown_model_vad):
         update_G = gr.update(visible=False)
         update_H = gr.update(value=0.1)
         update_I = gr.update(value=0.05)
+        update_J = gr.update(value=800)
     else:
         update_A = gr.update(visible=True)
         update_B = gr.update(visible=True)
@@ -527,7 +529,8 @@ def update_vad(dropdown_model_vad):
         update_G = gr.update(visible=True)
         update_H = gr.update(value=0.0)
         update_I = gr.update(value=0.05)
-    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I
+        update_J = gr.update(value=400)
+    return update_A, update_B, update_C, update_D, update_E, update_F, update_G, update_H, update_I, update_J
 
 
 def get_language_id(language_input, is_whisper):
@@ -1771,7 +1774,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             )
         with gr.Column():
             model_asr = gr.Dropdown(
-                choices=["SenseVoiceSmall-Fast", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"],
+                choices=["SenseVoiceSmall-Fast", "Whisper-Large-V2", "Whisper-Large-V3", "Whisper-Large-V3-Turbo", "Custom-Fine-Tune-Whisper-V2", "Custom-Fine-Tune-Whisper-V3", "Paraformer-Small", "Paraformer-Large"],
                 label="ASR Model",
                 info="Model used for transcription.",
                 value="SenseVoiceSmall-Fast",
@@ -2034,7 +2037,8 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_MAX_SPEECH_DURATION,
             slider_vad_MIN_SILENCE_DURATION,
             slider_vad_FUSION_THRESHOLD,
-            slider_vad_MIN_SPEECH_DURATION
+            slider_vad_MIN_SPEECH_DURATION,
+            slider_vad_pad
         ]
     )
 
