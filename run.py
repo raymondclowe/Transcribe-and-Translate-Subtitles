@@ -1025,30 +1025,16 @@ def handle_inputs(
     for input_audio in task_queue:
         print(f"\nLoading the Input Media: {input_audio}")
         file_name = os.path.basename(input_audio).split(".")[0]
-        audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-        if vad_type == 3:
-            if denoiser_name == "DFSMN":
-                sf.write(f"./Cache/{file_name}_vad.wav", np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(16000).get_array_of_samples()), 16000, format='WAVEX')
-            else:
-                sf.write(f"./Cache/{file_name}_vad.wav", audio, 16000, format='WAVEX')
-
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{denoiser_name}.wav").exists():
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
                 SAMPLE_RATE = 16000
-                de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                if denoiser_name == "DFSMN":
-                    audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
-                min_len = min(de_audio.shape[-1], audio.shape[-1])
-                de_audio = de_audio[:min_len]
-                audio_plus_denoised = ((audio[:min_len] * slider_denoise_factor_minus) + de_audio.astype(np.float32) * slider_denoise_factor).clip(min=-32768.0, max=32767.0).astype(np.int16)
-                if switcher_run_test:
-                    audio_plus_denoised = audio_plus_denoised[:min_len // 10]
-                audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
-                audio = de_audio
+                audio_plus_denoised = True
+                audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
             else:
-                audio_plus_denoised = None
+                audio_plus_denoised = True
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
                 if FIRST_RUN:
                     if denoiser_name == "ZipEnhancer":
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1060,7 +1046,10 @@ def handle_inputs(
                     out_name_A0 = out_name_A[0].name
                     print(f"\nDenoise - Usable Providers: {ort_session_A.get_providers()}")
         else:
-            audio_plus_denoised = None
+            audio_plus_denoised = False
+            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+            if vad_type == 3:
+                sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
         if FIRST_RUN:
             print(f"\nModels have been successfully loaded.")
             print("----------------------------------------------------------------------------------------------------------")
@@ -1282,16 +1271,12 @@ def handle_inputs(
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
             de_audio = (np.concatenate(saved, axis=-1))
-            de_audio = de_audio[:, :, :audio_len].astype(np.float32)
-            audio_plus_denoised = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio * slider_denoise_factor
+            audio = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor
             if denoiser_name == "DFSMN":
                 SAMPLE_RATE = 16000
                 audio_len = audio_len // 3
-                audio_len_3 = audio_len + audio_len + audio_len
-                de_audio = np.sum(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
-                audio_plus_denoised = np.mean(audio_plus_denoised[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
-            audio = de_audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
-            audio_plus_denoised = audio_plus_denoised.clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio = np.sum(audio[:, :, :(audio_len + audio_len + audio_len)].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
+            audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
             del saved
             del results
             del de_audio
@@ -1319,7 +1304,8 @@ def handle_inputs(
             elif audio_len < INPUT_AUDIO_LENGTH:
                 white_noise = (np.sqrt(np.mean(audio * audio)) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio.dtype)
                 audio = np.concatenate((audio, white_noise), axis=-1)
-            aligned_len = audio.shape[-1]
+            audio_len = audio.shape[-1]
+            inv_audio_len = float(100.0 / audio_len)
             cache_0 = np.zeros((1, 128, 19, 1), dtype=np.float32)  # FSMN_VAD model fixed cache shape. Do not edit it.
             noise_average_dB = np.array([slider_vad_BACKGROUND_NOISE_dB_INIT + slider_vad_SNR_THRESHOLD], dtype=np.float32)
             one_minus_speech_threshold = np.array([slider_vad_ONE_MINUS_SPEECH_THRESHOLD], dtype=np.float32)
@@ -1331,7 +1317,7 @@ def handle_inputs(
             saved = []
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
-            while slice_end <= aligned_len:
+            while slice_end <= audio_len:
                 score, cache_0, cache_1, cache_2, cache_3, noisy_dB = ort_session_B.run(
                     [out_name_B0, out_name_B1, out_name_B2, out_name_B3, out_name_B4, out_name_B5],
                     {
@@ -1395,10 +1381,10 @@ def handle_inputs(
                 timestamps = [(item['start'], item['end']) for item in timestamps]
             else:
                 print("\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.")
-                if audio_plus_denoised is None:
-                    audio_path = f"./Cache/{file_name}_vad.wav"
-                else:
+                if audio_plus_denoised:
                     audio_path = f"./Cache/{file_name}_{denoiser_name}.wav"
+                else:
+                    audio_path = f"./Cache/{file_name}_vad.wav"
                 with torch.inference_mode():
                     timestamps = pyannote_vad_pipeline(audio_path)
                     segments = list(timestamps._tracks.keys())
@@ -1419,11 +1405,6 @@ def handle_inputs(
 
         # ASR parts
         print("\nStart to transcribe task.")
-        if audio_plus_denoised is not None:
-            audio = audio_plus_denoised
-            audio_len = audio.shape[-1]
-            inv_audio_len = float(100.0 / audio_len)
-            del audio_plus_denoised
         results = []
         start_time = time.time()
         if asr_type == 0:
