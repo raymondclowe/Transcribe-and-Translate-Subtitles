@@ -1282,6 +1282,7 @@ def handle_inputs(
                 audio_len_3 = audio_len + audio_len + audio_len
                 audio = np.sum(audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
                 de_audio = np.sum(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                inv_audio_len = float(1.0 / audio_len)
             audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
             sf.write(f"./Cache/{file_name}_{denoiser_name}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             if vad_type == 3:
