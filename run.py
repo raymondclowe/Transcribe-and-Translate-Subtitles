@@ -1527,7 +1527,7 @@ def handle_inputs(
                 system_ram = psutil.virtual_memory().total * inv_1024
                 low_mem = False
                 if system_ram < 17:
-                    if ("8" in model_llm_accuracy) or ("16" in model_llm_accuracy):
+                    if (("8" in model_llm_accuracy) or ("16" in model_llm_accuracy)) and ("Whisper" not in model_llm):
                         print("\nWarning for the low memory system with 8 bit or 16 bit LLM accuracy. Try to using the 4 bit or lower bit instead.")
                         low_mem = True
                 if model_llm == "Custom-GGUF-LLM":
