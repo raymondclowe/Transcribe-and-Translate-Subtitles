@@ -1348,9 +1348,7 @@ def handle_inputs(
                 print(f"VAD: {slice_start * inv_audio_len:.3f}%")
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
-            # Generate timestamps.
             timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH / SAMPLE_RATE)
-            timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
             del saved
             del cache_0
             del cache_1
@@ -1403,7 +1401,7 @@ def handle_inputs(
                         if segment_end > total_seconds:
                             segment_end = total_seconds
                         timestamps.append((segment_start, segment_end))
-            timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
+        timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
         gc.collect()
         print(f"VAD Complete 100.00%.\nTime Cost: {(time.time() - start_time):.3f} seconds.")
 
