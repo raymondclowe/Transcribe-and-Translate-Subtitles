@@ -751,7 +751,8 @@ def handle_inputs(
     USE_V3 = False
     FIRST_RUN = True
 
-    slider_denoise_factor = float(1.0 - slider_denoise_factor)
+    slider_denoise_factor_minus = float(1.0 - slider_denoise_factor)
+    slider_denoise_factor = float(slider_denoise_factor)
     if "ZipEnhancer" in model_denoiser:
         denoiser_name = "ZipEnhancer"
     elif "GTCRN" in model_denoiser:
@@ -1041,7 +1042,7 @@ def handle_inputs(
                     audio = np.mean(audio[:audio.shape[-1] // 3 * 3].reshape(-1, 3), axis=1, dtype=np.float32)
                 min_len = min(de_audio.shape[-1], audio.shape[-1])
                 de_audio = de_audio[:min_len]
-                audio_plus_denoised = ((audio[:min_len] * slider_denoise_factor) + de_audio.astype(np.float32)).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio_plus_denoised = ((audio[:min_len] * slider_denoise_factor_minus) + de_audio.astype(np.float32) * slider_denoise_factor).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 if switcher_run_test:
                     audio_plus_denoised = audio_plus_denoised[:min_len // 10]
                 audio_plus_denoised = audio_plus_denoised.reshape(1, 1, -1)
@@ -1282,7 +1283,7 @@ def handle_inputs(
             saved = [result[1] for result in results]
             de_audio = (np.concatenate(saved, axis=-1))
             de_audio = de_audio[:, :, :audio_len].astype(np.float32)
-            audio_plus_denoised = (audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor + de_audio)
+            audio_plus_denoised = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio * slider_denoise_factor
             if denoiser_name == "DFSMN":
                 SAMPLE_RATE = 16000
                 audio_len = audio_len // 3
@@ -1872,7 +1873,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
         slider_denoise_factor = gr.Slider(
             0.1, 1.0, step=0.025, label="Denoise Factor",
             info="A larger value enhances the denoising effect.",
-            value=0.6,
+            value=0.5,
             visible=False
         )
     with gr.Row():
@@ -1911,7 +1912,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
             slider_vad_SILENCE_SCORE = gr.Slider(
                 0, 1, step=0.025, label="Silence State Score",
                 info="A larger value makes it easier to cut off speaking.",
-                value=0.2,
+                value=0.25,
                 visible=True
             )
             slider_vad_FUSION_THRESHOLD = gr.Slider(
@@ -1921,7 +1922,7 @@ with gr.Blocks(css=".gradio-container { background-color: black; }", fill_height
                 visible=True
             )
             slider_vad_MIN_SPEECH_DURATION = gr.Slider(
-                0.025, 2, step=0.025, label="Filter Short Voice",
+                0, 2, step=0.025, label="Filter Short Voice",
                 info="Minimum duration for voice filtering. Unit: seconds.",
                 value=0.05,
                 visible=True
