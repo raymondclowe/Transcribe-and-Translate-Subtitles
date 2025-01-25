@@ -516,9 +516,9 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=False)
         update_G = gr.update(visible=False)
-        update_H = gr.update(value=0.1)
+        update_H = gr.update(value=0.0)
         update_I = gr.update(value=0.05)
-        update_J = gr.update(value=800)
+        update_J = gr.update(value=400)
     else:
         update_A = gr.update(visible=True)
         update_B = gr.update(visible=True)
