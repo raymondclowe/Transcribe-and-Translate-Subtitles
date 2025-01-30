@@ -60,7 +60,7 @@ pip install -r requirements.txt
 - The largest LLM size that can run on a 16GB RAM computer is 7 billion parameters (7B). For example: [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 Step 4: Place the LLM Model in the Correct Directory (Optional, for translate task)
-- Move the downloaded LLM model to the following path:
+- Move the downloaded LLM model to the correct path. For example:
 ```
 Transcribe_and_Translate_Subtitles/LLM/Qwen/7B
 ```
@@ -179,7 +179,7 @@ pip install -r requirements.txt
 - 在16GB内存的电脑上可运行的最大LLM模型为70亿参数(7B)。例如：[Qwen2.5-7B-Instruct](https://modelscope.cn/models/Qwen/Qwen2.5-7B-Instruct)
 
 ### 📂 第四步：将 LLM 模型放置到正确的目录 （可选，用于翻译任务） 
-- 将下载的 LLM 模型移动到以下路径：  
+- 将下载的 LLM 模型移动到正确的路径。例如：  
 ```
 Transcribe_and_Translate_Subtitles/LLM/Qwen/7B
 ```
