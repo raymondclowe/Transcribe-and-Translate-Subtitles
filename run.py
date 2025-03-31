@@ -1033,15 +1033,15 @@ def handle_inputs(
                 print("\nThe denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
                 SAMPLE_RATE = 16000
-                de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{denoiser_name}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
                 min_len = min(audio.shape[-1], de_audio.shape[-1])
-                audio = (audio[:min_len].astype(np.float32) * slider_denoise_factor_minus + de_audio[:min_len].astype(np.float32) * slider_denoise_factor).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio = (audio[:min_len] * slider_denoise_factor_minus + de_audio[:min_len] * slider_denoise_factor).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 del de_audio
                 if vad_type == 3:
                     sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
             else:
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.int16)
                 if FIRST_RUN:
                     if denoiser_name == "ZipEnhancer":
                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1053,7 +1053,7 @@ def handle_inputs(
                     out_name_A0 = out_name_A[0].name
                     print(f"\nDenoise - Usable Providers: {ort_session_A.get_providers()}")
         else:
-            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples())
+            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.int16)
             if vad_type == 3:
                 sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
         if FIRST_RUN:
