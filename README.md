@@ -26,7 +26,6 @@ This project is built on ONNX Runtime and the IPEX-LLM framework.
   - [Whisper-Large-V2](https://huggingface.co/openai/whisper-large-v2)
   - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
   - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
-  - Custom-Whisper - V2 / V3 / Distil / Turbo (The model must be exported using this [tool](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX))
 
 - LLM Supports: 
   - Gemma-2-it: [2B](https://huggingface.co/google/gemma-2-2b-it), [9B](https://huggingface.co/google/gemma-2-9b-it)  
@@ -147,7 +146,6 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [Whisper-Large-V2](https://huggingface.co/openai/whisper-large-v2)
   - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
   - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
-  - 自定义 Whisper - V2 / V3 / Distil / Turbo（需要使用此[工具](https://github.com/DakeQQ/Automatic-Speech-Recognition-ASR-ONNX)导出模型）
 
 - **大语言模型（LLM）支持**：  
   - Gemma-2-it: [2B](https://huggingface.co/google/gemma-2-2b-it), [9B](https://huggingface.co/google/gemma-2-9b-it)  
