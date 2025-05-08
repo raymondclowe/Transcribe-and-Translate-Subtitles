@@ -1,7 +1,7 @@
 # Transcribe and Translate Subtitles
 
 ## 🚨 Important Note
-- **This project is not recommended for commercial use.**
+- **2025/5/8 Update and uploading...**
 - **Every task runs locally without internet, ensuring maximum privacy.**
 
 ---
@@ -114,7 +114,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 # 转录和翻译字幕
 
 ## 🚨 重要提示  
-- **不建议将此项目用于商业用途。**  
+- **2025/5/8 更新上传中...**
 - **所有任务均在本地运行，无需连接互联网，确保最大程度的隐私保护。**
 
 ---
