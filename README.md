@@ -120,7 +120,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 
 ## ✨ 功能
-这个项目基于ONNX Runtime和IPEX-LLM框架。
+这个项目基于 ONNX Runtime 框架。
 - **去噪器 (Denoiser) 支持**：
   - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
