@@ -657,7 +657,22 @@ def MAIN_PROCESS(
             init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), device_type, DEVICE_ID)
             init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), device_type, DEVICE_ID)
     elif asr_type == 1:  # SenseVoice
-        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        try: 
+            options = [
+                {
+                    'device_type': 'CPU',
+                    'precision': 'ACCURACY',
+                    'model_priority': 'HIGH',
+                    'num_of_threads': parallel_threads,
+                    'num_streams': 1,
+                    'enable_opencl_throttling': True,
+                    'enable_qdq_optimizer': True,
+                    'disable_dynamic_shapes': False
+                }
+            ]
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['OpenVINOExecutionProvider'], provider_options=options)
+        except:
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=options)
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
