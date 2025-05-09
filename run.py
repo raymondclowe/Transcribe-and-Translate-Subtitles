@@ -961,7 +961,7 @@ def MAIN_PROCESS(
             sf.write(f"./Cache/{file_name}_{model_denoiser}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             if vad_type == 3:
                 sf.write(f"./Cache/{file_name}_vad.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            print(f"Denoising: 100.00%.\n降噪完成。Complete.\nTime Cost: {(end_time - start_time):.3f} Seconds.")
+            print(f"Denoising: 100.00%\n降噪完成。Complete.\nTime Cost: {(end_time - start_time):.3f} Seconds.")
             del saved
             del results
             del de_audio
@@ -1085,7 +1085,7 @@ def MAIN_PROCESS(
                 print("\n这个任务不使用 VAD。This task does not use VAD.\n")
         if vad_type >= 0:
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
-            print(f"VAD: 100.00%.\n完成提取语音片段。Complete.\nTime Cost: {(time.time() - start_time):.3f} Seconds.")
+            print(f"VAD: 100.00%\n完成提取语音片段。Complete.\nTime Cost: {(time.time() - start_time):.3f} Seconds.")
         else:
             timestamps = [(0.0, audio_len * inv_16k)]
         print("----------------------------------------------------------------------------------------------------------")
@@ -1122,7 +1122,7 @@ def MAIN_PROCESS(
         results.sort(key=lambda x: x[0])
         save_text = [result[1] for result in results]
         save_timestamps = [result[2] for result in results]
-        print(f"ASR: 100.00%.\n完成转录任务。Complete.\nTime Cost: {time.time() - start_time:.3f} Seconds")
+        print(f"ASR: 100.00%\n完成转录任务。Complete.\nTime Cost: {time.time() - start_time:.3f} Seconds")
         del audio
         del timestamps
         gc.collect()
