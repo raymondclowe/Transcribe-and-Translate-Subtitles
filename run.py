@@ -1175,8 +1175,7 @@ def MAIN_PROCESS(
         if "Translate" not in task:
             continue
         else:
-            print("\n开始LLM翻译任务。Start to LLM Translate.\n加载LLM模型。Loading the LLM model.")
-            print("----------------------------------------------------------------------------------------------------------")
+            print("\n开始 LLM 翻译任务。Start to LLM Translate.\n\n加载 LLM 模型。Loading the LLM model.")
             start_time = time.time()
             if FIRST_RUN:
                 if model_llm == "Qwen-3-4B":
@@ -1227,28 +1226,28 @@ def MAIN_PROCESS(
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
                 # Load the LLM
-                system_prompt = f"Main task:\nTranslate the provided subtitles from {transcribe_language} to {translate_language}.\n\nGuidelines:\n1. Return the translation results only and strictly in the defined 'ID-translation results' format. Do not add, omit, reorder, or annotate anything text outside the required format.\n2. Fix transcription errors (missing punctuation, homophones, omitted words) and enhance fluency using context from preceding and succeeding lines.\n3. Ensure translations are logical, natural, emotionally rich, and maintain smooth transitions both within and across lines.\n4. Preserve and enrich the intended meaning and tone.\n"
+                system_prompt = f"Translate every subtitle line from {transcribe_language} to {translate_language}, fixing contextual errors for fluent, vivid flow, and output only the exact ‘ID-translated’ line per entry—nothing else."
                 if "Qwen" in model_llm:
                     LLM_STOP_TOKEN = [151643, 151645]
-                    prompt_head = f'<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n'
+                    prompt_head = f'<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\nThe given subtitles:\n'
                     prompt_tail = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
                     tokenizer_llm = AutoTokenizer.from_pretrained(f"./LLM/Qwen/Tokenizer", trust_remote_code=True)
                     is_Intern = False
                 elif "InternLM" in model_llm:
                     LLM_STOP_TOKEN = [2, 128131]
-                    prompt_head = f'<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n'
+                    prompt_head = f'<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\nThe given subtitles:\n'
                     prompt_tail = "<|im_end|>\n<|im_start|>assistant\n"
                     tokenizer_llm = AutoTokenizer.from_pretrained(f"./LLM/Intern/Tokenizer", trust_remote_code=True)
                     is_Intern = True
                 elif "Gemma" in model_llm:
                     LLM_STOP_TOKEN = [106, 1]
-                    prompt_head = f'<bos><start_of_turn>user\n{system_prompt}\n\n'
+                    prompt_head = f'<bos><start_of_turn>user\n{system_prompt}\n\nThe given subtitles:\n'
                     prompt_tail = "<end_of_turn>\n<start_of_turn>model\n"
                     tokenizer_llm = AutoTokenizer.from_pretrained(f"./LLM/Gemma/Tokenizer", trust_remote_code=True)
                     is_Intern = False
                 elif "Phi" in model_llm:
                     LLM_STOP_TOKEN = [200020, 199999]
-                    prompt_head = f'<|system|>{system_prompt}<|end|><|user|>'
+                    prompt_head = f'<|system|>{system_prompt}<|end|><|user|>The given subtitles:\n'
                     prompt_tail = "<|end|><|assistant|>"
                     tokenizer_llm = AutoTokenizer.from_pretrained(f"./LLM/Phi/Tokenizer", trust_remote_code=True)
                     is_Intern = False
@@ -1257,8 +1256,8 @@ def MAIN_PROCESS(
                     print(error)
                     return error
 
-                prompt_head = tokenizer_llm(prompt_head, return_tensors="pt")['input_ids'].int().numpy()
-                prompt_tail = tokenizer_llm(prompt_tail, return_tensors="pt")['input_ids'].int().numpy()
+                prompt_head = tokenizer_llm(prompt_head, return_tensors="np")['input_ids'].astype(np.int32)
+                prompt_tail = tokenizer_llm(prompt_tail, return_tensors="np")['input_ids'].astype(np.int32)
                 if device_type == 'cpu':
                     ORT_Accelerate_Providers = ['CPUExecutionProvider']  # Currently, OpenVINO will crash with Int4 onnx model.
                     provider_options = None
@@ -1316,7 +1315,7 @@ def MAIN_PROCESS(
                 for chunk_start in range(0, total_lines, step_size):
                     chunk_end = min(total_lines, chunk_start + MAX_TRANSLATE_LINES)
                     translation_prompt = "".join(asr_lines[chunk_start:chunk_end])
-                    tokens = np.concatenate((prompt_head, tokenizer_llm(translation_prompt, return_tensors="pt")['input_ids'].int().numpy(), prompt_tail), axis=1)
+                    tokens = np.concatenate((prompt_head, tokenizer_llm(translation_prompt, return_tensors="np")['input_ids'].astype(np.int32), prompt_tail), axis=1)
                     input_feed_E[in_name_E[-4].name] = onnxruntime.OrtValue.ortvalue_from_numpy(tokens, device_type, DEVICE_ID)
                     input_feed_E[in_name_E[-2].name] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([tokens.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
                     num_decode = 0
@@ -1390,6 +1389,7 @@ html, body, .gradio-container{
     font-size:18px;                /* ——— bigger global font                */
 }
 h1,h2,h3,h4,h5,h6,.markdown{color:#f4f4f4;}
+
 input,textarea,select,.input-container{
     background:#111;
     border:1px solid #333;
@@ -1409,6 +1409,7 @@ label{
 }
 .slider .noUi-connect{background:#1e90ff;}
 .slider .noUi-handle {background:#0d8bfd;border:1px solid #80d0ff;}
+
 /* ===== buttons ============================================================ */
 button,.button-primary{
     font-size:20px;
@@ -1423,6 +1424,7 @@ button:hover{
     transform:translateY(-2px) scale(1.02);
     box-shadow:0 0 20px #31d2ff;
 }
+
 /* ===== big page title ===================================================== */
 .big-title{
     font-size:40px;
@@ -1433,6 +1435,7 @@ button:hover{
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     text-shadow:0 0 20px rgba(49,210,255,.5);
 }
+
 /* ===== section blocks ===================================================== */
 .section{
     padding:18px 18px 12px 18px;
@@ -1451,6 +1454,7 @@ button:hover{
 .section-tgt   {background:rgba( 50,205, 50,.12);border-color:#32cd3255;}
 .section-aud   {background:rgba(255, 20,147,.12);border-color:#ff149355;}
 .section-vad   {background:rgba( 75,  0,130,.12);border-color:#4b008255;}
+
 /* ===== “coding-style” state box =========================================== */
 .task-state textarea{
     background:#000 !important;
@@ -1934,4 +1938,3 @@ if __name__ == "__main__":
     shutil.copyfile("./VAD/Silero/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
 
     GUI.launch()
-    
