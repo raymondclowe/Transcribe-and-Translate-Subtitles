@@ -1242,7 +1242,7 @@ def MAIN_PROCESS(
                     translate_language = 'korean'
                 translate_language = translate_language[0].upper() + translate_language[1:]
 
-               if (translate_language == '中文') or (translate_language == 'chinese'):
+                if (translate_language == '中文') or (translate_language == 'chinese'):
                     transcribe_language = 'simplified Chinese'
                 elif transcribe_language == '日本語':
                     transcribe_language = 'japanese'
@@ -1964,3 +1964,4 @@ if __name__ == "__main__":
     shutil.copyfile("./VAD/Silero/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
 
     GUI.launch()
+    
