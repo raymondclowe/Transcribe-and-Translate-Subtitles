@@ -627,12 +627,8 @@ def MAIN_PROCESS(
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
         
     if asr_type == 0 or asr_type == 3:  # Whisper & FireRedASR
-        if hardware == "CPU":
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-        else:
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
@@ -651,24 +647,21 @@ def MAIN_PROCESS(
             output_names_D.append(out_name_D[i].name)
         if asr_type == 0:
             ASR_STOP_TOKEN = [50257]
-            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[50258, target_language_id, target_task_id]], dtype=np.int32), device_type, DEVICE_ID)
+            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[50258, target_language_id, target_task_id]], dtype=np.int32), 'cpu', DEVICE_ID)
             generate_limit = MAX_SEQ_LEN - 5  # 5 = length of initial input_ids
         else:
             ASR_STOP_TOKEN = [4]
-            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[3]], dtype=np.int32), device_type, DEVICE_ID)
+            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[3]], dtype=np.int32), 'cpu', DEVICE_ID)
             generate_limit = MAX_SEQ_LEN - 1  # 1 = length of initial input_ids
         num_layers = (amount_of_outputs_D - 1) // 2
         num_layers_2 = num_layers + num_layers
         num_layers_4 = num_layers_2 + num_layers_2
         layer_indices = np.arange(num_layers_2, num_layers_4, dtype=np.int32) + 1
-        init_attention_mask_D_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int8), device_type, DEVICE_ID)
-        init_attention_mask_D_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int8), device_type, DEVICE_ID)
-        if device_type == 'dml':
-            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), 'cpu', DEVICE_ID)
-            init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), 'cpu', DEVICE_ID)
-        else:
-            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), device_type, DEVICE_ID)
-            init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), device_type, DEVICE_ID)
+        init_attention_mask_D_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int8), 'cpu', DEVICE_ID)
+        init_attention_mask_D_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int8), 'cpu', DEVICE_ID)
+        init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), 'cpu', DEVICE_ID)
+        init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), 'cpu', DEVICE_ID)
+        print(f"\nASR 可用的硬件 ASR-Usable Providers: ['CPUExecutionProvider']")
     else:
         options = [
             {
@@ -692,9 +685,8 @@ def MAIN_PROCESS(
         else:
             in_name_C1 = None
         out_name_C0 = out_name_C[0].name
-
-    c_provider = ort_session_C.get_providers()
-    print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
+        c_provider = ort_session_C.get_providers()
+        print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
 
     # Start Process
     for input_audio in task_queue:
@@ -726,13 +718,6 @@ def MAIN_PROCESS(
                             provider_options[0]['cudnn_conv_algo_search'] = "DEFAULT"
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                             provider_options[0]['cudnn_conv_algo_search'] = "EXHAUSTIVE"
-                        else:
-                            ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                    elif model_denoiser == "MelBandRoformer":
-                        if "OpenVINOExecutionProvider" in ORT_Accelerate_Providers:
-                            provider_options[0]['disable_dynamic_shapes'] = True
-                            ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers,  provider_options=provider_options)
-                            provider_options[0]['disable_dynamic_shapes'] = False
                         else:
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                     else:
