@@ -11,7 +11,6 @@ from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 # Third-party imports
-import torch
 import onnxruntime
 import numpy as np
 import librosa
@@ -98,7 +97,7 @@ def update_transcribe_language(dropdown_model_asr):
             ]
         )
     elif "SenseVoice" in dropdown_model_asr:
-        update_A = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "自动 Auto"])
+        update_A = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "自动 auto"])
     elif "Paraformer-Small" == dropdown_model_asr:
         update_A = gr.update(value="中文", choices=["中文"])
     elif "Paraformer-Large" == dropdown_model_asr:
@@ -1027,20 +1026,25 @@ def MAIN_PROCESS(
                 timestamps = [(item['start'] * inv_16k, item['end'] * inv_16k) for item in timestamps]
             elif vad_type == 2:
                 print("\nVAD-Official-Silero 不提供可视化的运行进度。\nThe VAD-Official-Silero does not provide the running progress for visualization.\n")
-                timestamps = get_speech_timestamps(
-                    torch.from_numpy(audio.reshape(-1).astype(np.float32) * inv_16k),
-                    model=silero_vad,
-                    threshold=slider_vad_SPEAKING_SCORE,
-                    neg_threshold=slider_vad_SILENCE_SCORE,
-                    max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
-                    min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
-                    min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
-                    speech_pad_ms=slider_vad_pad,
-                    return_seconds=True
-                )
-                timestamps = [(item['start'], item['end']) for item in timestamps]
+                if FIRST_RUN:
+                    import torch
+                with torch.inference_mode():
+                    timestamps = get_speech_timestamps(
+                        torch.from_numpy(audio.reshape(-1).astype(np.float32) * inv_16k),
+                        model=silero_vad,
+                        threshold=slider_vad_SPEAKING_SCORE,
+                        neg_threshold=slider_vad_SILENCE_SCORE,
+                        max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
+                        min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
+                        min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
+                        speech_pad_ms=slider_vad_pad,
+                        return_seconds=True
+                    )
+                    timestamps = [(item['start'], item['end']) for item in timestamps]
             elif vad_type == 3:
                 print("\nVAD-Pyannote_Segmentation_3.0 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.\n")
+                if FIRST_RUN:
+                    import torch
                 with torch.inference_mode():
                     timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_vad.wav")
                     segments = list(timestamps._tracks.keys())
@@ -1175,9 +1179,10 @@ def MAIN_PROCESS(
         if "Translate" not in task:
             continue
         else:
-            print("\n开始 LLM 翻译任务。Start to LLM Translate.\n\n加载 LLM 模型。Loading the LLM model.")
+            print("\n开始 LLM 翻译任务。Start to LLM Translate.")
             start_time = time.time()
             if FIRST_RUN:
+                print("\n加载 LLM 模型。Loading the LLM model.")
                 if model_llm == "Qwen-3-4B":
                     MAX_TRANSLATE_LINES = 4
                     llm_path = f"./LLM/Qwen/4B/Qwen.onnx"
@@ -1221,7 +1226,7 @@ def MAIN_PROCESS(
                     transcribe_language = 'japanese'
                 elif transcribe_language == '한국인':
                     transcribe_language = 'korean'
-                elif transcribe_language == '自动 Auto':
+                elif transcribe_language == '自动 auto':
                     transcribe_language = 'unknown language'
                 transcribe_language = transcribe_language[0].upper() + transcribe_language[1:]
 
@@ -1290,6 +1295,7 @@ def MAIN_PROCESS(
                     output_names_E.append(out_name_E[i].name)
                 output_names_E.append(out_name_E[-2].name)
                 output_names_E.append(out_name_E[-1].name)
+                print("\nLLM 模型加载完成。LLM loading completed")
                 FIRST_RUN = False
 
             with open(f"./Results/Text/{file_name}.txt", 'r', encoding='utf-8') as asr_file:
@@ -1306,70 +1312,68 @@ def MAIN_PROCESS(
                 print("\n翻译内容为空。Empty content for translation task.")
                 continue
 
-            print("\nLLM 模型加载完成。LLM loading completed")
             print("----------------------------------------------------------------------------------------------------------")
             inv_total_lines = float(100.0 / total_lines)
             step_size = MAX_TRANSLATE_LINES - TRANSLATE_OVERLAP
             translated_responses = []
-            with torch.inference_mode():
-                for chunk_start in range(0, total_lines, step_size):
-                    chunk_end = min(total_lines, chunk_start + MAX_TRANSLATE_LINES)
-                    translation_prompt = "".join(asr_lines[chunk_start:chunk_end])
-                    tokens = np.concatenate((prompt_head, tokenizer_llm(translation_prompt, return_tensors="np")['input_ids'].astype(np.int32), prompt_tail), axis=1)
-                    input_feed_E[in_name_E[-4].name] = onnxruntime.OrtValue.ortvalue_from_numpy(tokens, device_type, DEVICE_ID)
-                    input_feed_E[in_name_E[-2].name] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([tokens.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
-                    num_decode = 0
-                    save_text = ""
-                    start_time = time.time()
-                    while num_decode < MAX_TOKENS_PER_CHUNK:
-                        all_outputs = ort_session_E.run_with_ort_values(
-                            output_names_E,
-                            input_feed_E
-                        )
-                        max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs[-2])
-                        num_decode += 1
-                        if max_logit_ids in LLM_STOP_TOKEN:
-                            break
-                        for i in range(amount_of_outputs_E):
-                            input_feed_E[in_name_E[i].name] = all_outputs[i]
-                        if num_decode < 2:
-                            input_feed_E[in_name_E[-1].name] = init_attention_mask_E_0
-                            input_feed_E[in_name_E[-2].name] = init_ids_len
-                        text = tokenizer_llm.decode(max_logit_ids[0], skip_special_tokens=True)
-                        if is_Intern:
-                            text += " "
-                        save_text += text
-                        print(text, end="", flush=True)
-                    print(f"\n\nDecode: {(num_decode / (time.time() - start_time)):.3f} token/s")
-                    if chunk_start > 0:
-                        save_text = "\n".join(save_text.split("\n")[TRANSLATE_OVERLAP + 1:])
-                    translated_responses.append(save_text)
-                    print(f"Translating - {chunk_end * inv_total_lines:.3f}%")
-                    print("----------------------------------------------------------------------------------------------------------")
-                    if chunk_end == total_lines - 1:
+            for chunk_start in range(0, total_lines, step_size):
+                chunk_end = min(total_lines, chunk_start + MAX_TRANSLATE_LINES)
+                translation_prompt = "".join(asr_lines[chunk_start:chunk_end])
+                tokens = np.concatenate((prompt_head, tokenizer_llm(translation_prompt, return_tensors="np")['input_ids'].astype(np.int32), prompt_tail), axis=1)
+                input_feed_E[in_name_E[-4].name] = onnxruntime.OrtValue.ortvalue_from_numpy(tokens, device_type, DEVICE_ID)
+                input_feed_E[in_name_E[-2].name] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([tokens.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
+                num_decode = 0
+                save_text = ""
+                start_time = time.time()
+                while num_decode < MAX_TOKENS_PER_CHUNK:
+                    all_outputs = ort_session_E.run_with_ort_values(
+                        output_names_E,
+                        input_feed_E
+                    )
+                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs[-2])
+                    num_decode += 1
+                    if max_logit_ids in LLM_STOP_TOKEN:
                         break
-                    input_feed_E[in_name_E[-1].name] = init_attention_mask_E_1
-                    input_feed_E[in_name_E[-3].name] = init_history_len
-                    for i in range(num_layers):
-                        input_feed_E[in_name_E[i].name] = init_past_keys_E
-                    for i in range(num_layers, num_keys_values):
-                        input_feed_E[in_name_E[i].name] = init_past_values_E
-                merged_responses = "\n".join(translated_responses).split("\n")
-                with open(f"./Results/Subtitles/{file_name}_translated.vtt", "w", encoding='UTF-8') as subtitles_file:
-                    subtitles_file.write("WEBVTT\n\n")
-                    idx = 0
-                    timestamp_len = len(timestamp_lines)
-                    for i in range(len(merged_responses)):
-                        response_line = merged_responses[i]
-                        if response_line:
-                            parts = response_line.split("-")
-                            if len(parts) > 1:
-                                if parts[0].isdigit():
-                                    line_index = int(parts[0])
-                                    if line_index < timestamp_len:
-                                        text = "".join(parts[1:])
-                                        subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{text}\n\n")
-                                        idx += 1
+                    for i in range(amount_of_outputs_E):
+                        input_feed_E[in_name_E[i].name] = all_outputs[i]
+                    if num_decode < 2:
+                        input_feed_E[in_name_E[-1].name] = init_attention_mask_E_0
+                        input_feed_E[in_name_E[-2].name] = init_ids_len
+                    text = tokenizer_llm.decode(max_logit_ids[0], skip_special_tokens=True)
+                    if is_Intern:
+                        text += " "
+                    save_text += text
+                    print(text, end="", flush=True)
+                print(f"\n\nDecode: {(num_decode / (time.time() - start_time)):.3f} token/s")
+                if chunk_start > 0:
+                    save_text = "\n".join(save_text.split("\n")[TRANSLATE_OVERLAP + 1:])
+                translated_responses.append(save_text)
+                print(f"Translating - {chunk_end * inv_total_lines:.3f}%")
+                print("----------------------------------------------------------------------------------------------------------")
+                if chunk_end == total_lines - 1:
+                    break
+                input_feed_E[in_name_E[-1].name] = init_attention_mask_E_1
+                input_feed_E[in_name_E[-3].name] = init_history_len
+                for i in range(num_layers):
+                    input_feed_E[in_name_E[i].name] = init_past_keys_E
+                for i in range(num_layers, num_keys_values):
+                    input_feed_E[in_name_E[i].name] = init_past_values_E
+            merged_responses = "\n".join(translated_responses).split("\n")
+            with open(f"./Results/Subtitles/{file_name}_translated.vtt", "w", encoding='UTF-8') as subtitles_file:
+                subtitles_file.write("WEBVTT\n\n")
+                idx = 0
+                timestamp_len = len(timestamp_lines)
+                for i in range(len(merged_responses)):
+                    response_line = merged_responses[i]
+                    if response_line:
+                        parts = response_line.split("-")
+                        if len(parts) > 1:
+                            if parts[0].isdigit():
+                                line_index = int(parts[0])
+                                if line_index < timestamp_len:
+                                    text = "".join(parts[1:])
+                                    subtitles_file.write(f"{idx}\n{timestamp_lines[line_index]}{text}\n\n")
+                                    idx += 1
             print(f"\n翻译完成。LLM Translate Complete.\nTime Cost: {time.time() - start_time:.3f} Seconds")
             print("----------------------------------------------------------------------------------------------------------")
     success = f"\n所有任务已完成。翻译字幕保存在文件夹: ./Result/Subtitles\nAll tasks complete. The translated subtitles are saved in the folder: ./Result/Subtitles\n\nTotal Time: {(time.time() - total_process_time):.3f} Seconds.\n"
@@ -1594,7 +1598,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                     "English",
                     "粤语",
                     "한국인",
-                    "自动 Auto"
+                    "自动 auto"
                 ],
                 label="转录语言 Transcription Language",
                 info="源媒体的语言。\nLanguage of the input media.",
@@ -1922,7 +1926,7 @@ if __name__ == "__main__":
     }
     language_map_B = {'auto': 0, 'zh': 1, 'en': 2, 'yue': 3, 'ja': 4, 'ko': 5}
     full_language_names_B = {
-        '自动 Auto': 'auto',
+        '自动 auto': 'auto',
         '中文': 'zh',
         'english': 'en',
         '粤语': 'yue',
