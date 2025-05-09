@@ -668,21 +668,30 @@ def MAIN_PROCESS(
         else:
             init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), device_type, DEVICE_ID)
             init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), device_type, DEVICE_ID)
-    elif asr_type == 1:  # SenseVoice
-        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+    else:
+        options = [
+            {
+                'device_type': "CPU",
+                'precision': 'ACCURACY',
+                'model_priority': 'HIGH',
+                'num_of_threads': parallel_threads,
+                'num_streams': 1,
+                'enable_opencl_throttling': True,
+                'enable_qdq_optimizer': True,
+                'disable_dynamic_shapes': False
+            }
+        ]
+        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['OpenVINOExecutionProvider'], provider_options=options)
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
         in_name_C0 = in_name_C[0].name
-        in_name_C1 = in_name_C[1].name
+        if asr_type == 1:  # SenseVoice
+            in_name_C1 = in_name_C[1].name
+        else:
+            in_name_C1 = None
         out_name_C0 = out_name_C[0].name
-    else:  # Paraformer
-        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-        input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
-        in_name_C = ort_session_C.get_inputs()
-        out_name_C = ort_session_C.get_outputs()
-        in_name_C0 = in_name_C[0].name
-        out_name_C0 = out_name_C[0].name
+
     c_provider = ort_session_C.get_providers()
     print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
 
