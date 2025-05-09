@@ -1,9 +1,31 @@
 # Transcribe and Translate Subtitles
 
 ## 🚨 Important Note
-- **2025/5/8 Update and uploading...**
 - **Every task runs locally without internet, ensuring maximum privacy.**
 
+---
+## 2025/5/9 Updates
+1. Added an option to **not use** VAD (Voice Activity Detection), offering greater flexibility.  
+2. Added a noise reduction model: **MelBandRoformer**.  
+3. Added three Japanese anime fine-tuned Whisper models.  
+4. Added ASR model: **CrisperWhisper**.  
+5. Added English fine-tuned ASR model: **Whisper-Large-v3.5-Distil**.  
+6. Added ASR model supporting Chinese (including some dialects): **FireRedASR-AED-L**.  
+7. Removed the IPEX-LLM framework to enhance overall performance.  
+8. Cancelled LLM quantization options, standardizing on the **Q4F32** format.  
+9. Improved accuracy of **FSMN-VAD**.  
+10. Improved recognition accuracy of **Paraformer**.  
+11. Improved recognition accuracy of **SenseVoice**.  
+12. Improved inference speed of the **Whisper** series by over 10%.  
+13. Supported the following large language models (LLMs) with **ONNX Runtime 100% GPU operator deployment**:  
+    - Qwen3-4B/8B  
+    - InternLM3-8B  
+    - Phi-4-mini-Instruct  
+    - Gemma3-4B/12B-it  
+14. Expanded hardware support:  
+    - **Intel OpenVINO**  
+    - **NVIDIA CUDA GPU**  
+    - **Windows DirectML GPU** (supports integrated and discrete GPUs)  
 ---
 
 ## ✨ Features  
@@ -19,7 +41,7 @@ This project is built on ONNX Runtime framework.
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [Official - Silero](https://github.com/snakers4/silero-vad)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-    - You need to download the Pyannote `pytorch_model.bin` file yourself and place it in the `VAD/pyannote_segmentation_3` folder.
+    - You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Next, place it in the `VAD/pyannote_segmentation_3` folder.
 
 - ASR Support:
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
@@ -62,11 +84,10 @@ pip install -r requirements.txt
 - Place it in the `Transcribe_and_Translate_Subtitles` folder.
 
 ### 📁 Step 4: Place Target Videos in the Media Folder
-- Place the videos you want to transcribe and translate in the following directory:
+- Place the videos you want to transcribe and translate in the following directory. The application will process the videos one by one.:
 ```
 Transcribe_and_Translate_Subtitles/Media
 ```
-- The application will process the videos one by one.
 
 ### 🚀 Step 5: Run the Application
 - Open your preferred terminal (PyCharm, CMD, PowerShell, etc.).
@@ -114,9 +135,31 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 # 转录和翻译字幕
 
 ## 🚨 重要提示  
-- **2025/5/8 更新上传中...**
 - **所有任务均在本地运行，无需连接互联网，确保最大程度的隐私保护。**
 
+---
+## 2025/5/9 最新更新与功能
+1. 新增 **不使用** VAD（语音活动检测）的选项，提供更多灵活性。  
+2. 新增降噪模型：**MelBandRoformer**。  
+3. 新增三款日语动漫微调Whisper模型。  
+4. 新增ASR模型：**CrisperWhisper**。  
+5. 新增英语微调ASR模型：**Whisper-Large-v3.5-Distil**。  
+6. 新增支持中文（包括部分方言）的ASR模型：**FireRedASR-AED-L**。  
+7. 移除IPEX-LLM框架，提升整体性能。  
+8. 取消LLM量化选项，统一采用**Q4F32**格式。  
+9. 改进了**FSMN-VAD**的准确率。  
+10. 改进了**Paraformer**的识别准确率。  
+11. 改进了**SenseVoice**的识别准确率。
+12. 改进了**Whisper**系列的推理速度10%+。  
+13. 支持以下大语言模型（LLM），实现**ONNX Runtime 100% GPU算子部署**：  
+    - Qwen3-4B/8B  
+    - InternLM3-8B  
+    - Phi-4-mini-Instruct  
+    - Gemma3-4B/12B-it  
+14. 扩展硬件支持：  
+    - **Intel OpenVINO**  
+    - **NVIDIA CUDA GPU**  
+    - **Windows DirectML GPU**（支持集成显卡和独立显卡）
 ---
 
 ## ✨ 功能
@@ -132,7 +175,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-    - 需要自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation_3` 文件夹中。
+    - 需要接受Pyannote的使用条款，並自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation_3` 文件夹中。
 
 - **语音识别（ASR）支持**：
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
@@ -177,11 +220,10 @@ pip install -r requirements.txt
 - 将 `run.py` 放置在 `Transcribe_and_Translate_Subtitles` 文件夹中。
 
 ### 📁 第四步：将目标视频放入 Media 文件夹  
-- 将你想要转录和翻译的视频放置在以下目录：  
+- 将你想要转录和翻译的视频放置在以下目录，应用程序将逐个处理这些视频：  
 ```
 Transcribe_and_Translate_Subtitles/Media
 ```
-- 应用程序将逐个处理这些视频。
 
 ### 🚀 第五步：运行应用程序  
 - 打开你喜欢的终端工具（PyCharm、CMD、PowerShell 等）。  
