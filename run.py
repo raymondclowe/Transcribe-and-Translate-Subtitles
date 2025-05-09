@@ -1234,16 +1234,16 @@ def MAIN_PROCESS(
                 TRANSLATE_OVERLAP = MAX_TRANSLATE_LINES // 4
                 MAX_TOKENS_PER_CHUNK = MAX_TRANSLATE_LINES * MAX_SEQ_LEN
 
-                if translate_language == '中文':
-                    translate_language = 'chinese'
+                if (translate_language == '中文') or (translate_language == 'chinese'):
+                    translate_language = 'simplified Chinese'
                 elif translate_language == '日本語':
                     translate_language = 'japanese'
                 elif translate_language == '한국인':
                     translate_language = 'korean'
                 translate_language = translate_language[0].upper() + translate_language[1:]
 
-                if transcribe_language == '中文':
-                    transcribe_language = 'chinese'
+               if (translate_language == '中文') or (translate_language == 'chinese'):
+                    transcribe_language = 'simplified Chinese'
                 elif transcribe_language == '日本語':
                     transcribe_language = 'japanese'
                 elif transcribe_language == '한국인':
