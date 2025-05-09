@@ -1,0 +1,36 @@
+# Core dependencies
+torch>=2.6.1
+numpy>=2.2.5
+tiktoken>=0.9.0
+accelerate>=1.6.0
+transformers>=4.51.3
+sentencepiece>=0.2.0
+
+# Audio processing
+pydub>=0.25.1
+librosa>=0.11.0
+soundfile>=0.13.1
+silero_vad>=5.1.2
+faster-whisper>=1.1.1  # Use the VAD only.
+pyannote.audio>=3.3.2
+
+# Web interface
+gradio>=5.29.0
+
+# ONNX Runtime and Execution Providers
+# ----------------------------------------
+# For CPU only
+onnxruntime>=1.21.1
+# ----------------------------------------
+# For Windows + (Intel or AMD)
+# onnxruntime>=1.21.1
+# onnxruntime-directml>=1.21.1
+# ----------------------------------------
+# For Intel OpenVINO
+# onnxruntime==1.21.0
+# onnxruntime-openvino==1.21.0
+# ----------------------------------------
+# For NVIDIA-CUDA
+# onnxruntime>=1.21.1
+# onnxruntime-gpu>=1.21.1
+# ----------------------------------------
