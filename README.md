@@ -45,15 +45,15 @@ This project is built on ONNX Runtime framework.
 
 - ASR Support:
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
+  - [Paraformer-Small-Chinese](https://modelscope.cn/models/iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1)
   - [Paraformer-Large-Chinese](https://modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
   - [Paraformer-Large-English](https://modelscope.cn/models/iic/speech_paraformer_asr-en-16k-vocab4199-pytorch)
-  - [Paraformer-Small-Chinese](https://modelscope.cn/models/iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1)
   - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
   - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
   - [Whisper-Large-V3-Turbo-Japanese](https://huggingface.co/hhim8826/whisper-large-v3-turbo-ja)
-  - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [Whisper-Large-V3-Anime-A](https://huggingface.co/efwkjn/whisper-ja-anime-v0.1)
   - [Whisper-Large-V3-Anime-B](https://huggingface.co/litagin/anime-whisper)
+  - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [CrisperWhisper](https://github.com/nyrahealth/CrisperWhisper)
   - [FireRedASR-AED-L](https://github.com/FireRedTeam/FireRedASR)
 
@@ -179,15 +179,15 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 - **语音识别（ASR）支持**：
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
+  - [Paraformer-Small-Chinese](https://modelscope.cn/models/iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1)
   - [Paraformer-Large-Chinese](https://modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
   - [Paraformer-Large-English](https://modelscope.cn/models/iic/speech_paraformer_asr-en-16k-vocab4199-pytorch)
-  - [Paraformer-Small-Chinese](https://modelscope.cn/models/iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1)
   - [Whisper-Large-V3](https://huggingface.co/openai/whisper-large-v3)
   - [Whisper-Large-V3-Turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
   - [Whisper-Large-V3-Turbo-Japanese](https://huggingface.co/hhim8826/whisper-large-v3-turbo-ja)
-  - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [Whisper-Large-V3-Anime-A](https://huggingface.co/efwkjn/whisper-ja-anime-v0.1)
   - [Whisper-Large-V3-Anime-B](https://huggingface.co/litagin/anime-whisper)
+  - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [CrisperWhisper](https://github.com/nyrahealth/CrisperWhisper)
   - [FireRedASR-AED-L](https://github.com/FireRedTeam/FireRedASR)
 
