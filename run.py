@@ -840,7 +840,7 @@ def MAIN_PROCESS(
                 for i in range(num_layers, num_layers_2):
                     input_feed_D[in_name_D[i].name] = _init_past_values_D
                 num_decode = 0
-                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
+                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], 'cpu', DEVICE_ID)})
                 for i in range(num_layers_2):
                     input_feed_D[in_name_D[layer_indices[i]].name] = all_outputs_C[i]
                 while num_decode < generate_limit:
