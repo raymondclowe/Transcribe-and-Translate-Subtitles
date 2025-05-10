@@ -11,6 +11,7 @@ from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 # Third-party imports
+import psutil
 import onnxruntime
 import numpy as np
 import librosa
@@ -24,6 +25,10 @@ from sentencepiece import SentencePieceProcessor
 from silero_vad import load_silero_vad, get_speech_timestamps
 from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
 from ASR.FireRedASR.AED.L.aed_tokenizer import ChineseCharEnglishSpmTokenizer
+
+
+physical_cores = psutil.cpu_count(logical=False)
+print(f"\n找到{physical_cores}个物理 CPU 核心。Found {physical_cores} physical CPU cores.\n")
 
 
 def update_task(dropdown_task):
@@ -840,7 +845,7 @@ def MAIN_PROCESS(
                 for i in range(num_layers, num_layers_2):
                     input_feed_D[in_name_D[i].name] = _init_past_values_D
                 num_decode = 0
-                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], 'cpu', DEVICE_ID)})
+                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
                 for i in range(num_layers_2):
                     input_feed_D[in_name_D[layer_indices[i]].name] = all_outputs_C[i]
                 while num_decode < generate_limit:
@@ -1529,7 +1534,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 1, 64, step=1,
                 label="并行处理 Parallel Threads",
                 info="用于并行处理的 CPU 内核数。\nNumber of CPU cores.",
-                value=4,
+                value=physical_cores,
                 interactive=True
             )
             hardware = gr.Dropdown(
