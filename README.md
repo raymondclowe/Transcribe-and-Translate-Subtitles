@@ -6,7 +6,7 @@
 ---
 ## Updates
 - 2025/5/13
-    - Added Float16/32 ASR models to support GPU usage. These models can achieve >99% GPU operator deplotment.
+    - Added Float16/32 ASR models to support CUDA/DirectML GPU usage. These models can achieve >99% GPU operator deplotment.
 - 2025/5/9
     - Added an option to **not use** VAD (Voice Activity Detection), offering greater flexibility.
     - Added a noise reduction model: **MelBandRoformer**.
@@ -143,7 +143,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 ## 最近更新与功能
 - 2025/5/13
-    - 新增 Float16/32 ASR 模型，支持 GPU 使用。这些模型可实现 >99% 的 GPU 算子部署率。
+    - 新增 Float16/32 ASR 模型，支持 CUDA/DirectML GPU 使用。这些模型可实现 >99% 的 GPU 算子部署率。
 - 2025/5/9
     - 新增 **不使用** VAD（语音活动检测）的选项，提供更多灵活性。
     - 新增降噪模型：**MelBandRoformer**。
