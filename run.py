@@ -651,11 +651,9 @@ def MAIN_PROCESS(
         if quant != 'Q8F32':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-            model_D_dtype = np.float16
         else:
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-            model_D_dtype = np.float32
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
@@ -663,6 +661,11 @@ def MAIN_PROCESS(
         output_names_C = []
         for i in range(len(out_name_C)):
             output_names_C.append(out_name_C[i].name)
+        model_D_dtype = ort_session_D._inputs_meta[0].type
+        if 'float16' in model_D_dtype:
+            model_D_dtype = np.float16
+        else:
+            model_D_dtype = np.float32
         in_name_D = ort_session_D.get_inputs()
         out_name_D = ort_session_D.get_outputs()
         input_names_D = []
@@ -693,10 +696,10 @@ def MAIN_PROCESS(
         init_ids_len_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int64), device_type, DEVICE_ID)
         init_input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(input_ids, device_type, DEVICE_ID)
         if device_type != 'dml':
-            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), device_type, DEVICE_ID)
+            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=model_D_dtype), device_type, DEVICE_ID)
             init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=model_D_dtype), device_type, DEVICE_ID)
         else:
-            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), 'cpu', DEVICE_ID)
+            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=model_D_dtype), 'cpu', DEVICE_ID)
             init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=model_D_dtype), 'cpu', DEVICE_ID)
         c_provider = ort_session_C.get_providers()
         print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
