@@ -411,7 +411,6 @@ def MAIN_PROCESS(
     elif "DmlExecutionProvider" in ORT_Accelerate_Providers:
         if os.name != 'nt':
             print("\nDirectML-GPU-NPU 仅支持 Windows 系统。回退到 CPU 硬件。\nThe DirectML-GPU-NPU only support the Windows System. Fallback to the CPU providers.")
-            provider_options = None
             device_type = 'cpu'
             ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
             provider_options = [
@@ -648,7 +647,7 @@ def MAIN_PROCESS(
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
         
     if asr_type == 0 or asr_type == 3:  # Whisper & FireRedASR
-        if quant != 'Q8F32':
+        if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
         else:
@@ -704,7 +703,7 @@ def MAIN_PROCESS(
         c_provider = ort_session_C.get_providers()
         print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
     else:
-        if quant != 'Q8F32':
+        if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
         else:
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
@@ -1118,29 +1117,49 @@ def MAIN_PROCESS(
         results = []
         start_time = time.time()
         if asr_type == 0:
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, True) for start, end in timestamps]
-                for future in futures:
-                    results.append(future.result())
+            if max_workers != 1:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, True) for start, end in timestamps]
+                    for future in futures:
+                        results.append(future.result())
+                        print(f"ASR: {results[-1][0]:.3f}%")
+            else:
+                for start, end in timestamps:
+                    results.append(process_segment_CD(start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, True))
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 1:
             language_idx = np.array([target_language_id], dtype=np.int32)
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(process_segment_C_sensevoice, start, end, inv_audio_len, audio, SAMPLE_RATE, language_idx) for start, end in timestamps]
-                for future in futures:
-                    results.append(future.result())
+            if max_workers != 1:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_segment_C_sensevoice, start, end, inv_audio_len, audio, SAMPLE_RATE, language_idx) for start, end in timestamps]
+                    for future in futures:
+                        results.append(future.result())
+                        print(f"ASR: {results[-1][0]:.3f}%")
+            else:
+                for start, end in timestamps:
+                    results.append(process_segment_C_sensevoice(start, end, inv_audio_len, audio, SAMPLE_RATE, language_idx))
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 2:
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(process_segment_C_paraformer, start, end, inv_audio_len, audio, SAMPLE_RATE, is_english) for start, end in timestamps]
-                for future in futures:
-                    results.append(future.result())
+            if max_workers != 1:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_segment_C_paraformer, start, end, inv_audio_len, audio, SAMPLE_RATE, is_english) for start, end in timestamps]
+                    for future in futures:
+                        results.append(future.result())
+                        print(f"ASR: {results[-1][0]:.3f}%")
+            else:
+                for start, end in timestamps:
+                    results.append(process_segment_C_paraformer(start, end, inv_audio_len, audio, SAMPLE_RATE, is_english))
                     print(f"ASR: {results[-1][0]:.3f}%")
         else:
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False) for start, end in timestamps]
-                for future in futures:
-                    results.append(future.result())
+            if max_workers != 1:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False) for start, end in timestamps]
+                    for future in futures:
+                        results.append(future.result())
+                        print(f"ASR: {results[-1][0]:.3f}%")
+            else:
+                for start, end in timestamps:
+                    results.append(process_segment_CD(start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False))
                     print(f"ASR: {results[-1][0]:.3f}%")
         results.sort(key=lambda x: x[0])
         save_text = [result[1] for result in results]
