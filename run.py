@@ -28,7 +28,7 @@ from ASR.FireRedASR.AED.L.aed_tokenizer import ChineseCharEnglishSpmTokenizer
 
 
 physical_cores = psutil.cpu_count(logical=False)
-print(f"\n找到{physical_cores}个物理 CPU 核心。Found {physical_cores} physical CPU cores.\n")
+print(f"\n找到 {physical_cores} 个物理 CPU 核心。Found {physical_cores} physical CPU cores.\n")
 
 
 def update_task(dropdown_task):
@@ -75,7 +75,11 @@ def update_translate_language(dropdown_model_llm):
 
 
 def update_transcribe_language(dropdown_model_asr):
-    if "Whisper" in dropdown_model_asr:
+    if "English" in dropdown_model_asr:
+        update_A = gr.update(value="English", choices=["English"])
+    elif ("Japanese" in dropdown_model_asr) or ("Anime" in dropdown_model_asr):
+        update_A = gr.update(value="日本語", choices=["日本語"])
+    elif "Whisper" in dropdown_model_asr:
         update_A = gr.update(
             choices=[
                 "中文",         "English",          "日本語",         "한국인",
@@ -304,6 +308,12 @@ def MAIN_PROCESS(
 ):
     total_process_time = time.time()
     print("----------------------------------------------------------------------------------------------------------")
+
+    USE_V3 = True  # In the current version, only release the Whisper-V3 series.
+    FIRST_RUN = True
+    USE_DENOISED = True
+    SAMPLE_RATE = 16000
+
     task_queue = []
     if os.path.isfile(file_path_input):
         if file_path_input.endswith(MEDIA_EXTENSIONS):
@@ -331,10 +341,105 @@ def MAIN_PROCESS(
     else:
         print(f"\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.")
 
-    USE_V3 = True   # In the current version, only release the Whisper-V3 series.
-    FIRST_RUN = True
-    USE_DENOISED = True
-    SAMPLE_RATE = 16000
+    if hardware == "Intel-OpenVINO-GPU":
+        quant = "Q8F32"
+        device_type = 'GPU'
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+    elif hardware == "Intel-OpenVINO-NPU":
+        quant = "Q8F32"
+        device_type = 'NPU'
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+    elif hardware == "Intel-OpenVINO-AUTO_ALL":
+        quant = "Q8F32"
+        device_type = 'AUTO:NPU,GPU,CPU'
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+    elif hardware == "Intel-OpenVINO-HETERO_ALL":
+        quant = "Q8F32"
+        device_type = 'HETERO:NPU,GPU,CPU'
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+    elif hardware == "NVIDIA-CUDA-GPU":
+        quant = "F16"
+        device_type = 'cuda'
+        ORT_Accelerate_Providers = ['CUDAExecutionProvider']
+    elif hardware == "Windows-DirectML-GPU-NPU":
+        quant = "F16"
+        device_type = 'npu'
+        ORT_Accelerate_Providers = ['DmlExecutionProvider']
+    else:
+        quant = "Q8F32"
+        device_type = "CPU"
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+
+    if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers:
+        provider_options = [
+            {
+                'device_type': device_type,
+                'precision': 'ACCURACY',
+                'model_priority': 'HIGH',
+                'num_of_threads': parallel_threads,
+                'num_streams': 1,
+                'enable_opencl_throttling': True,
+                'enable_qdq_optimizer': True,
+                'disable_dynamic_shapes': False
+            }
+        ]
+        device_type = 'cpu'
+        max_workers = parallel_threads
+    elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:
+        provider_options = [
+            {
+                'device_id': DEVICE_ID,
+                'gpu_mem_limit': 24 * 1024 * 1024 * 1024,      # 24 GB
+                'arena_extend_strategy': 'kNextPowerOfTwo',    # ["kNextPowerOfTwo", "kSameAsRequested"]
+                'cudnn_conv_algo_search': 'EXHAUSTIVE',        # ["DEFAULT", "HEURISTIC", "EXHAUSTIVE"]
+                'sdpa_kernel': '2',                            # ["0", "1", "2"]
+                'use_tf32': '1',
+                'fuse_conv_bias': '1',
+                'cudnn_conv_use_max_workspace': '1',
+                'cudnn_conv1d_pad_to_nc1d': '1',
+                'tunable_op_enable': '1',
+                'tunable_op_tuning_enable': '1',
+                'tunable_op_max_tuning_duration_ms': 10000,
+                'do_copy_in_default_stream': '0',
+                'enable_cuda_graph': '0',                      # Set to '0' to avoid potential errors when enabled.
+                'prefer_nhwc': '0',
+                'enable_skip_layer_norm_strict_mode': '0',
+                'use_ep_level_unified_stream': '0',
+            }
+        ]
+        max_workers = parallel_threads
+    elif "DmlExecutionProvider" in ORT_Accelerate_Providers:
+        if os.name != 'nt':
+            print("\nDirectML-GPU-NPU 仅支持 Windows 系统。回退到 CPU 硬件。\nThe DirectML-GPU-NPU only support the Windows System. Fallback to the CPU providers.")
+            provider_options = None
+            device_type = 'cpu'
+            ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+            provider_options = [
+                {
+                    'device_type': "CPU",
+                    'precision': 'ACCURACY',
+                    'model_priority': 'HIGH',
+                    'num_of_threads': parallel_threads,
+                    'num_streams': 1,
+                    'enable_opencl_throttling': True,
+                    'enable_qdq_optimizer': True,
+                    'disable_dynamic_shapes': False
+                }
+            ]
+        else:
+            provider_options = [
+                {
+                    'device_id': DEVICE_ID,
+                    'performance_preference': 'high_performance',  # [high_performance, default, minimum_power]
+                    'device_filter': device_type                   # [any, npu, gpu]
+                }
+            ]
+            device_type = 'dml'
+            max_workers = 1
+    else:
+        device_type = 'cpu'
+        provider_options = None
+        max_workers = parallel_threads
 
     slider_denoise_factor_minus = float(1.0 - slider_denoise_factor)
     slider_denoise_factor = float(slider_denoise_factor)
@@ -372,7 +477,7 @@ def MAIN_PROCESS(
             onnx_model_B = None
             print(f"\n找到了 VAD-Faster_Whisper-Silero。Found the VAD-Faster_Whisper-Silero.")
         else:
-            error = "\nVAD-Faster_Whisper-Silero 不存在。请运行'pip install fastest-whisper --upgrade'。\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'"
+            error = "\nVAD-Faster_Whisper-Silero 不存在。请运行 pip install fastest-whisper --upgrade。\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'"
             print(error)
             return error
     elif model_vad == "Official-Silero":
@@ -381,7 +486,7 @@ def MAIN_PROCESS(
             onnx_model_B = None
             print(f"\n找到了 VAD-Official_Silero。Found the VAD-Official_Silero.")
         else:
-            error = "\nVAD-Official_Silero不存在。请运行pip install silero-vad --upgrade'。\nThe VAD-Official_Silero doesn't exist. Please run 'pip install silero-vad --upgrade'"
+            error = "\nVAD-Official_Silero不存在。请运行 pip install silero-vad --upgrade。\nThe VAD-Official_Silero doesn't exist. Please run 'pip install silero-vad --upgrade'"
             print(error)
             return error
     elif model_vad == "Pyannote-3.0":
@@ -423,8 +528,8 @@ def MAIN_PROCESS(
             target_task_id = get_task_id('translate', USE_V3)[0]
         else:
             target_task_id = get_task_id('transcribe', USE_V3)[0]
-        onnx_model_C = f"{path}/Whisper_Encoder.onnx"
-        onnx_model_D = f"{path}/Whisper_Decoder.onnx"
+        onnx_model_C = f"{path}/{quant}/Whisper_Encoder.onnx"
+        onnx_model_D = f"{path}/{quant}/Whisper_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -437,7 +542,7 @@ def MAIN_PROCESS(
         tokenizer.Load("./ASR/SenseVoice/Small/chn_jpn_yue_eng_ko_spectok.bpe.model")
         target_language_id = get_language_id(transcribe_language, False)
         target_task_id = None
-        onnx_model_C = "./ASR/SenseVoice/Small/SenseVoice.onnx"
+        onnx_model_C = f"./ASR/SenseVoice/Small/F32/SenseVoice.onnx"
         onnx_model_D = None
         if os.path.isfile(onnx_model_C):
             print(f"\n找到了 ASR。Found the {model_asr}.")
@@ -451,15 +556,15 @@ def MAIN_PROCESS(
             if "English" in transcribe_language or "english" in transcribe_language:
                 is_english = True
                 tokens_path = "./ASR/Paraformer/English/Large/tokens.json"
-                onnx_model_C = "./ASR/Paraformer/English/Large/Paraformer.onnx"
+                onnx_model_C = f"./ASR/Paraformer/English/Large/F32/Paraformer.onnx"
             else:
                 is_english = False
                 tokens_path = "./ASR/Paraformer/Chinese/Large/tokens.json"
-                onnx_model_C = "./ASR/Paraformer/Chinese/Large/Paraformer.onnx"
+                onnx_model_C = f"./ASR/Paraformer/Chinese/Large/F32/Paraformer.onnx"
         else:
             is_english = False
             tokens_path = "./ASR/Paraformer/Chinese/Small/tokens.json"
-            onnx_model_C = "./ASR/Paraformer/Chinese/Small/Paraformer.onnx"
+            onnx_model_C = f"./ASR/Paraformer/Chinese/Small/F32/Paraformer.onnx"
         with open(tokens_path, 'r', encoding='UTF-8') as json_file:
             tokenizer = np.array(json.load(json_file), dtype=np.str_)
         target_language_id = get_language_id(transcribe_language, False)
@@ -474,8 +579,8 @@ def MAIN_PROCESS(
     elif "FireRedASR" in model_asr:
         asr_type = 3
         tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
-        onnx_model_C = "./ASR/FireRedASR/AED/L/FireRedASR-AED-L-Encoder.onnx"
-        onnx_model_D = "./ASR/FireRedASR/AED/L/FireRedASR-AED-L-Decoder.onnx"
+        onnx_model_C = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Encoder.onnx"
+        onnx_model_D = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -505,95 +610,6 @@ def MAIN_PROCESS(
     session_opts.add_session_config_entry("disable_synchronize_execution_providers", "1")
     session_opts.add_session_config_entry("optimization.minimal_build_optimizations", "")
     session_opts.add_session_config_entry("session.use_device_allocator_for_initializers", "1")
-
-    if hardware == "Intel-OpenVINO-GPU":
-        device_type = 'GPU'
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-    elif hardware == "Intel-OpenVINO-NPU":
-        device_type = 'NPU'
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-    elif hardware == "Intel-OpenVINO-AUTO_ALL":
-        device_type = 'AUTO:NPU,GPU,CPU'
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-    elif hardware == "Intel-OpenVINO-HETERO_ALL":
-        device_type = 'HETERO:NPU,GPU,CPU'
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-    elif hardware == "NVIDIA-CUDA-GPU":
-        device_type = 'cuda'
-        ORT_Accelerate_Providers = ['CUDAExecutionProvider']
-    elif hardware == "Windows-DirectML-GPU-NPU":
-        device_type = 'npu'
-        ORT_Accelerate_Providers = ['DmlExecutionProvider']
-    else:
-        device_type = "CPU"
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-
-    if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers:
-        provider_options = [
-            {
-                'device_type': device_type,
-                'precision': 'ACCURACY',
-                'model_priority': 'HIGH',
-                'num_of_threads': parallel_threads,
-                'num_streams': 1,
-                'enable_opencl_throttling': True,
-                'enable_qdq_optimizer': True,
-                'disable_dynamic_shapes': False
-            }
-        ]
-        device_type = 'cpu'
-    elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:
-        provider_options = [
-            {
-                'device_id': DEVICE_ID,
-                'gpu_mem_limit': 24 * 1024 * 1024 * 1024,      # 24 GB
-                'arena_extend_strategy': 'kNextPowerOfTwo',    # ["kNextPowerOfTwo", "kSameAsRequested"]
-                'cudnn_conv_algo_search': 'EXHAUSTIVE',        # ["DEFAULT", "HEURISTIC", "EXHAUSTIVE"]
-                'sdpa_kernel': '2',                            # ["0", "1", "2"]
-                'use_tf32': '1',
-                'fuse_conv_bias': '1',
-                'cudnn_conv_use_max_workspace': '1',
-                'cudnn_conv1d_pad_to_nc1d': '1',
-                'tunable_op_enable': '1',
-                'tunable_op_tuning_enable': '1',
-                'tunable_op_max_tuning_duration_ms': 10000,
-                'do_copy_in_default_stream': '0',
-                'enable_cuda_graph': '0',                      # Set to '0' to avoid potential errors when enabled.
-                'prefer_nhwc': '0',
-                'enable_skip_layer_norm_strict_mode': '0',
-                'use_ep_level_unified_stream': '0',
-            }
-        ]
-    elif "DmlExecutionProvider" in ORT_Accelerate_Providers:
-        if os.name != 'nt':
-            print("\nDirectML-GPU-NPU 仅支持 Windows 系统。回退到 CPU 硬件。\nThe DirectML-GPU-NPU only support the Windows System. Fallback to the CPU providers.")
-            provider_options = None
-            device_type = 'cpu'
-            ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-            provider_options = [
-                {
-                    'device_type': "CPU",
-                    'precision': 'ACCURACY',
-                    'model_priority': 'HIGH',
-                    'num_of_threads': parallel_threads,
-                    'num_streams': 1,
-                    'enable_opencl_throttling': True,
-                    'enable_qdq_optimizer': True,
-                    'disable_dynamic_shapes': False
-                }
-            ]
-        else:
-            provider_options = [
-                {
-                    'device_id': DEVICE_ID,
-                    'performance_preference': 'high_performance',  # [high_performance, default, minimum_power]
-                    'device_filter': device_type                   # [any, npu, gpu]
-                }
-            ]
-            device_type = 'dml'
-    else:
-        device_type = 'cpu'
-        provider_options = None
 
     print("----------------------------------------------------------------------------------------------------------")
     print("\n正在加载所需的模型和目标文件。Now loading the required models and target files.")
@@ -632,8 +648,14 @@ def MAIN_PROCESS(
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
         
     if asr_type == 0 or asr_type == 3:  # Whisper & FireRedASR
-        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-        ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        if quant != 'Q8F32':
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+            model_D_dtype = np.float16
+        else:
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+            model_D_dtype = np.float32
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
@@ -652,35 +674,37 @@ def MAIN_PROCESS(
             output_names_D.append(out_name_D[i].name)
         if asr_type == 0:
             ASR_STOP_TOKEN = [50257]
-            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[50258, target_language_id, target_task_id]], dtype=np.int32), 'cpu', DEVICE_ID)
+            input_ids = np.array([[50258, target_language_id, target_task_id]], dtype=np.int32)
             generate_limit = MAX_SEQ_LEN - 5  # 5 = length of initial input_ids
         else:
             ASR_STOP_TOKEN = [4]
-            input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[3]], dtype=np.int32), 'cpu', DEVICE_ID)
+            input_ids = np.array([[3]], dtype=np.int32)
             generate_limit = MAX_SEQ_LEN - 1  # 1 = length of initial input_ids
-        num_layers = (amount_of_outputs_D - 1) // 2
+        num_layers = (amount_of_outputs_D - 2) // 2
         num_layers_2 = num_layers + num_layers
         num_layers_4 = num_layers_2 + num_layers_2
-        layer_indices = np.arange(num_layers_2, num_layers_4, dtype=np.int32) + 1
-        init_attention_mask_D_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int8), 'cpu', DEVICE_ID)
-        init_attention_mask_D_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int8), 'cpu', DEVICE_ID)
-        init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), 'cpu', DEVICE_ID)
-        init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=np.float32), 'cpu', DEVICE_ID)
-        print(f"\nASR 可用的硬件 ASR-Usable Providers: ['CPUExecutionProvider']")
+        num_layers_2_plus_1 = num_layers_2 + 1
+        num_layers_2_plus_2 = num_layers_2 + 2
+        layer_indices = np.arange(num_layers_2, num_layers_4, dtype=np.int32) + 3
+        init_attention_mask_D_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int8), device_type, DEVICE_ID)
+        init_attention_mask_D_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int8), device_type, DEVICE_ID)
+        init_history_len = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type, DEVICE_ID)
+        init_ids_len = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([input_ids.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
+        init_ids_len_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int64), device_type, DEVICE_ID)
+        init_input_ids = onnxruntime.OrtValue.ortvalue_from_numpy(input_ids, device_type, DEVICE_ID)
+        if device_type != 'dml':
+            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), device_type, DEVICE_ID)
+            init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=model_D_dtype), device_type, DEVICE_ID)
+        else:
+            init_past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[0].shape[0], ort_session_D._inputs_meta[0].shape[1], 0), dtype=np.float32), 'cpu', DEVICE_ID)
+            init_past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_D._inputs_meta[num_layers].shape[0], 0, ort_session_D._inputs_meta[num_layers].shape[2]), dtype=model_D_dtype), 'cpu', DEVICE_ID)
+        c_provider = ort_session_C.get_providers()
+        print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
     else:
-        options = [
-            {
-                'device_type': "CPU",
-                'precision': 'ACCURACY',
-                'model_priority': 'HIGH',
-                'num_of_threads': parallel_threads,
-                'num_streams': 1,
-                'enable_opencl_throttling': True,
-                'enable_qdq_optimizer': True,
-                'disable_dynamic_shapes': False
-            }
-        ]
-        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['OpenVINOExecutionProvider'], provider_options=options)
+        if quant != 'Q8F32':
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
+        else:
+            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
@@ -811,7 +835,7 @@ def MAIN_PROCESS(
                 text = ''.join(text).replace("</s>", "")
             return start_indices * _inv_audio_len, text + ";", (_start, _end)
 
-        def process_segment_CD(_start, _end, _inv_audio_len, _audio, _sample_rate, _input_ids, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _is_whisper):
+        def process_segment_CD(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _is_whisper):
             start_indices = _start * _sample_rate
             audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
             audio_len = audio_segment.shape[-1]
@@ -838,7 +862,9 @@ def MAIN_PROCESS(
             while slice_end <= aligned_len:
                 input_feed_D = {
                     in_name_D[-1].name: _init_attention_mask_D_1,
-                    in_name_D[num_layers_2].name: _input_ids
+                    in_name_D[num_layers_2].name: _init_input_ids,
+                    in_name_D[num_layers_2_plus_1].name: _init_history_len,
+                    in_name_D[num_layers_2_plus_2].name: _init_ids_len
                 }
                 for i in range(num_layers):
                     input_feed_D[in_name_D[i].name] = _init_past_keys_D
@@ -850,7 +876,7 @@ def MAIN_PROCESS(
                     input_feed_D[in_name_D[layer_indices[i]].name] = all_outputs_C[i]
                 while num_decode < generate_limit:
                     all_outputs_D = ort_session_D.run_with_ort_values(output_names_D, input_feed_D)
-                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-1])[0][0]
+                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
                     num_decode += 1
                     if max_logit_ids in ASR_STOP_TOKEN:
                         break
@@ -858,6 +884,8 @@ def MAIN_PROCESS(
                         input_feed_D[in_name_D[i].name] = all_outputs_D[i]
                     if num_decode < 2:
                         input_feed_D[in_name_D[-1].name] = _init_attention_mask_D_0
+                        if _is_whisper:
+                            input_feed_D[in_name_D[num_layers_2_plus_2].name] = _init_ids_len_1
                     save_token.append(max_logit_ids)
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
@@ -908,6 +936,7 @@ def MAIN_PROCESS(
             aligned_len = audio.shape[-1]
             print("----------------------------------------------------------------------------------------------------------")
             print("\n对音频进行降噪。Denoising the audio.")
+            print("\n如果遇到 RAM 不足的情况，请尝试减少并行线程的数量。If you encounter low RAM conditions, try reducing the number of parallel threads.\n")
             results = []
             start_time = time.time()
             with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
@@ -1082,30 +1111,31 @@ def MAIN_PROCESS(
 
         # ASR parts
         print("\n开始转录任务。Start to transcribe task.")
+        print("\n如果遇到 RAM 不足的情况，请尝试减少并行线程的数量。If you encounter low RAM conditions, try reducing the number of parallel threads.\n")
         results = []
         start_time = time.time()
         if asr_type == 0:
-            with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, input_ids, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, True) for start, end in timestamps]
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, True) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 1:
             language_idx = np.array([target_language_id], dtype=np.int32)
-            with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 futures = [executor.submit(process_segment_C_sensevoice, start, end, inv_audio_len, audio, SAMPLE_RATE, language_idx) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         elif asr_type == 2:
-            with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 futures = [executor.submit(process_segment_C_paraformer, start, end, inv_audio_len, audio, SAMPLE_RATE, is_english) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
         else:
-            with ThreadPoolExecutor(max_workers=parallel_threads) as executor:
-                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, input_ids, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False) for start, end in timestamps]
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False) for start, end in timestamps]
                 for future in futures:
                     results.append(future.result())
                     print(f"ASR: {results[-1][0]:.3f}%")
