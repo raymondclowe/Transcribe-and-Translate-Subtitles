@@ -648,7 +648,7 @@ def MAIN_PROCESS(
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
         
     if asr_type == 0 or asr_type == 3:  # Whisper & FireRedASR
-        if quant != 'Q8F32':
+        if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
         else:
@@ -704,7 +704,7 @@ def MAIN_PROCESS(
         c_provider = ort_session_C.get_providers()
         print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
     else:
-        if quant != 'Q8F32':
+        if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
         else:
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
