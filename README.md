@@ -4,28 +4,31 @@
 - **Every task runs locally without internet, ensuring maximum privacy.**
 
 ---
-## 2025/5/9 Updates
-1. Added an option to **not use** VAD (Voice Activity Detection), offering greater flexibility.  
-2. Added a noise reduction model: **MelBandRoformer**.  
-3. Added three Japanese anime fine-tuned Whisper models.  
-4. Added ASR model: **CrisperWhisper**.  
-5. Added English fine-tuned ASR model: **Whisper-Large-v3.5-Distil**.  
-6. Added ASR model supporting Chinese (including some dialects): **FireRedASR-AED-L**.  
-7. Removed the IPEX-LLM framework to enhance overall performance.  
-8. Cancelled LLM quantization options, standardizing on the **Q4F32** format.  
-9. Improved accuracy of **FSMN-VAD**.  
-10. Improved recognition accuracy of **Paraformer**.  
-11. Improved recognition accuracy of **SenseVoice**.  
-12. Improved inference speed of the **Whisper** series by over 10%.  
-13. Supported the following large language models (LLMs) with **ONNX Runtime 100% GPU operator deployment**:  
-    - Qwen3-4B/8B  
-    - InternLM3-8B  
-    - Phi-4-mini-Instruct  
-    - Gemma3-4B/12B-it  
-14. Expanded hardware support:  
-    - **Intel OpenVINO**  
-    - **NVIDIA CUDA GPU**  
-    - **Windows DirectML GPU** (supports integrated and discrete GPUs)  
+## Updates
+- 2025/5/13
+    - Added Float16/32 ASR models to support GPU usage. These models can achieve >99% GPU operator deplotment.
+- 2025/5/9
+    - Added an option to **not use** VAD (Voice Activity Detection), offering greater flexibility.
+    - Added a noise reduction model: **MelBandRoformer**.
+    - Added three Japanese anime fine-tuned Whisper models.
+    - Added ASR model: **CrisperWhisper**.
+    - Added English fine-tuned ASR model: **Whisper-Large-v3.5-Distil**.
+    - Added ASR model supporting Chinese (including some dialects): **FireRedASR-AED-L**.
+    - Removed the IPEX-LLM framework to enhance overall performance.
+    - Cancelled LLM quantization options, standardizing on the **Q4F32** format.
+    - Improved accuracy of **FSMN-VAD**.
+    - Improved recognition accuracy of **Paraformer**.
+    - Improved recognition accuracy of **SenseVoice**.
+    - Improved inference speed of the **Whisper** series by over 10%.
+    - Supported the following large language models (LLMs) with **ONNX Runtime 100% GPU operator deployment**:
+        - Qwen3-4B/8B
+        - InternLM3-8B
+        - Phi-4-mini-Instruct
+        - Gemma3-4B/12B-it
+    - Expanded hardware support:
+        - **Intel OpenVINO**
+        - **NVIDIA CUDA GPU**
+        - **Windows DirectML GPU** (supports integrated and discrete GPUs)  
 ---
 
 ## ✨ Features  
@@ -138,28 +141,31 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 - **所有任务均在本地运行，无需连接互联网，确保最大程度的隐私保护。**
 
 ---
-## 2025/5/9 最新更新与功能
-1. 新增 **不使用** VAD（语音活动检测）的选项，提供更多灵活性。  
-2. 新增降噪模型：**MelBandRoformer**。  
-3. 新增三款日语动漫微调Whisper模型。  
-4. 新增ASR模型：**CrisperWhisper**。  
-5. 新增英语微调ASR模型：**Whisper-Large-v3.5-Distil**。  
-6. 新增支持中文（包括部分方言）的ASR模型：**FireRedASR-AED-L**。  
-7. 移除IPEX-LLM框架，提升整体性能。  
-8. 取消LLM量化选项，统一采用**Q4F32**格式。  
-9. 改进了**FSMN-VAD**的准确率。  
-10. 改进了**Paraformer**的识别准确率。  
-11. 改进了**SenseVoice**的识别准确率。
-12. 改进了**Whisper**系列的推理速度10%+。  
-13. 支持以下大语言模型（LLM），实现**ONNX Runtime 100% GPU算子部署**：  
-    - Qwen3-4B/8B  
-    - InternLM3-8B  
-    - Phi-4-mini-Instruct  
-    - Gemma3-4B/12B-it  
-14. 扩展硬件支持：  
-    - **Intel OpenVINO**  
-    - **NVIDIA CUDA GPU**  
-    - **Windows DirectML GPU**（支持集成显卡和独立显卡）
+## 最近更新与功能
+- 2025/5/13
+    - 新增 Float16/32 ASR 模型，支持 GPU 使用。这些模型可实现 >99% 的 GPU 算子部署率。
+- 2025/5/9
+    - 新增 **不使用** VAD（语音活动检测）的选项，提供更多灵活性。
+    - 新增降噪模型：**MelBandRoformer**。
+    - 新增三款日语动漫微调Whisper模型。
+    - 新增ASR模型：**CrisperWhisper**。
+    - 新增英语微调ASR模型：**Whisper-Large-v3.5-Distil**。
+    - 新增支持中文（包括部分方言）的ASR模型：**FireRedASR-AED-L**。
+    - 移除IPEX-LLM框架，提升整体性能。
+    - 取消LLM量化选项，统一采用**Q4F32**格式。
+    - 改进了**FSMN-VAD**的准确率。
+    - 改进了**Paraformer**的识别准确率。
+    - 改进了**SenseVoice**的识别准确率。
+    - 改进了**Whisper**系列的推理速度10%+。
+    - 支持以下大语言模型（LLM），实现**ONNX Runtime 100% GPU算子部署**：
+        - Qwen3-4B/8B  
+        - InternLM3-8B  
+        - Phi-4-mini-Instruct  
+        - Gemma3-4B/12B-it
+    - 扩展硬件支持：  
+        - **Intel OpenVINO**  
+        - **NVIDIA CUDA GPU**  
+        - **Windows DirectML GPU**（支持集成显卡和独立显卡）
 ---
 
 ## ✨ 功能
