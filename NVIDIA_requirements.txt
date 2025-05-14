@@ -21,17 +21,17 @@ gradio>=5.29.0
 # ONNX Runtime and Execution Providers
 # ----------------------------------------
 # For CPU only
-# onnxruntime>=1.21.1
+# onnxruntime>=1.22.0
 # ----------------------------------------
 # For Windows + (Intel or AMD)
-# onnxruntime>=1.21.1
-# onnxruntime-directml>=1.21.1
+# onnxruntime>=1.22.0
+# onnxruntime-directml>=1.22.0
 # ----------------------------------------
 # For Intel OpenVINO
 # onnxruntime==1.21.0
 # onnxruntime-openvino==1.21.0
 # ----------------------------------------
 # For NVIDIA-CUDA
-onnxruntime>=1.21.1
-onnxruntime-gpu>=1.21.1
+onnxruntime>=1.22.0
+onnxruntime-gpu>=1.22.0
 # ----------------------------------------
