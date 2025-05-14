@@ -105,7 +105,7 @@ def update_transcribe_language(dropdown_model_asr):
                 "vietnamese",   "yiddish",          "yoruba",        "chinese"
             ]
         )
-    elif "SenseVoice" in dropdown_model_asr:
+    elif "SenseVoice-Small" == dropdown_model_asr:
         update_A = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "自动 auto"])
     elif ("Paraformer-Small" == dropdown_model_asr) or ("FireRedASR-AED-L" == dropdown_model_asr):
         update_A = gr.update(value="中文", choices=["中文"])
