@@ -6,7 +6,7 @@
 ---
 ## Updates
 - 2025/5/13
-    - Added Float16/32 ASR models to support CUDA/DirectML GPU usage. These models can achieve >99% GPU operator deplotment.
+    - Added Float16/32 ASR models to support CUDA/DirectML GPU usage. These models can achieve >99% GPU operator deployment.
 - 2025/5/9
     - Added an option to **not use** VAD (Voice Activity Detection), offering greater flexibility.
     - Added a noise reduction model: **MelBandRoformer**.
