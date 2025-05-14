@@ -107,12 +107,10 @@ def update_transcribe_language(dropdown_model_asr):
         )
     elif "SenseVoice" in dropdown_model_asr:
         update_A = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "自动 auto"])
-    elif "Paraformer-Small" == dropdown_model_asr:
+    elif ("Paraformer-Small" == dropdown_model_asr) or ("FireRedASR-AED-L" == dropdown_model_asr):
         update_A = gr.update(value="中文", choices=["中文"])
     elif "Paraformer-Large" == dropdown_model_asr:
         update_A = gr.update(value="中文", choices=["中文", "English"])
-    elif "FireRedASR-AED-L" == dropdown_model_asr:
-        update_A = gr.update(value="中文", choices=["中文"])
     else:
         update_A = gr.update(visible=False)
     return update_A
@@ -646,7 +644,7 @@ def MAIN_PROCESS(
             pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
         
-    if asr_type == 0 or asr_type == 3:  # Whisper & FireRedASR
+    if (asr_type == 0) or (asr_type == 3):  # Whisper & FireRedASR
         if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
