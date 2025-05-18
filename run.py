@@ -224,8 +224,8 @@ def process_timestamps(timestamps, fusion_threshold=1.0, min_duration=0.5):
         filtered_timestamps = [(start, end) for start, end in timestamps if (end - start) > min_duration]
     else:
         filtered_timestamps = timestamps
-    del timestamps 
-    
+    del timestamps
+
     # Fuse and filter timestamps
     if fusion_threshold > 0.0:
         fused_timestamps = []
@@ -643,7 +643,7 @@ def MAIN_PROCESS(
             }
             pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
-        
+
     if (asr_type == 0) or (asr_type == 3):  # Whisper & FireRedASR
         if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -665,13 +665,9 @@ def MAIN_PROCESS(
             model_D_dtype = np.float32
         in_name_D = ort_session_D.get_inputs()
         out_name_D = ort_session_D.get_outputs()
-        input_names_D = []
-        output_names_D = []
         amount_of_outputs_D = len(out_name_D)
-        for i in range(len(in_name_D)):
-            input_names_D.append(in_name_D[i].name)
-        for i in range(amount_of_outputs_D):
-            output_names_D.append(out_name_D[i].name)
+        in_name_D = [in_name_D[i].name for i in range(len(in_name_D))]
+        out_name_D = [out_name_D[i].name for i in range(amount_of_outputs_D)]
         if asr_type == 0:
             ASR_STOP_TOKEN = [50257]
             input_ids = np.array([[50258, target_language_id, target_task_id]], dtype=np.int32)
@@ -743,7 +739,7 @@ def MAIN_PROCESS(
                             provider_options[0]['disable_dynamic_shapes'] = True
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                             provider_options[0]['disable_dynamic_shapes'] = False
-                        elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:                            
+                        elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:
                             provider_options[0]['cudnn_conv_algo_search'] = "DEFAULT"
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                             provider_options[0]['cudnn_conv_algo_search'] = "EXHAUSTIVE"
@@ -861,31 +857,31 @@ def MAIN_PROCESS(
             save_token = []
             while slice_end <= aligned_len:
                 input_feed_D = {
-                    in_name_D[-1].name: _init_attention_mask_D_1,
-                    in_name_D[num_layers_2].name: _init_input_ids,
-                    in_name_D[num_layers_2_plus_1].name: _init_history_len,
-                    in_name_D[num_layers_2_plus_2].name: _init_ids_len
+                    in_name_D[-1]: _init_attention_mask_D_1,
+                    in_name_D[num_layers_2]: _init_input_ids,
+                    in_name_D[num_layers_2_plus_1]: _init_history_len,
+                    in_name_D[num_layers_2_plus_2]: _init_ids_len
                 }
                 for i in range(num_layers):
-                    input_feed_D[in_name_D[i].name] = _init_past_keys_D
+                    input_feed_D[in_name_D[i]] = _init_past_keys_D
                 for i in range(num_layers, num_layers_2):
-                    input_feed_D[in_name_D[i].name] = _init_past_values_D
+                    input_feed_D[in_name_D[i]] = _init_past_values_D
                 num_decode = 0
                 all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
                 for i in range(num_layers_2):
-                    input_feed_D[in_name_D[layer_indices[i]].name] = all_outputs_C[i]
+                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
                 while num_decode < generate_limit:
-                    all_outputs_D = ort_session_D.run_with_ort_values(output_names_D, input_feed_D)
+                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
                     max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
                     num_decode += 1
                     if max_logit_ids in ASR_STOP_TOKEN:
                         break
                     for i in range(amount_of_outputs_D):
-                        input_feed_D[in_name_D[i].name] = all_outputs_D[i]
+                        input_feed_D[in_name_D[i]] = all_outputs_D[i]
                     if num_decode < 2:
-                        input_feed_D[in_name_D[-1].name] = _init_attention_mask_D_0
+                        input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
                         if _is_whisper:
-                            input_feed_D[in_name_D[num_layers_2_plus_2].name] = _init_ids_len_1
+                            input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
                     save_token.append(max_logit_ids)
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
@@ -1332,6 +1328,8 @@ def MAIN_PROCESS(
                 in_name_E = ort_session_E.get_inputs()
                 out_name_E = ort_session_E.get_outputs()
                 amount_of_outputs_E = len(out_name_E)
+                in_name_E = [in_name_E[i].name for i in range(len(in_name_E))]
+                out_name_E = [out_name_E[i].name for i in range(amount_of_outputs_E)]
                 num_layers = (amount_of_outputs_E - 2) // 2
                 num_keys_values = num_layers + num_layers
                 init_attention_mask_E_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int8), device_type, DEVICE_ID)
@@ -1344,19 +1342,14 @@ def MAIN_PROCESS(
                 else:
                     init_past_keys_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[0].shape[0], 1, ort_session_E._inputs_meta[0].shape[2], 0), dtype=np.float32), device_type, DEVICE_ID)
                     init_past_values_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[num_layers].shape[0], 1, 0, ort_session_E._inputs_meta[num_layers].shape[3]), dtype=np.float32), device_type, DEVICE_ID)
-                output_names_E = []
                 input_feed_E = {
-                    in_name_E[-1].name: init_attention_mask_E_1,
-                    in_name_E[-3].name: init_history_len
+                    in_name_E[-1]: init_attention_mask_E_1,
+                    in_name_E[-3]: init_history_len
                 }
                 for i in range(num_layers):
-                    input_feed_E[in_name_E[i].name] = init_past_keys_E
-                    output_names_E.append(out_name_E[i].name)
+                    input_feed_E[in_name_E[i]] = init_past_keys_E
                 for i in range(num_layers, num_keys_values):
-                    input_feed_E[in_name_E[i].name] = init_past_values_E
-                    output_names_E.append(out_name_E[i].name)
-                output_names_E.append(out_name_E[-2].name)
-                output_names_E.append(out_name_E[-1].name)
+                    input_feed_E[in_name_E[i]] = init_past_values_E
                 print("\nLLM 模型加载完成。LLM loading completed")
                 FIRST_RUN = False
 
@@ -1382,14 +1375,14 @@ def MAIN_PROCESS(
                 chunk_end = min(total_lines, chunk_start + MAX_TRANSLATE_LINES)
                 translation_prompt = "".join(asr_lines[chunk_start:chunk_end])
                 tokens = np.concatenate((prompt_head, tokenizer_llm(translation_prompt, return_tensors="np")['input_ids'].astype(np.int32), prompt_tail), axis=1)
-                input_feed_E[in_name_E[-4].name] = onnxruntime.OrtValue.ortvalue_from_numpy(tokens, device_type, DEVICE_ID)
-                input_feed_E[in_name_E[-2].name] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([tokens.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_E[in_name_E[-4]] = onnxruntime.OrtValue.ortvalue_from_numpy(tokens, device_type, DEVICE_ID)
+                input_feed_E[in_name_E[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([tokens.shape[-1]], dtype=np.int64), device_type, DEVICE_ID)
                 num_decode = 0
                 save_text = ""
                 start_time = time.time()
                 while num_decode < MAX_TOKENS_PER_CHUNK:
                     all_outputs = ort_session_E.run_with_ort_values(
-                        output_names_E,
+                        out_name_E,
                         input_feed_E
                     )
                     max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs[-2])
@@ -1397,10 +1390,10 @@ def MAIN_PROCESS(
                     if max_logit_ids in LLM_STOP_TOKEN:
                         break
                     for i in range(amount_of_outputs_E):
-                        input_feed_E[in_name_E[i].name] = all_outputs[i]
+                        input_feed_E[in_name_E[i]] = all_outputs[i]
                     if num_decode < 2:
-                        input_feed_E[in_name_E[-1].name] = init_attention_mask_E_0
-                        input_feed_E[in_name_E[-2].name] = init_ids_len
+                        input_feed_E[in_name_E[-1]] = init_attention_mask_E_0
+                        input_feed_E[in_name_E[-2]] = init_ids_len
                     text = tokenizer_llm.decode(max_logit_ids[0], skip_special_tokens=True)
                     if is_Intern:
                         text += " "
@@ -1414,12 +1407,12 @@ def MAIN_PROCESS(
                 print("----------------------------------------------------------------------------------------------------------")
                 if chunk_end == total_lines - 1:
                     break
-                input_feed_E[in_name_E[-1].name] = init_attention_mask_E_1
-                input_feed_E[in_name_E[-3].name] = init_history_len
+                input_feed_E[in_name_E[-1]] = init_attention_mask_E_1
+                input_feed_E[in_name_E[-3]] = init_history_len
                 for i in range(num_layers):
-                    input_feed_E[in_name_E[i].name] = init_past_keys_E
+                    input_feed_E[in_name_E[i]] = init_past_keys_E
                 for i in range(num_layers, num_keys_values):
-                    input_feed_E[in_name_E[i].name] = init_past_values_E
+                    input_feed_E[in_name_E[i]] = init_past_values_E
             merged_responses = "\n".join(translated_responses).split("\n")
             with open(f"./Results/Subtitles/{file_name}_translated.vtt", "w", encoding='UTF-8') as subtitles_file:
                 subtitles_file.write("WEBVTT\n\n")
