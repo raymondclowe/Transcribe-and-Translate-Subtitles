@@ -47,7 +47,7 @@ def update_translate_language(dropdown_model_llm):
     else:
         update_A = gr.update(
             choices=[
-                "中文",         "English",          "日語",         "한국인",
+                "中文",          "English",          "日語",          "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
