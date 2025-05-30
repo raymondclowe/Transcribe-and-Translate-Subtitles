@@ -486,7 +486,7 @@ def MAIN_PROCESS(
                 'cudnn_conv_algo_search': 'EXHAUSTIVE',        # ["DEFAULT", "HEURISTIC", "EXHAUSTIVE"]
                 'sdpa_kernel': '2',                            # ["0", "1", "2"]
                 'use_tf32': '1',
-                'fuse_conv_bias': '1',
+                'fuse_conv_bias': '0',
                 'cudnn_conv_use_max_workspace': '1',
                 'cudnn_conv1d_pad_to_nc1d': '1',
                 'tunable_op_enable': '1',
@@ -594,7 +594,6 @@ def MAIN_PROCESS(
         onnx_model_B = None
 
     if "Whisper" in model_asr:
-        asr_type = 0
         if model_asr == "Whisper-Large-V3":
             path = "./ASR/Whisper/Official_Large"
         elif model_asr == "Whisper-Large-V3-Turbo":
@@ -613,12 +612,6 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。No model-{model_asr} found."
             print(error)
             return error
-        tokenizer = AutoTokenizer.from_pretrained(path)
-        target_language_id = get_language_id(transcribe_language, True)
-        if (model_llm == "Whisper") and ("Translate" in task):
-            target_task_id = get_task_id('translate', USE_V3)[0]
-        else:
-            target_task_id = get_task_id('transcribe', USE_V3)[0]
         onnx_model_C = f"{path}/{quant}/Whisper_Encoder.onnx"
         onnx_model_D = f"{path}/{quant}/Whisper_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
@@ -627,22 +620,28 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
+        asr_type = 0
+        tokenizer = AutoTokenizer.from_pretrained(path)
+        target_language_id = get_language_id(transcribe_language, True)
+        if (model_llm == "Whisper") and ("Translate" in task):
+            target_task_id = get_task_id('translate', USE_V3)[0]
+        else:
+            target_task_id = get_task_id('transcribe', USE_V3)[0]
     elif "SenseVoice" in model_asr:
-        asr_type = 1
-        tokenizer = SentencePieceProcessor()
-        tokenizer.Load("./ASR/SenseVoice/Small/chn_jpn_yue_eng_ko_spectok.bpe.model")
-        target_language_id = get_language_id(transcribe_language, False)
-        target_task_id = None
         onnx_model_C = f"./ASR/SenseVoice/Small/F32/SenseVoice.onnx"
-        onnx_model_D = None
         if os.path.isfile(onnx_model_C):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
             error = f"\n未找到模型 The {model_asr} doesn't exist."
             print(error)
             return error
+        asr_type = 1
+        tokenizer = SentencePieceProcessor()
+        tokenizer.Load("./ASR/SenseVoice/Small/chn_jpn_yue_eng_ko_spectok.bpe.model")
+        target_language_id = get_language_id(transcribe_language, False)
+        target_task_id = None
+        onnx_model_D = None
     elif "Paraformer" in model_asr:
-        asr_type = 2
         if "Large" in model_asr:
             if "English" in transcribe_language or "english" in transcribe_language:
                 is_english = True
@@ -656,20 +655,19 @@ def MAIN_PROCESS(
             is_english = False
             tokens_path = "./ASR/Paraformer/Chinese/Small/tokens.json"
             onnx_model_C = f"./ASR/Paraformer/Chinese/Small/F32/Paraformer.onnx"
-        with open(tokens_path, 'r', encoding='UTF-8') as json_file:
-            tokenizer = np.array(json.load(json_file), dtype=np.str_)
-        target_language_id = get_language_id(transcribe_language, False)
-        target_task_id = None
-        onnx_model_D = None
         if os.path.isfile(onnx_model_C):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
+        asr_type = 2
+        with open(tokens_path, 'r', encoding='UTF-8') as json_file:
+            tokenizer = np.array(json.load(json_file), dtype=np.str_)
+        target_language_id = get_language_id(transcribe_language, False)
+        target_task_id = None
+        onnx_model_D = None
     elif "FireRedASR" in model_asr:
-        asr_type = 3
-        tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
         onnx_model_C = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Encoder.onnx"
         onnx_model_D = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
@@ -678,9 +676,9 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
+        asr_type = 3
+        tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
     elif "Dolphin" in model_asr:
-        asr_type = 4
-        tokenizer = Dolphin_Tokenizer(r"./ASR/Dolphin/Small/vocab_Dolphin.txt")
         if device_type != 'cpu':
             onnx_model_C = "./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
             onnx_model_D = "./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
@@ -693,6 +691,9 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
+        asr_type = 4
+        provider_options[0]['fuse_conv_bias'] = '0'
+        tokenizer = Dolphin_Tokenizer(r"./ASR/Dolphin/Small/vocab_Dolphin.txt")
     else:
         error = f"\n未找到模型。The {model_asr} doesn't exist."
         print(error)
