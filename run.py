@@ -47,7 +47,7 @@ def update_translate_language(dropdown_model_llm):
     else:
         update_A = gr.update(
             choices=[
-                "中文",         "English",          "日本語",         "한국인",
+                "中文",         "English",          "日語",         "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -78,11 +78,12 @@ def update_transcribe_language(dropdown_model_asr):
     if "English" in dropdown_model_asr:
         update_A = gr.update(value="English", choices=["English"])
     elif ("Japanese" in dropdown_model_asr) or ("Anime" in dropdown_model_asr):
-        update_A = gr.update(value="日本語", choices=["日本語"])
+        update_A = gr.update(value="日語", choices=["日語"])
     elif "Whisper" in dropdown_model_asr:
         update_A = gr.update(
+            value="日語",
             choices=[
-                "中文",         "English",          "日本語",         "한국인",
+                "中文",         "English",          "日語",         "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -106,11 +107,80 @@ def update_transcribe_language(dropdown_model_asr):
             ]
         )
     elif "SenseVoice-Small" == dropdown_model_asr:
-        update_A = gr.update(choices=["日本語", "中文", "English", "粤语", "한국인", "自动 auto"])
+        update_A = gr.update(value="日語", choices=["日語", "中文", "English", "粤语", "한국인", "自动 auto"])
     elif ("Paraformer-Small" == dropdown_model_asr) or ("FireRedASR-AED-L" == dropdown_model_asr):
         update_A = gr.update(value="中文", choices=["中文"])
     elif "Paraformer-Large" == dropdown_model_asr:
         update_A = gr.update(value="中文", choices=["中文", "English"])
+    elif "Dolphin" in dropdown_model_asr:
+        update_A = gr.update(
+            value="Auto-Auto",
+            choices=[
+                # Auto-detection options
+                "Auto-Auto",             "Mandarin-Auto",          "Yue-Auto",              "Tamil-Auto",
+                "Urdu-Auto",             "Arabic-Auto",
+                "自动-自动",               "中文-自动",               "粤语-自动",               "泰米尔语-自动",
+                "乌尔都语-自动",            "阿拉伯语-自动",
+
+                # Chinese varieties (English)
+                "Chinese-Mandarin",       "Chinese-Taiwan",        "Chinese-Wuyu",          "Chinese-Sichuan",
+                "Chinese-Shanxi",         "Chinese-Anhui",         "Chinese-Tianjin",       "Chinese-Ningxia",
+                "Chinese-Shaanxi",        "Chinese-Hebei",         "Chinese-Shandong",      "Chinese-Guangdong",
+                "Chinese-Shanghai",       "Chinese-Hubei",         "Chinese-Liaoning",      "Chinese-Gansu",
+                "Chinese-Fujian",         "Chinese-Hunan",         "Chinese-Henan",         "Chinese-Yunnan",
+                "Chinese-Minnan",         "Chinese-Wenzhou",
+
+                # Chinese varieties (Chinese)
+                "中文-普通话",             "中文-台湾",               "中文-吴语",              "中文-四川话",
+                "中文-山西话",             "中文-安徽话",             "中文-天津话",             "中文-宁夏话",
+                "中文-陕西话",             "中文-河北话",             "中文-山东话",             "中文-广东话",
+                "中文-上海话",             "中文-湖北话",             "中文-辽宁话",             "中文-甘肃话",
+                "中文-福建话",             "中文-湖南话",             "中文-河南话",             "中文-云南话",
+                "中文-闽南语",             "中文-温州话",
+
+                # Cantonese and East Asian languages
+                "Yue-Unknown",           "Yue-Hongkong",           "Yue-Guangdong",         "Japanese",
+                "Korean",                "Thai",                   "Vietnamese",
+                "粤语-未知",               "粤语-香港",               "粤语-广东",              "日语",
+                "韩语",                   "泰语",                    "越南语",
+
+                # Southeast Asian languages
+                "Indonesian",            "Malay",                  "Burmese",               "Tagalog",
+                "Khmer",                 "Javanese",               "Lao",                   "Filipino",            "Sundanese",
+                "印度尼西亚语",            "马来语",                  "缅甸语",                 "塔加洛语",
+                "高棉语",                 "爪哇语",                  "老挝语",                 "菲律宾语",              "巽他语",
+
+                # South Asian languages
+                "Hindi",                 "Bengali",                "Tamil-Singaporean",     "Tamil-Sri Lankan",
+                "Tamil-India",           "Tamil-Malaysia",         "Telugu",                "Gujarati",
+                "Oriya",                 "Odia",                   "Nepali",                "Sinhala",
+                "Panjabi",               "Kashmiri",               "Marathi",
+                "印地语",                 "孟加拉语",                "泰米尔语-新加坡",          "泰米尔语-斯里兰卡",
+                "泰米尔语-印度",           "泰米尔语-马来西亚",         "泰卢固语",                "古吉拉特语",
+                "奥里亚语",               "尼泊尔语",                 "僧伽罗语",                "旁遮普语",
+                "克什米尔语",              "马拉地语",
+
+                # West Asian languages
+                "Urdu",                  "Urdu-India",             "Persian",               "Pushto",
+                "乌尔都语",               "乌尔都语-印度",             "波斯语",                 "普什图语",
+
+                # Arabic varieties
+                "Arabic",                "Arabic-Morocco",         "Arabic-Saudi Arabia",   "Arabic-Egypt",
+                "Arabic-Kuwait",         "Arabic-Libya",           "Arabic-Jordan",         "Arabic-U.A.E.",
+                "Arabic-Levant",
+                "阿拉伯语",               "阿拉伯语-摩洛哥",           "阿拉伯语-沙特",            "阿拉伯语-埃及",
+                "阿拉伯语-科威特",         "阿拉伯语-利比亚",           "阿拉伯语-约旦",            "阿拉伯语-阿联酋",
+                "阿拉伯语-黎凡特",
+
+                # Central Asian and Turkic languages
+                "Uighur",               "Uzbek",                  "Kazakh",                 "Mongolian",
+                "Kabyle",               "Bashkir",                "Tajik",                  "Kirghiz",             "Azerbaijani",
+                "维吾尔语",               "乌兹别克语",              "哈萨克语",                 "蒙古语",
+                "卡拜尔语",               "巴什基尔语",              "塔吉克语",                 "吉尔吉斯语",            "阿塞拜疆语",
+
+                # Other languages
+                "Russian",              "俄语"
+            ])
     else:
         update_A = gr.update(visible=False)
     return update_A
@@ -277,6 +347,30 @@ def normalize_to_int16(audio):
     max_val = np.max(np.abs(audio))
     scaling_factor = 32767.0 / max_val if max_val > 0 else 1.0
     return (audio * float(scaling_factor)).astype(np.int16)
+
+
+class Dolphin_Tokenizer:
+    def __init__(self, filename=None):
+        self.str_to_idx = {}
+        self.idx_to_str = {}
+        if filename:
+            self.load_from_file(filename)
+
+    def load_from_file(self, filename):
+        with open(filename, 'r', encoding='utf-8') as file:
+            for idx, line in enumerate(file):
+                token = line.rstrip('\n')
+                self.str_to_idx[token] = idx
+                self.idx_to_str[idx] = token
+
+    def encode(self, token):
+        return self.str_to_idx.get(token)
+
+    def decode(self, idx):
+        return self.idx_to_str.get(idx)
+
+    def __len__(self):
+        return len(self.str_to_idx)
 
 
 def MAIN_PROCESS(
@@ -584,6 +678,21 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
+    elif "Dolphin" in model_asr:
+        asr_type = 4
+        tokenizer = Dolphin_Tokenizer(r"./ASR/Dolphin/Small/vocab_Dolphin.txt")
+        if device_type != 'cpu':
+            onnx_model_C = "./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
+            onnx_model_D = "./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
+        else:
+            onnx_model_C = "./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
+            onnx_model_D = "./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
+        if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
+            print(f"\n找到了 ASR。Found the {model_asr}.")
+        else:
+            error = f"\n未找到模型。The {model_asr} doesn't exist."
+            print(error)
+            return error
     else:
         error = f"\n未找到模型。The {model_asr} doesn't exist."
         print(error)
@@ -644,7 +753,7 @@ def MAIN_PROCESS(
             pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
-    if (asr_type == 0) or (asr_type == 3):  # Whisper & FireRedASR
+    if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
         if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
             ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -672,10 +781,35 @@ def MAIN_PROCESS(
             ASR_STOP_TOKEN = [50257]
             input_ids = np.array([[50258, target_language_id, target_task_id]], dtype=np.int32)
             generate_limit = MAX_SEQ_LEN - 5  # 5 = length of initial input_ids
-        else:
+        elif asr_type == 3:
             ASR_STOP_TOKEN = [4]
             input_ids = np.array([[3]], dtype=np.int32)
             generate_limit = MAX_SEQ_LEN - 1  # 1 = length of initial input_ids
+        else:
+            ASR_STOP_TOKEN = [40000]
+            input_ids = np.array([[39999]], dtype=np.int32)
+            language_region = DOLPHIN_LANGUAGE_REGION.get(transcribe_language, "NONE")
+            language_region = language_region.split("-")
+            lang_id = f"<{language_region[0]}>"
+            region_id = f"<{language_region[1]}>"
+            if lang_id != "<auto>":
+                detect_language = False
+                lang_id = tokenizer.encode(lang_id)
+            else:
+                detect_language = True
+            if not detect_language:
+                if region_id != "<auto>":
+                    detect_region = False
+                    region_id = tokenizer.encode(region_id)
+                else:
+                    detect_region = True
+            else:
+                detect_region = True
+            if detect_language or detect_region:
+                lang_str = tokenizer.decode(lang_id)
+                region_str = tokenizer.decode(region_id)
+                transcribe_language = INV_DOLPHIN_REGION_LANGUAGE.get(f"{lang_str}-{region_str}", "Unknown")
+            generate_limit = MAX_SEQ_LEN - 5  # 5 = length of initial input_ids
         num_layers = (amount_of_outputs_D - 2) // 2
         num_layers_2 = num_layers + num_layers
         num_layers_4 = num_layers_2 + num_layers_2
@@ -897,6 +1031,91 @@ def MAIN_PROCESS(
                 )
             else:
                 text = ("".join([tokenizer.dict[int(id)] for id in save_token])).replace(tokenizer.SPM_SPACE, ' ').strip()
+            return start_indices * _inv_audio_len, text + ";", (_start, _end)
+
+        def process_segment_CD_dolphin(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _lang_id, _region_id):
+            start_indices = _start * _sample_rate
+            audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
+            audio_len = audio_segment.shape[-1]
+            if isinstance(input_shape_C, str):
+                INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_len)  # You can adjust it.
+            else:
+                INPUT_AUDIO_LENGTH = input_shape_C
+            stride_step = INPUT_AUDIO_LENGTH
+            if audio_len > INPUT_AUDIO_LENGTH:
+                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
+                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
+                pad_amount = total_length_needed - audio_len
+                final_slice = audio_segment[:, :, -pad_amount:].astype(np.float32)
+                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio_segment.dtype)
+                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
+            elif audio_len < INPUT_AUDIO_LENGTH:
+                audio_segment_float = audio_segment.astype(np.float32)
+                white_noise = (np.sqrt(np.mean(audio_segment_float * audio_segment_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio_segment.dtype)
+                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
+            aligned_len = audio_segment.shape[-1]
+            save_token = []
+            slice_start = 0
+            slice_end = INPUT_AUDIO_LENGTH
+            while slice_end <= aligned_len:
+                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
+                input_feed_D = {
+                    in_name_D[-1]: _init_attention_mask_D_1,
+                    in_name_D[num_layers_2_plus_1]: _init_history_len,
+                }
+                for i in range(num_layers):
+                    input_feed_D[in_name_D[i]] = _init_past_keys_D
+                for i in range(num_layers, num_layers_2):
+                    input_feed_D[in_name_D[i]] = _init_past_values_D
+                for i in range(num_layers_2):
+                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
+                if detect_language:
+                    input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999]], dtype=np.int32), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
+                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                    _lang_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 7
+                    for i in range(num_layers):
+                        input_feed_D[in_name_D[i]] = _init_past_keys_D
+                    for i in range(num_layers, num_layers_2):
+                        input_feed_D[in_name_D[i]] = _init_past_values_D
+                if detect_region:
+                    input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([324], dtype=np.int64), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999, _lang_id]], dtype=np.int32), device_type, DEVICE_ID)
+                    input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([2], dtype=np.int64), device_type, DEVICE_ID)
+                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                    _region_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 145
+                    for i in range(num_layers):
+                        input_feed_D[in_name_D[i]] = _init_past_keys_D
+                    for i in range(num_layers, num_layers_2):
+                        input_feed_D[in_name_D[i]] = _init_past_values_D
+                input_ids = np.array([[39999, _lang_id, _region_id, 6, 324]], dtype=np.int32)  # start_id = 39999; itn = 5; asr = 6; no_timestamp = 324
+                ids_len = np.array([input_ids.shape[1]], dtype=np.int64)
+                input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(input_ids, device_type, DEVICE_ID)
+                input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(ids_len, device_type, DEVICE_ID)
+                input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([40002], dtype=np.int64), device_type, DEVICE_ID)
+                num_decode = 0
+                while num_decode < generate_limit:
+                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
+                    num_decode += 1
+                    if max_logit_ids in ASR_STOP_TOKEN:
+                        break
+                    for i in range(amount_of_outputs_D):
+                        input_feed_D[in_name_D[i]] = all_outputs_D[i]
+                    if num_decode < 2:
+                        input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
+                        input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
+                    save_token.append(max_logit_ids)
+                slice_start += stride_step
+                slice_end = slice_start + INPUT_AUDIO_LENGTH
+            text = ""
+            for i in save_token:
+                text += tokenizer.decode(i)
+            text = text.replace("▁", " ")
             return start_indices * _inv_audio_len, text + ";", (_start, _end)
 
         # Process audio
@@ -1144,7 +1363,7 @@ def MAIN_PROCESS(
                 for start, end in timestamps:
                     results.append(process_segment_C_paraformer(start, end, inv_audio_len, audio, SAMPLE_RATE, is_english))
                     print(f"ASR: {results[-1][0]:.3f}%")
-        else:
+        elif asr_type == 3:
             if max_workers != 1:
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     futures = [executor.submit(process_segment_CD, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False) for start, end in timestamps]
@@ -1154,6 +1373,17 @@ def MAIN_PROCESS(
             else:
                 for start, end in timestamps:
                     results.append(process_segment_CD(start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, False))
+                    print(f"ASR: {results[-1][0]:.3f}%")
+        else:
+            if max_workers != 1:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_segment_CD_dolphin, start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, lang_id, region_id) for start, end in timestamps]
+                    for future in futures:
+                        results.append(future.result())
+                        print(f"ASR: {results[-1][0]:.3f}%")
+            else:
+                for start, end in timestamps:
+                    results.append(process_segment_CD_dolphin(start, end, inv_audio_len, audio, SAMPLE_RATE, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, lang_id, region_id))
                     print(f"ASR: {results[-1][0]:.3f}%")
         results.sort(key=lambda x: x[0])
         save_text = [result[1] for result in results]
@@ -1168,7 +1398,6 @@ def MAIN_PROCESS(
         with open(f"./Results/Timestamps/{file_name}.txt", "w", encoding='UTF-8') as time_file, \
                 open(f"./Results/Text/{file_name}.txt", "w", encoding='UTF-8') as text_file, \
                 open(f"./Results/Subtitles/{file_name}.vtt", "w", encoding='UTF-8') as subtitles_file:
-
             subtitles_file.write("WEBVTT\n\n")  # Correct VTT header
             idx = 0
             for text, t_stamp in zip(save_text, save_timestamps):
@@ -1272,7 +1501,7 @@ def MAIN_PROCESS(
 
                 if (translate_language == '中文') or (translate_language == 'chinese'):
                     translate_language = 'simplified Chinese'
-                elif translate_language == '日本語':
+                elif translate_language == '日語':
                     translate_language = 'japanese'
                 elif translate_language == '한국인':
                     translate_language = 'korean'
@@ -1280,7 +1509,7 @@ def MAIN_PROCESS(
 
                 if (translate_language == '中文') or (translate_language == 'chinese'):
                     transcribe_language = 'simplified Chinese'
-                elif transcribe_language == '日本語':
+                elif transcribe_language == '日語':
                     transcribe_language = 'japanese'
                 elif transcribe_language == '한국인':
                     transcribe_language = 'korean'
@@ -1631,7 +1860,8 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                     "Whisper-Large-CrisperWhisper",
                     "Paraformer-Small",
                     "Paraformer-Large",
-                    "FireRedASR-AED-L"
+                    "FireRedASR-AED-L",
+                    "Dolphin-Small"
                 ],
                 label="ASR模型 ASR Model",
                 info="用于转录的模型。\nModel used for transcription.",
@@ -1648,7 +1878,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
         with gr.Row():
             transcribe_language = gr.Dropdown(
                 choices=[
-                    "日本語",
+                    "日語",
                     "中文",
                     "English",
                     "粤语",
@@ -1657,13 +1887,13 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 ],
                 label="转录语言 Transcription Language",
                 info="源媒体的语言。\nLanguage of the input media.",
-                value="日本語",
+                value="日語",
                 visible=True,
                 interactive=True
             )
             translate_language = gr.Dropdown(
                 choices=[
-                    "中文",         "English",          "日本語",         "한국인",
+                    "中文",         "English",          "日語",         "한국인",
                     "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                     "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                     "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -1952,7 +2182,7 @@ if __name__ == "__main__":
             'vi': 50278, 'yi': 50335, 'yo': 50325, 'zh': 50260
     }
     full_language_names_A = {
-            '中文': 'zh',            '日本語': 'ja',          '한국인': 'ko',
+            '中文': 'zh',            '日語': 'ja',          '한국인': 'ko',
             'afrikaans': 'af',      'amharic': 'am',        'arabic': 'ar',        'assamese': 'as',
             'azerbaijani': 'az',    'bashkir': 'ba',        'belarusian': 'be',    'bulgarian': 'bg',
             'bengali': 'bn',        'tibetan': 'bo',        'breton': 'br',        'bosnian': 'bs',
@@ -1985,9 +2215,299 @@ if __name__ == "__main__":
         '中文': 'zh',
         'english': 'en',
         '粤语': 'yue',
-        '日本語': 'ja',
+        '日語': 'ja',
         '한국인': 'ko'
     }
+    
+    DOLPHIN_LANGUAGE_REGION = {
+        # ───────────────────────────── Auto Detection ─────────────────────────────
+        "Auto-Auto"                    : "auto-auto",
+        "Mandarin-Auto"                : "zh-auto",
+        "Yue-Auto"                     : "ct-NULL",
+        "Tamil-Auto"                   : "ta-auto",
+        "Urdu-Auto"                    : "ur-auto",
+        "Arabic-Auto"                  : "ar-auto",
+
+        "自动-自动"                      : "auto-auto",
+        "中文-自动"                      : "zh-auto",
+        "粤语-自动"                      : "ct-NULL",
+        "泰米尔语-自动"                   : "ta-auto",
+        "乌尔都语-自动"                   : "ur-auto",
+        "阿拉伯语-自动"                   : "ar-auto",
+
+        # ───────────────────────────── Chinese variants ─────────────────────────────
+        "Chinese-Mandarin"              : "zh-CN",
+        "Chinese-Taiwan"                : "zh-TW",
+        "Chinese-Wuyu"                  : "zh-WU",
+        "Chinese-Sichuan"               : "zh-SICHUAN",
+        "Chinese-Shanxi"                : "zh-SHANXI",
+        "Chinese-Anhui"                 : "zh-ANHUI",
+        "Chinese-Tianjin"               : "zh-TIANJIN",
+        "Chinese-Ningxia"               : "zh-NINGXIA",
+        "Chinese-Shaanxi"               : "zh-SHAANXI",
+        "Chinese-Hebei"                 : "zh-HEBEI",
+        "Chinese-Shandong"              : "zh-SHANDONG",
+        "Chinese-Guangdong"             : "zh-GUANGDONG",
+        "Chinese-Shanghai"              : "zh-SHANGHAI",
+        "Chinese-Hubei"                 : "zh-HUBEI",
+        "Chinese-Liaoning"              : "zh-LIAONING",
+        "Chinese-Gansu"                 : "zh-GANSU",
+        "Chinese-Fujian"                : "zh-FUJIAN",
+        "Chinese-Hunan"                 : "zh-HUNAN",
+        "Chinese-Henan"                 : "zh-HENAN",
+        "Chinese-Yunnan"                : "zh-YUNNAN",
+        "Chinese-Minnan"                : "zh-MINNAN",
+        "Chinese-Wenzhou"               : "zh-WENZHOU",
+
+        "中文-普通话"                    : "zh-CN",
+        "中文-台湾"                      : "zh-TW",
+        "中文-吴语"                      : "zh-WU",
+        "中文-四川话"                    : "zh-SICHUAN",
+        "中文-山西话"                    : "zh-SHANXI",
+        "中文-安徽话"                    : "zh-ANHUI",
+        "中文-天津话"                    : "zh-TIANJIN",
+        "中文-宁夏话"                    : "zh-NINGXIA",
+        "中文-陕西话"                    : "zh-SHAANXI",
+        "中文-河北话"                    : "zh-HEBEI",
+        "中文-山东话"                    : "zh-SHANDONG",
+        "中文-广东话"                    : "zh-GUANGDONG",
+        "中文-上海话"                    : "zh-SHANGHAI",
+        "中文-湖北话"                    : "zh-HUBEI",
+        "中文-辽宁话"                    : "zh-LIAONING",
+        "中文-甘肃话"                    : "zh-GANSU",
+        "中文-福建话"                    : "zh-FUJIAN",
+        "中文-湖南话"                    : "zh-HUNAN",
+        "中文-河南话"                    : "zh-HENAN",
+        "中文-云南话"                    : "zh-YUNNAN",
+        "中文-闽南语"                    : "zh-MINNAN",
+        "中文-温州话"                    : "zh-WENZHOU",
+
+        # ───────────────────────────── Yue-Cantonese variants ───────────────────────────
+        "Yue-Unknown"                  : "ct-NULL",
+        "Yue-Hongkong"                 : "ct-HK",
+        "Yue-Guangdong"                : "ct-GZ",
+
+        "粤语-未知"                     : "ct-NULL",
+        "粤语-香港"                     : "ct-HK",
+        "粤语-广东"                     : "ct-GZ",
+
+        # ───────────────────────────── East-Asian languages ──────────────────────────────
+        "Japanese"                      : "ja-JP",
+        "Korean"                        : "ko-KR",
+
+        "日语"                           : "ja-JP",
+        "韩语"                           : "ko-KR",
+
+        # ───────────────────────────── South-East Asian languages ─────────────────────────
+        "Thai"                          : "th-TH",
+        "Indonesian"                    : "id-ID",
+        "Vietnamese"                    : "vi-VN",
+        "Malay"                         : "ms-MY",
+        "Burmese"                       : "my-MM",
+        "Tagalog"                       : "tl-PH",
+        "Khmer"                         : "km-KH",
+        "Javanese"                      : "jv-ID",
+        "Lao"                           : "lo-LA",
+        "Filipino"                      : "fil-PH",
+        "Sundanese"                     : "su-ID",
+
+        "泰语"                            : "th-TH",
+        "印度尼西亚语"                     : "id-ID",
+        "越南语"                          : "vi-VN",
+        "马来语"                          : "ms-MY",
+        "缅甸语"                          : "my-MM",
+        "塔加洛语"                        : "tl-PH",
+        "高棉语"                          : "km-KH",
+        "爪哇语"                          : "jv-ID",
+        "老挝语"                          : "lo-LA",
+        "菲律宾语"                        : "fil-PH",
+        "巽他语"                          : "su-ID",
+
+        # ───────────────────────────── South-Asian languages ──────────────────────────────
+        "Hindi"                         : "hi-IN",
+        "Bengali"                       : "bn-BD",
+        "Tamil-Singaporean"             : "ta-SG",
+        "Tamil-Sri Lankan"              : "ta-LK",
+        "Tamil-India"                   : "ta-IN",
+        "Tamil-Malaysia"                : "ta-MY",
+        "Telugu"                        : "te-IN",
+        "Gujarati"                      : "gu-IN",
+        "Oriya"                         : "or-IN",
+        "Odia"                          : "or-IN",
+        "Nepali"                        : "ne-NP",
+        "Sinhala"                       : "si-LK",
+        "Panjabi"                       : "pa-IN",
+        "Kashmiri"                      : "ks-IN",
+        "Marathi"                       : "mr-IN",
+
+        "印地语"                         : "hi-IN",
+        "孟加拉语"                       : "bn-BD",
+        "泰米尔语-新加坡"                 : "ta-SG",
+        "泰米尔语-斯里兰卡"                : "ta-LK",
+        "泰米尔语-印度"                   : "ta-IN",
+        "泰米尔语-马来西亚"                : "ta-MY",
+        "泰卢固语"                        : "te-IN",
+        "古吉拉特语"                      : "gu-IN",
+        "奥里亚语"                        : "or-IN",
+        "尼泊尔语"                        : "ne-NP",
+        "僧伽罗语"                        : "si-LK",
+        "旁遮普语"                        : "pa-IN",
+        "克什米尔语"                      : "ks-IN",
+        "马拉地语"                        : "mr-IN",
+
+        # ───────────────────────────── Middle-Eastern languages ───────────────────────────
+        "Urdu"                          : "ur-PK",
+        "Urdu-India"                    : "ur-IN",
+        "Persian"                       : "fa-IR",
+        "Pushto"                        : "ps-AF",
+
+        "乌尔都语"                        : "ur-PK",
+        "乌尔都语-印度"                    : "ur-IN",
+        "波斯语"                          : "fa-IR",
+        "普什图语"                        : "ps-AF",
+
+        # ───────────────────────────── Arabic variants ──────────────────────────────
+        "Arabic"                        : "ar-GLA",
+        "Arabic-Morocco"                : "ar-MA",
+        "Arabic-Saudi Arabia"           : "ar-SA",
+        "Arabic-Egypt"                  : "ar-EG",
+        "Arabic-Kuwait"                 : "ar-KW",
+        "Arabic-Libya"                  : "ar-LY",
+        "Arabic-Jordan"                 : "ar-JO",
+        "Arabic-U.A.E."                 : "ar-AE",
+        "Arabic-Levant"                 : "ar-LVT",
+
+        "阿拉伯语"                        : "ar-GLA",
+        "阿拉伯语-摩洛哥"                  : "ar-MA",
+        "阿拉伯语-沙特"                    : "ar-SA",
+        "阿拉伯语-埃及"                    : "ar-EG",
+        "阿拉伯语-科威特"                  : "ar-KW",
+        "阿拉伯语-利比亚"                  : "ar-LY",
+        "阿拉伯语-约旦"                    : "ar-JO",
+        "阿拉伯语-阿联酋"                  : "ar-AE",
+        "阿拉伯语-黎凡特"                  : "ar-LVT",
+
+        # ───────────────────────────── Central-Asian languages ────────────────────────────
+        "Uighur"                        : "ug-CN",
+        "Uzbek"                         : "uz-UZ",
+        "Kazakh"                        : "kk-KZ",
+        "Mongolian"                     : "mn-MN",
+        "Kabyle"                        : "kab-NULL",
+        "Bashkir"                       : "ba-NULL",
+        "Tajik"                         : "tg-TJ",
+        "Kirghiz"                       : "ky-KG",
+        "Azerbaijani"                   : "az-AZ",
+
+        "维吾尔语"                        : "ug-CN",
+        "乌兹别克语"                      : "uz-UZ",
+        "哈萨克语"                        : "kk-KZ",
+        "蒙古语"                          : "mn-MN",
+        "卡拜尔语"                        : "kab-NULL",
+        "巴什基尔语"                      : "ba-NULL",
+        "塔吉克语"                        : "tg-TJ",
+        "吉尔吉斯语"                      : "ky-KG",
+        "阿塞拜疆语"                      : "az-AZ",
+
+        # ───────────────────────────── Eastern-European languages ─────────────────────────
+        "Russian"                       : "ru-RU",
+        "俄语"                           : "ru-RU"
+    }
+    
+    INV_DOLPHIN_REGION_LANGUAGE = {
+        # ───────────────────────────── Chinese variants ─────────────────────────────
+        "zh-CN"                         : "Chinese-Mandarin",
+        "zh-TW"                         : "Chinese-Taiwan",
+        "zh-WU"                         : "Chinese-Wuyu",
+        "zh-SICHUAN"                    : "Chinese-Sichuan",
+        "zh-SHANXI"                     : "Chinese-Shanxi",
+        "zh-ANHUI"                      : "Chinese-Anhui",
+        "zh-TIANJIN"                    : "Chinese-Tianjin",
+        "zh-NINGXIA"                    : "Chinese-Ningxia",
+        "zh-SHAANXI"                    : "Chinese-Shaanxi",
+        "zh-HEBEI"                      : "Chinese-Hebei",
+        "zh-SHANDONG"                   : "Chinese-Shandong",
+        "zh-GUANGDONG"                  : "Chinese-Guangdong",
+        "zh-SHANGHAI"                   : "Chinese-Shanghai",
+        "zh-HUBEI"                      : "Chinese-Hubei",
+        "zh-LIAONING"                   : "Chinese-Liaoning",
+        "zh-GANSU"                      : "Chinese-Gansu",
+        "zh-FUJIAN"                     : "Chinese-Fujian",
+        "zh-HUNAN"                      : "Chinese-Hunan",
+        "zh-HENAN"                      : "Chinese-Henan",
+        "zh-YUNNAN"                     : "Chinese-Yunnan",
+        "zh-MINNAN"                     : "Chinese-Minnan",
+        "zh-WENZHOU"                    : "Chinese-Wenzhou",
+
+        # ───────────────────────────── Yue-Cantonese variants ───────────────────────────
+        "ct-NULL"                       : "Yue-Unknown",
+        "ct-HK"                         : "Yue-Hongkong",
+        "ct-GZ"                         : "Yue-Guangdong",
+
+        # ───────────────────────────── East-Asian languages ──────────────────────────────
+        "ja-JP"                         : "Japanese",
+        "ko-KR"                         : "Korean",
+
+        # ───────────────────────────── South-East Asian languages ─────────────────────────
+        "th-TH"                         : "Thai",
+        "id-ID"                         : "Indonesian",
+        "vi-VN"                         : "Vietnamese",
+        "ms-MY"                         : "Malay",
+        "my-MM"                         : "Burmese",
+        "tl-PH"                         : "Tagalog",
+        "km-KH"                         : "Khmer",
+        "jv-ID"                         : "Javanese",
+        "lo-LA"                         : "Lao",
+        "fil-PH"                        : "Filipino",
+        "su-ID"                         : "Sundanese",
+
+        # ───────────────────────────── South-Asian languages ──────────────────────────────
+        "hi-IN"                         : "Hindi",
+        "bn-BD"                         : "Bengali",
+        "ta-SG"                         : "Tamil-Singaporean",
+        "ta-LK"                         : "Tamil-Sri Lankan",
+        "ta-IN"                         : "Tamil-India",
+        "ta-MY"                         : "Tamil-Malaysia",
+        "te-IN"                         : "Telugu",
+        "gu-IN"                         : "Gujarati",
+        "or-IN"                         : "Odia",  # Note: "Oriya" would be overwritten by "Odia"
+        "ne-NP"                         : "Nepali",
+        "si-LK"                         : "Sinhala",
+        "pa-IN"                         : "Panjabi",
+        "ks-IN"                         : "Kashmiri",
+        "mr-IN"                         : "Marathi",
+
+        # ───────────────────────────── Middle-Eastern languages ───────────────────────────
+        "ur-PK"                         : "Urdu-Islamic Republic of Pakistan",  # Note: "Urdu" would be overwritten
+        "ur-IN"                         : "Urdu-India",
+        "fa-IR"                         : "Persian",
+        "ps-AF"                         : "Pushto",
+
+        # ───────────────────────────── Arabic variants ──────────────────────────────
+        "ar-GLA"                        : "Arabic",
+        "ar-MA"                         : "Arabic-Morocco",
+        "ar-SA"                         : "Arabic-Saudi Arabia",
+        "ar-EG"                         : "Arabic-Egypt",
+        "ar-KW"                         : "Arabic-Kuwait",
+        "ar-LY"                         : "Arabic-Libya",
+        "ar-JO"                         : "Arabic-Jordan",
+        "ar-AE"                         : "Arabic-U.A.E.",
+        "ar-LVT"                        : "Arabic-Levant",
+
+        # ───────────────────────────── Central-Asian languages ────────────────────────────
+        "ug-CN"                         : "Uighur",
+        "uz-UZ"                         : "Uzbek",
+        "kk-KZ"                         : "Kazakh",
+        "mn-MN"                         : "Mongolian",
+        "kab-NULL"                      : "Kabyle",
+        "ba-NULL"                       : "Bashkir",
+        "tg-TJ"                         : "Tajik",
+        "ky-KG"                         : "Kirghiz",
+        "az-AZ"                         : "Azerbaijani",
+
+        # ───────────────────────────── Eastern-European languages ─────────────────────────
+        "ru-RU"                         : "Russian",
+    }
+
 
     LANGUAGE_MAP = [(language_map_A, full_language_names_A), (language_map_B, full_language_names_B)]
 
