@@ -83,7 +83,7 @@ def update_transcribe_language(dropdown_model_asr):
         update_A = gr.update(
             value="日語",
             choices=[
-                "中文",         "English",          "日語",         "한국인",
+                "中文",         "English",           "日語",          "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -1894,7 +1894,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
             )
             translate_language = gr.Dropdown(
                 choices=[
-                    "中文",         "English",          "日語",         "한국인",
+                    "中文",         "English",           "日語",          "한국인",
                     "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                     "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                     "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -2183,7 +2183,7 @@ if __name__ == "__main__":
             'vi': 50278, 'yi': 50335, 'yo': 50325, 'zh': 50260
     }
     full_language_names_A = {
-            '中文': 'zh',            '日語': 'ja',          '한국인': 'ko',
+            '中文': 'zh',            '日語': 'ja',           '한국인': 'ko',
             'afrikaans': 'af',      'amharic': 'am',        'arabic': 'ar',        'assamese': 'as',
             'azerbaijani': 'az',    'bashkir': 'ba',        'belarusian': 'be',    'bulgarian': 'bg',
             'bengali': 'bn',        'tibetan': 'bo',        'breton': 'br',        'bosnian': 'bs',
