@@ -350,13 +350,9 @@ def normalize_to_int16(audio):
 
 
 class Dolphin_Tokenizer:
-    def __init__(self, filename=None):
+    def __init__(self, filename):
         self.str_to_idx = {}
         self.idx_to_str = {}
-        if filename:
-            self.load_from_file(filename)
-
-    def load_from_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as file:
             for idx, line in enumerate(file):
                 token = line.rstrip('\n')
@@ -368,9 +364,6 @@ class Dolphin_Tokenizer:
 
     def decode(self, idx):
         return self.idx_to_str.get(idx)
-
-    def __len__(self):
-        return len(self.str_to_idx)
 
 
 def MAIN_PROCESS(
@@ -1066,10 +1059,11 @@ def MAIN_PROCESS(
                 }
                 for i in range(num_layers):
                     input_feed_D[in_name_D[i]] = _init_past_keys_D
+                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
                 for i in range(num_layers, num_layers_2):
                     input_feed_D[in_name_D[i]] = _init_past_values_D
-                for i in range(num_layers_2):
                     input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
+                    
                 if detect_language:
                     input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type, DEVICE_ID)
                     input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
