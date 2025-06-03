@@ -5,6 +5,8 @@
 
 ---
 ## Updates
+- 2025/6/3
+    - Added Dolphin ASR model to support Asian languages.
 - 2025/5/13
     - Added Float16/32 ASR models to support CUDA/DirectML GPU usage. These models can achieve >99% GPU operator deployment.
 - 2025/5/9
@@ -59,6 +61,7 @@ This project is built on ONNX Runtime framework.
   - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [CrisperWhisper](https://github.com/nyrahealth/CrisperWhisper)
   - [FireRedASR-AED-L](https://github.com/FireRedTeam/FireRedASR)
+  - [Dolphin-Small](https://github.com/DataoceanAI/Dolphin)
 
 - LLM Supports: 
   - Qwen-3: [4B](https://modelscope.cn/models/Qwen/Qwen3-4B), [8B](https://modelscope.cn/models/Qwen/Qwen3-8B)
@@ -142,6 +145,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 ## 最近更新与功能
+- 2025/6/3
+    - 新增 Dolphin ASR 模型以支持亚洲语言。
 - 2025/5/13
     - 新增 Float16/32 ASR 模型，支持 CUDA/DirectML GPU 使用。这些模型可实现 >99% 的 GPU 算子部署率。
 - 2025/5/9
@@ -196,6 +201,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [Whisper-Large-v3.5-Distil](https://huggingface.co/distil-whisper/distil-large-v3.5)
   - [CrisperWhisper](https://github.com/nyrahealth/CrisperWhisper)
   - [FireRedASR-AED-L](https://github.com/FireRedTeam/FireRedASR)
+  - [Dolphin-Small](https://github.com/DataoceanAI/Dolphin)
 
 
 - **大语言模型（LLM）支持**：  
