@@ -47,7 +47,7 @@ def update_translate_language(dropdown_model_llm):
     else:
         update_A = gr.update(
             choices=[
-                "中文",          "English",          "日語",          "한국인",
+                "中文",         "English",          "日語",         "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -83,7 +83,7 @@ def update_transcribe_language(dropdown_model_asr):
         update_A = gr.update(
             value="日語",
             choices=[
-                "中文",         "English",           "日語",          "한국인",
+                "中文",         "English",          "日語",         "한국인",
                 "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                 "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                 "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -350,9 +350,13 @@ def normalize_to_int16(audio):
 
 
 class Dolphin_Tokenizer:
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         self.str_to_idx = {}
         self.idx_to_str = {}
+        if filename:
+            self.load_from_file(filename)
+
+    def load_from_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as file:
             for idx, line in enumerate(file):
                 token = line.rstrip('\n')
@@ -364,6 +368,9 @@ class Dolphin_Tokenizer:
 
     def decode(self, idx):
         return self.idx_to_str.get(idx)
+
+    def __len__(self):
+        return len(self.str_to_idx)
 
 
 def MAIN_PROCESS(
@@ -1052,7 +1059,7 @@ def MAIN_PROCESS(
             slice_start = 0
             slice_end = INPUT_AUDIO_LENGTH
             while slice_end <= aligned_len:
-                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
+                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
                 input_feed_D = {
                     in_name_D[-1]: _init_attention_mask_D_1,
                     in_name_D[num_layers_2_plus_1]: _init_history_len,
@@ -1063,7 +1070,7 @@ def MAIN_PROCESS(
                 for i in range(num_layers, num_layers_2):
                     input_feed_D[in_name_D[i]] = _init_past_values_D
                     input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
-                    
+
                 if detect_language:
                     input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type, DEVICE_ID)
                     input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
@@ -1888,7 +1895,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
             )
             translate_language = gr.Dropdown(
                 choices=[
-                    "中文",         "English",           "日語",          "한국인",
+                    "中文",         "English",          "日語",         "한국인",
                     "afrikaans",    "amharic",          "arabic",        "assamese",      "azerbaijani",
                     "bashkir",      "belarusian",       "bulgarian",     "bengali",       "tibetan",
                     "breton",       "bosnian",          "catalan",       "czech",         "welsh",
@@ -2177,7 +2184,7 @@ if __name__ == "__main__":
             'vi': 50278, 'yi': 50335, 'yo': 50325, 'zh': 50260
     }
     full_language_names_A = {
-            '中文': 'zh',            '日語': 'ja',           '한국인': 'ko',
+            '中文': 'zh',            '日語': 'ja',          '한국인': 'ko',
             'afrikaans': 'af',      'amharic': 'am',        'arabic': 'ar',        'assamese': 'as',
             'azerbaijani': 'az',    'bashkir': 'ba',        'belarusian': 'be',    'bulgarian': 'bg',
             'bengali': 'bn',        'tibetan': 'bo',        'breton': 'br',        'bosnian': 'bs',
