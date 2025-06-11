@@ -238,6 +238,17 @@ def update_vad(dropdown_model_vad):
         update_H = gr.update(visible=True, value=0.0)
         update_I = gr.update(visible=True, value=0.1)
         update_J = gr.update(visible=True, value=400)
+    elif "MarbleNet" in dropdown_model_vad:
+        update_A = gr.update(visible=True)
+        update_B = gr.update(visible=True)
+        update_C = gr.update(visible=False)
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(visible=True)
+        update_G = gr.update(visible=True)
+        update_H = gr.update(visible=True, value=0.0)
+        update_I = gr.update(visible=True, value=0.1)
+        update_J = gr.update(visible=True, value=400)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
@@ -591,13 +602,13 @@ def MAIN_PROCESS(
             error = "\nVAD-Official_Silero不存在。请运行 pip install silero-vad --upgrade。\nThe VAD-Official_Silero doesn't exist. Please run 'pip install silero-vad --upgrade'"
             print(error)
             return error
-    elif model_vad == "Pyannote-3.0":
-        if os.path.isfile("./VAD/Pyannote_Segmentation_3/pytorch_model.bin"):
+    elif "Pyannote" in model_vad:
+        if os.path.isfile("./VAD/Pyannote_Segmentation/pytorch_model.bin"):
             vad_type = 3
             onnx_model_B = None
-            print(f"\n找到了 VAD-Pyannote_Segmentation_3.0。Found the VAD-Pyannote_Segmentation_3.0.")
+            print(f"\n找到了 VAD-Pyannote_Segmentation。Found the VAD-Pyannote_Segmentation.")
         else:
-            error = "\nVAD-Pyannote_Segmentation_3.0不存在。请运行'pip install pyannote.audio --upgrade' 并从 https://huggingface.co/pyannote/segmentation-3.0 下载 pytorch_model.bin。\nThe VAD-Pyannote_Segmentation_3.0 doesn't exist. Please run 'pip install pyannote.audio' --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0"
+            error = "\nVAD-Pyannote_Segmentation 不存在。请运行'pip install pyannote.audio --upgrade' 并从 https://huggingface.co/pyannote/segmentation-3.0 下载 pytorch_model.bin。\nThe VAD-Pyannote_Segmentation doesn't exist. Please run 'pip install pyannote.audio' --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0"
             print(error)
             return error
     elif model_vad == "HumAware":
@@ -607,6 +618,15 @@ def MAIN_PROCESS(
             print(f"\n找到了 VAD-HumAware。Found the VAD-HumAware.")
         else:
             error = "\nVAD-HumAware不存在。"
+            print(error)
+            return error
+    elif "MarbleNet" in model_vad:
+        if os.path.isfile("./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/frame_vad_multilingual_marblenet_v2.0.nemo"):
+            vad_type = 5
+            onnx_model_B = None
+            print(f"\n找到了 VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。Found the VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet")
+        else:
+            error = "\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。"
             print(error)
             return error
     else:
@@ -763,9 +783,13 @@ def MAIN_PROCESS(
         out_name_B5 = out_name_B[5].name
     else:
         if vad_type == 2:
+            import torch
+            torch.set_num_threads(parallel_threads)
             silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
         elif vad_type == 3:
-            pyannote_vad = Model.from_pretrained("./VAD/Pyannote_Segmentation_3/pytorch_model.bin")
+            import torch
+            torch.set_num_threads(parallel_threads)
+            pyannote_vad = Model.from_pretrained("./VAD/Pyannote_Segmentation/pytorch_model.bin")
             pyannote_vad_pipeline = VoiceActivityDetection(segmentation=pyannote_vad)
             HYPER_PARAMETERS = {
                 "min_duration_on": slider_vad_MIN_SPEECH_DURATION,
@@ -777,6 +801,15 @@ def MAIN_PROCESS(
             torch.set_num_threads(parallel_threads)
             humaware_vad = torch.jit.load("./VAD/HumAware/HumAwareVAD.jit", map_location='cpu')
             humaware_vad.eval()
+        elif vad_type == 5:
+            import torch
+            import nemo.collections.asr as nemo_asr
+            torch.set_num_threads(parallel_threads)
+            nemo_vad_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            nemo_vad = nemo_asr.models.EncDecFrameClassificationModel.from_pretrained(model_name="./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/frame_vad_multilingual_marblenet_v2.0.nemo")
+            nemo_vad = nemo_vad.to(nemo_vad_device)
+            nemo_vad.eval()
+
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
@@ -888,7 +921,7 @@ def MAIN_PROCESS(
                 audio = audio[:min_len] * slider_denoise_factor_minus + de_audio[:min_len] * slider_denoise_factor
                 audio = normalize_to_int16(audio)
                 del de_audio
-                if (vad_type == 3) or (vad_type == 4):
+                if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
                     sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
             else:
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
@@ -916,7 +949,7 @@ def MAIN_PROCESS(
         else:
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
             audio = normalize_to_int16(audio)
-            if (vad_type == 3) or (vad_type == 4):
+            if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
                 sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
         if FIRST_RUN:
             print(f"\n所有模型已成功加载。All Models have been successfully loaded.")
@@ -1220,7 +1253,7 @@ def MAIN_PROCESS(
                 inv_audio_len = float(100.0 / audio_len)
             audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
             sf.write(f"./Cache/{file_name}_{model_denoiser}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            if (vad_type == 3) or (vad_type == 4):
+            if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
                 sf.write(f"./Cache/{file_name}_vad.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising: 100.00%\n降噪完成。Complete.\nTime Cost: {(end_time - start_time):.3f} Seconds.")
             del saved
@@ -1309,9 +1342,6 @@ def MAIN_PROCESS(
                 timestamps = [(item['start'] * inv_16k, item['end'] * inv_16k) for item in timestamps]
             elif vad_type == 2:
                 print("\nVAD-Official-Silero 不提供可视化的运行进度。\nThe VAD-Official-Silero does not provide the running progress for visualization.\n")
-                if FIRST_RUN:
-                    import torch
-                    torch.set_num_threads(parallel_threads)
                 with torch.inference_mode():
                     timestamps = get_speech_timestamps(
                         torch.from_numpy(audio.reshape(-1).astype(np.float32) * inv_16k),
@@ -1326,10 +1356,7 @@ def MAIN_PROCESS(
                     )
                     timestamps = [(item['start'], item['end']) for item in timestamps]
             elif vad_type == 3:
-                print("\nVAD-Pyannote_Segmentation_3.0 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.\n")
-                if FIRST_RUN:
-                    import torch
-                    torch.set_num_threads(parallel_threads)
+                print("\nVAD-Pyannote_Segmentation 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation does not provide the running progress for visualization.\n")
                 with torch.inference_mode():
                     timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_vad.wav")
                     segments = list(timestamps._tracks.keys())
@@ -1374,6 +1401,34 @@ def MAIN_PROCESS(
                                 silence = False
                         else:
                             if score <= slider_vad_SILENCE_SCORE:
+                                silence = True
+                        saved.append(silence)
+                    timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
+                    del saved
+                    del waveform
+                    gc.collect()
+            elif vad_type == 5:
+                print("\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet 不提供可视化的运行进度。\nThe VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet does not provide the running progress for visualization.\n")
+                with torch.inference_mode():
+                    INPUT_AUDIO_LENGTH = 320
+                    waveform = torch.tensor([AudioSegment.from_file(f"./Cache/{file_name}_vad.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples()], dtype=torch.float32) * inv_int16
+                    outputs = nemo_vad(
+                        input_signal=waveform.to(nemo_vad_device),
+                        input_signal_length=torch.tensor([waveform.shape[1]]).to(nemo_vad_device)
+                    ).cpu().squeeze(0)
+                    silence = True
+                    saved = []
+                    nemo_slider_vad_SPEAKING_SCORE = float(slider_vad_SPEAKING_SCORE * 5.0)
+                    nemo_slider_vad_SILENCE_SCORE = float(slider_vad_SILENCE_SCORE * 5.0)
+                    outputs_len = outputs.shape[0]
+                    for i in range(outputs_len):
+                        if silence:
+                            score = outputs[i, 1]
+                            if score >= nemo_slider_vad_SPEAKING_SCORE:
+                                silence = False
+                        else:
+                            score = outputs[i, 0]
+                            if score >= nemo_slider_vad_SILENCE_SCORE:
                                 silence = True
                         saved.append(silence)
                     timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
@@ -2035,6 +2090,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 "Official-Silero",
                 "Pyannote-3.0",
                 "HumAware",
+                "NVIDIA-NeMo-MarbleNet-v2.0",
                 "None"
             ],
             label="语音活动检测 VAD",
@@ -2580,6 +2636,7 @@ if __name__ == "__main__":
     shutil.copyfile("./VAD/Silero/utils_vad.py", PYTHON_PACKAGE + "/silero_vad/utils_vad.py")
     shutil.copyfile("./VAD/Silero/model.py", PYTHON_PACKAGE + "/silero_vad/model.py")
     shutil.copyfile("./VAD/Silero/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
+    shutil.copyfile("./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/common.py", PYTHON_PACKAGE + "/nemo/core/classes/common.py")
 
     GUI.launch()
     
