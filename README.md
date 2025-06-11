@@ -50,7 +50,7 @@ This project is built on ONNX Runtime framework.
   - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [NVIDIA-NeMo-VAD-v2.0](https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-    - You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Next, place it in the `VAD/pyannote_segmentation_3` folder.
+    - You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Next, place it in the `VAD/pyannote_segmentation` folder.
 
 - ASR Support:
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
@@ -194,7 +194,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [NVIDIA-NeMo-VAD-v2.0](https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-    - 需要接受Pyannote的使用条款，並自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation_3` 文件夹中。
+    - 需要接受Pyannote的使用条款，並自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation` 文件夹中。
 
 - **语音识别（ASR）支持**：
   - [SenseVoice-Small](https://modelscope.cn/models/iic/SenseVoiceSmall)
