@@ -227,6 +227,17 @@ def update_vad(dropdown_model_vad):
         update_H = gr.update(visible=True, value=0.0)
         update_I = gr.update(visible=True, value=0.1)
         update_J = gr.update(visible=True, value=400)
+    elif "HumAware" in dropdown_model_vad:
+        update_A = gr.update(visible=True)
+        update_B = gr.update(visible=True)
+        update_C = gr.update(visible=False)
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(visible=True)
+        update_G = gr.update(visible=True)
+        update_H = gr.update(visible=True, value=0.0)
+        update_I = gr.update(visible=True, value=0.1)
+        update_J = gr.update(visible=True, value=400)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
@@ -589,6 +600,15 @@ def MAIN_PROCESS(
             error = "\nVAD-Pyannote_Segmentation_3.0不存在。请运行'pip install pyannote.audio --upgrade' 并从 https://huggingface.co/pyannote/segmentation-3.0 下载 pytorch_model.bin。\nThe VAD-Pyannote_Segmentation_3.0 doesn't exist. Please run 'pip install pyannote.audio' --upgrade and Download the pytorch_model.bin from https://huggingface.co/pyannote/segmentation-3.0"
             print(error)
             return error
+    elif model_vad == "HumAware":
+        if os.path.isfile("./VAD/HumAware/HumAwareVAD.jit"):
+            vad_type = 4
+            onnx_model_B = None
+            print(f"\n找到了 VAD-HumAware。Found the VAD-HumAware.")
+        else:
+            error = "\nVAD-HumAware不存在。"
+            print(error)
+            return error
     else:
         vad_type = -1
         onnx_model_B = None
@@ -752,6 +772,11 @@ def MAIN_PROCESS(
                 "min_duration_off": slider_vad_FUSION_THRESHOLD
             }
             pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
+        elif vad_type == 4:
+            import torch
+            torch.set_num_threads(parallel_threads)
+            humaware_vad = torch.jit.load("./VAD/HumAware/HumAwareVAD.jit", map_location='cpu')
+            humaware_vad.eval()
     print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
@@ -863,7 +888,7 @@ def MAIN_PROCESS(
                 audio = audio[:min_len] * slider_denoise_factor_minus + de_audio[:min_len] * slider_denoise_factor
                 audio = normalize_to_int16(audio)
                 del de_audio
-                if vad_type == 3:
+                if (vad_type == 3) or (vad_type == 4):
                     sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
             else:
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
@@ -891,7 +916,7 @@ def MAIN_PROCESS(
         else:
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
             audio = normalize_to_int16(audio)
-            if vad_type == 3:
+            if (vad_type == 3) or (vad_type == 4):
                 sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
         if FIRST_RUN:
             print(f"\n所有模型已成功加载。All Models have been successfully loaded.")
@@ -1195,7 +1220,7 @@ def MAIN_PROCESS(
                 inv_audio_len = float(100.0 / audio_len)
             audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
             sf.write(f"./Cache/{file_name}_{model_denoiser}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            if vad_type == 3:
+            if (vad_type == 3) or (vad_type == 4):
                 sf.write(f"./Cache/{file_name}_vad.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising: 100.00%\n降噪完成。Complete.\nTime Cost: {(end_time - start_time):.3f} Seconds.")
             del saved
@@ -1286,6 +1311,7 @@ def MAIN_PROCESS(
                 print("\nVAD-Official-Silero 不提供可视化的运行进度。\nThe VAD-Official-Silero does not provide the running progress for visualization.\n")
                 if FIRST_RUN:
                     import torch
+                    torch.set_num_threads(parallel_threads)
                 with torch.inference_mode():
                     timestamps = get_speech_timestamps(
                         torch.from_numpy(audio.reshape(-1).astype(np.float32) * inv_16k),
@@ -1303,6 +1329,7 @@ def MAIN_PROCESS(
                 print("\nVAD-Pyannote_Segmentation_3.0 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation_3.0 does not provide the running progress for visualization.\n")
                 if FIRST_RUN:
                     import torch
+                    torch.set_num_threads(parallel_threads)
                 with torch.inference_mode():
                     timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_vad.wav")
                     segments = list(timestamps._tracks.keys())
@@ -1317,6 +1344,42 @@ def MAIN_PROCESS(
                         if segment_end > total_seconds:
                             segment_end = total_seconds
                         timestamps.append((segment_start, segment_end))
+            elif vad_type == 4:
+                print("\nVAD-HumAware 不提供可视化的运行进度。\nThe VAD-HumAware does not provide the running progress for visualization.\n")
+                with torch.inference_mode():
+                    waveform = torch.tensor(AudioSegment.from_file(f"./Cache/{file_name}_vad.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=torch.float32) * inv_int16
+                    waveform_len = len(waveform)
+                    INPUT_AUDIO_LENGTH = 512
+                    stride_step = INPUT_AUDIO_LENGTH
+                    if waveform_len > INPUT_AUDIO_LENGTH:
+                        num_windows = int(torch.ceil(torch.tensor((waveform_len - INPUT_AUDIO_LENGTH) / stride_step))) + 1
+                        total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
+                        pad_amount = total_length_needed - waveform_len
+                        final_slice = waveform[-pad_amount:]
+                        rms = torch.sqrt(torch.mean(final_slice * final_slice))
+                        white_noise = rms * torch.randn(pad_amount, device=waveform.device, dtype=waveform.dtype)
+                        waveform = torch.cat((waveform, white_noise), dim=-1)
+                        waveform_len = len(waveform)
+                    elif waveform_len < INPUT_AUDIO_LENGTH:
+                        rms = torch.sqrt(torch.mean(waveform * waveform))
+                        white_noise = rms * torch.randn(INPUT_AUDIO_LENGTH - audio_len, device=waveform.device, dtype=waveform.dtype)
+                        waveform = torch.cat((waveform, white_noise), dim=-1)
+                        waveform_len = len(waveform)
+                    silence = True
+                    saved = []
+                    for i in range(0, waveform_len, INPUT_AUDIO_LENGTH):
+                        score = humaware_vad(waveform[i: i+INPUT_AUDIO_LENGTH], SAMPLE_RATE)
+                        if silence:
+                            if score >= slider_vad_SPEAKING_SCORE:
+                                silence = False
+                        else:
+                            if score <= slider_vad_SILENCE_SCORE:
+                                silence = True
+                        saved.append(silence)
+                    timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
+                    del saved
+                    del waveform
+                    gc.collect()
             else:
                 print("\n这个任务不使用 VAD。This task does not use VAD.\n")
         if vad_type >= 0:
@@ -1971,6 +2034,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 'Faster_Whisper-Silero',
                 "Official-Silero",
                 "Pyannote-3.0",
+                "HumAware",
                 "None"
             ],
             label="语音活动检测 VAD",
@@ -2017,7 +2081,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0, 1, step=0.025,
                 label="语音状态分数 Voice State Score",
                 info="值越大，判断语音状态越困难。\nThe higher the value, the more difficult it is to determine the state of the speech",
-                value=0.4,
+                value=0.3,
                 visible=True,
                 interactive=True
             )
@@ -2025,7 +2089,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0, 1, step=0.025,
                 label="静音状态分数 Silence State Score",
                 info="值越大，越容易截断语音。\nA larger value makes it easier to cut off speaking.",
-                value=0.25,
+                value=0.3,
                 visible=True,
                 interactive=True
             )
@@ -2509,7 +2573,6 @@ if __name__ == "__main__":
         # ───────────────────────────── Eastern-European languages ─────────────────────────
         "ru-RU"                         : "Russian",
     }
-
 
     LANGUAGE_MAP = [(language_map_A, full_language_names_A), (language_map_B, full_language_names_B)]
 
