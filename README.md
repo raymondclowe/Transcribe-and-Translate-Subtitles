@@ -5,6 +5,8 @@
 
 ---
 ## Updates
+- 2025/6/11
+    - Added HumAware-VAD
 - 2025/6/3
     - Added Dolphin ASR model to support Asian languages.
 - 2025/5/13
@@ -45,6 +47,7 @@ This project is built on ONNX Runtime framework.
   - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [Official - Silero](https://github.com/snakers4/silero-vad)
+  - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Next, place it in the `VAD/pyannote_segmentation_3` folder.
 
@@ -145,6 +148,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 ## 最近更新与功能
+- 2025/6/11
+    - 新增 HumAware-VAD。
 - 2025/6/3
     - 新增 Dolphin ASR 模型以支持亚洲语言。
 - 2025/5/13
@@ -185,6 +190,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
   - [Faster_Whisper - Silero](https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py)
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
+  - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - 需要接受Pyannote的使用条款，並自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation_3` 文件夹中。
 
