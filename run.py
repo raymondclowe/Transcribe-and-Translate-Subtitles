@@ -6,6 +6,7 @@ import json
 import time
 import site
 import shutil
+import platform
 from pathlib import Path
 from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
@@ -25,6 +26,7 @@ from sentencepiece import SentencePieceProcessor
 from silero_vad import load_silero_vad, get_speech_timestamps
 from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
 from ASR.FireRedASR.AED.L.aed_tokenizer import ChineseCharEnglishSpmTokenizer
+from VAD.TEN.include.ten_vad import TenVad
 
 
 physical_cores = psutil.cpu_count(logical=False)
@@ -202,8 +204,8 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=True)
         update_F = gr.update(visible=False)
         update_G = gr.update(visible=False)
-        update_H = gr.update(visible=True, value=0.2)
-        update_I = gr.update(visible=True, value=0.1)
+        update_H = gr.update(visible=True, value=0.5)
+        update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "Pyannote" in dropdown_model_vad:
         update_A = gr.update(visible=False)
@@ -213,8 +215,8 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=False)
         update_G = gr.update(visible=False)
-        update_H = gr.update(visible=True, value=0.0)
-        update_I = gr.update(visible=True, value=0.1)
+        update_H = gr.update(visible=True, value=0.2)
+        update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "Silero" in dropdown_model_vad:
         update_A = gr.update(visible=True)
@@ -224,8 +226,8 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=True)
         update_G = gr.update(visible=True)
-        update_H = gr.update(visible=True, value=0.0)
-        update_I = gr.update(visible=True, value=0.1)
+        update_H = gr.update(visible=True, value=0.2)
+        update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "HumAware" in dropdown_model_vad:
         update_A = gr.update(visible=True)
@@ -235,8 +237,8 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=True)
         update_G = gr.update(visible=True)
-        update_H = gr.update(visible=True, value=0.0)
-        update_I = gr.update(visible=True, value=0.1)
+        update_H = gr.update(visible=True, value=0.2)
+        update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "MarbleNet" in dropdown_model_vad:
         update_A = gr.update(visible=True)
@@ -246,8 +248,19 @@ def update_vad(dropdown_model_vad):
         update_E = gr.update(visible=False)
         update_F = gr.update(visible=True)
         update_G = gr.update(visible=True)
-        update_H = gr.update(visible=True, value=0.0)
-        update_I = gr.update(visible=True, value=0.1)
+        update_H = gr.update(visible=True, value=0.2)
+        update_I = gr.update(visible=True, value=0.05)
+        update_J = gr.update(visible=True, value=400)
+    elif dropdown_model_vad == "TEN":
+        update_A = gr.update(visible=True, value=0.5)
+        update_B = gr.update(visible=True, value=0.5)
+        update_C = gr.update(visible=False)
+        update_D = gr.update(visible=False)
+        update_E = gr.update(visible=False)
+        update_F = gr.update(visible=True)
+        update_G = gr.update(visible=True)
+        update_H = gr.update(visible=True, value=0.2)
+        update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     else:
         update_A = gr.update(visible=False)
@@ -334,22 +347,28 @@ def process_timestamps(timestamps, fusion_threshold=1.0, min_duration=0.5):
         return filtered_timestamps
 
 
-def vad_to_timestamps(vad_output, frame_duration):
+def vad_to_timestamps(vad_output, frame_duration, pad=0.0):
     timestamps = []
     start = None
+    max_len = len(vad_output) * frame_duration
+    frame_duration_plus = frame_duration + pad
     # Extract raw timestamps
     for i, silence in enumerate(vad_output):
         if silence:
             if start is not None:  # End of the current speaking segment
-                end = i * frame_duration + frame_duration
+                end = i * frame_duration + frame_duration_plus
+                if end > max_len:
+                    end = max_len
                 timestamps.append((start, end))
                 start = None
         else:
             if start is None:  # Start of a new speaking segment
-                start = i * frame_duration
+                start = i * frame_duration - pad
+                if start < 0.0:
+                    start = 0.0
     # Handle the case where speech continues until the end
     if start is not None:
-        timestamps.append((start, len(vad_output) * frame_duration))
+        timestamps.append((start, max_len))
     return timestamps
 
 
@@ -420,13 +439,181 @@ def MAIN_PROCESS(
         slider_vad_MAX_SPEECH_DURATION,
         slider_vad_MIN_SILENCE_DURATION
 ):
+    def process_segment_A(_inv_audio_len, _slice_start, _slice_end, _audio):
+        return _slice_start * _inv_audio_len, ort_session_A.run([out_name_A0], {in_name_A0: _audio[:, :, _slice_start: _slice_end]})[0]
+
+    def process_segment_C_sensevoice(_start, _end, _inv_audio_len, _audio, _sample_rate, _language_idx):
+        start_indices = _start * _sample_rate
+        audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
+        audio_segment_len = audio_segment.shape[-1]
+        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)
+        stride_step = INPUT_AUDIO_LENGTH
+        slice_start = 0
+        slice_end = INPUT_AUDIO_LENGTH
+        text = ""
+        while slice_start < audio_segment_len:
+            token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end], in_name_C1: _language_idx})[0]
+            text += tokenizer.decode(token_ids.tolist())[0]
+            slice_start += stride_step
+            slice_end = slice_start + INPUT_AUDIO_LENGTH
+        return start_indices * _inv_audio_len, text + ";", (_start, _end)
+
+    def process_segment_C_paraformer(_start, _end, _inv_audio_len, _audio, _sample_rate, _is_english):
+        start_indices = _start * _sample_rate
+        audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
+        audio_segment_len = audio_segment.shape[-1]
+        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        stride_step = INPUT_AUDIO_LENGTH
+        slice_start = 0
+        slice_end = INPUT_AUDIO_LENGTH
+        text = np.array([], dtype=np.str_)
+        while slice_start < audio_segment_len:
+            token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
+            text = np.concatenate((text, tokenizer[token_ids[0]]))
+            slice_start += stride_step
+            slice_end = slice_start + INPUT_AUDIO_LENGTH
+        if _is_english:
+            text = ' '.join(text).replace("</s>", "").replace("@@ ", "")
+        else:
+            text = ''.join(text).replace("</s>", "")
+        return start_indices * _inv_audio_len, text + ";", (_start, _end)
+
+    def process_segment_CD(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _is_whisper):
+        start_indices = _start * _sample_rate
+        audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
+        audio_segment_len = audio_segment.shape[-1]
+        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        stride_step = INPUT_AUDIO_LENGTH
+        slice_start = 0
+        slice_end = INPUT_AUDIO_LENGTH
+        save_token = []
+        while slice_start < audio_segment_len:
+            input_feed_D = {
+                in_name_D[-1]: _init_attention_mask_D_1,
+                in_name_D[num_layers_2]: _init_input_ids,
+                in_name_D[num_layers_2_plus_1]: _init_history_len,
+                in_name_D[num_layers_2_plus_2]: _init_ids_len
+            }
+            for i in range(num_layers):
+                input_feed_D[in_name_D[i]] = _init_past_keys_D
+            for i in range(num_layers, num_layers_2):
+                input_feed_D[in_name_D[i]] = _init_past_values_D
+            num_decode = 0
+            all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
+            for i in range(num_layers_2):
+                input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
+            while num_decode < generate_limit:
+                all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
+                num_decode += 1
+                if max_logit_ids in ASR_STOP_TOKEN:
+                    break
+                for i in range(amount_of_outputs_D):
+                    input_feed_D[in_name_D[i]] = all_outputs_D[i]
+                if num_decode < 2:
+                    input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
+                    if _is_whisper:
+                        input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
+                save_token.append(max_logit_ids)
+            slice_start += stride_step
+            slice_end = slice_start + INPUT_AUDIO_LENGTH
+        if _is_whisper:
+            save_token_array = remove_repeated_parts(save_token, 4)  # To handle "over-talking".
+            text, _ = tokenizer._decode_asr(
+                [{
+                    "tokens": save_token_array
+                }],
+                return_timestamps=None,  # Do not support return timestamps
+                return_language=None,
+                time_precision=0
+            )
+        else:
+            text = ("".join([tokenizer.dict[int(id)] for id in save_token])).replace(tokenizer.SPM_SPACE, ' ').strip()
+        return start_indices * _inv_audio_len, text + ";", (_start, _end)
+
+    def process_segment_CD_dolphin(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _lang_id, _region_id):
+        start_indices = _start * _sample_rate
+        audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
+        audio_segment_len = audio_segment.shape[-1]
+        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        stride_step = INPUT_AUDIO_LENGTH
+        save_token = []
+        slice_start = 0
+        slice_end = INPUT_AUDIO_LENGTH
+        while slice_start < audio_segment_len:
+            all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
+            input_feed_D = {
+                in_name_D[-1]: _init_attention_mask_D_1,
+                in_name_D[num_layers_2_plus_1]: _init_history_len,
+            }
+            for i in range(num_layers):
+                input_feed_D[in_name_D[i]] = _init_past_keys_D
+                input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
+            for i in range(num_layers, num_layers_2):
+                input_feed_D[in_name_D[i]] = _init_past_values_D
+                input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
+
+            if detect_language:
+                input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999]], dtype=np.int32), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
+                all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                _lang_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 7
+                for i in range(num_layers):
+                    input_feed_D[in_name_D[i]] = _init_past_keys_D
+                for i in range(num_layers, num_layers_2):
+                    input_feed_D[in_name_D[i]] = _init_past_values_D
+            if detect_region:
+                input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([324], dtype=np.int64), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999, _lang_id]], dtype=np.int32), device_type, DEVICE_ID)
+                input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([2], dtype=np.int64), device_type, DEVICE_ID)
+                all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                _region_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 145
+                for i in range(num_layers):
+                    input_feed_D[in_name_D[i]] = _init_past_keys_D
+                for i in range(num_layers, num_layers_2):
+                    input_feed_D[in_name_D[i]] = _init_past_values_D
+            input_ids = np.array([[39999, _lang_id, _region_id, 6, 324]], dtype=np.int32)  # start_id = 39999; itn = 5; asr = 6; no_timestamp = 324
+            ids_len = np.array([input_ids.shape[1]], dtype=np.int64)
+            input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(input_ids, device_type, DEVICE_ID)
+            input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(ids_len, device_type, DEVICE_ID)
+            input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type, DEVICE_ID)
+            input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([40002], dtype=np.int64), device_type, DEVICE_ID)
+            num_decode = 0
+            while num_decode < generate_limit:
+                all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
+                max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
+                num_decode += 1
+                if max_logit_ids in ASR_STOP_TOKEN:
+                    break
+                for i in range(amount_of_outputs_D):
+                    input_feed_D[in_name_D[i]] = all_outputs_D[i]
+                if num_decode < 2:
+                    input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
+                    input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
+                save_token.append(max_logit_ids)
+            slice_start += stride_step
+            slice_end = slice_start + INPUT_AUDIO_LENGTH
+        text = ""
+        for i in save_token:
+            text += tokenizer.decode(i)
+        text = text.replace("▁", " ")
+        return start_indices * _inv_audio_len, text + ";", (_start, _end)
+
     total_process_time = time.time()
     print("----------------------------------------------------------------------------------------------------------")
 
     USE_V3 = True  # In the current version, only release the Whisper-V3 series.
     FIRST_RUN = True
     USE_DENOISED = True
+    HAS_CACHE = False
     SAMPLE_RATE = 16000
+    sys_os = platform.system()
+
+    if (sys_os != 'Windows') and (sys_os != 'Darwin') and (sys_os != 'Linux'):
+        return f"Unsupported OS: {sys_os}"
 
     task_queue = []
     if os.path.isfile(file_path_input):
@@ -523,7 +710,7 @@ def MAIN_PROCESS(
         ]
         max_workers = parallel_threads
     elif "DmlExecutionProvider" in ORT_Accelerate_Providers:
-        if os.name != 'nt':
+        if sys_os != "Windows":
             print("\nDirectML-GPU-NPU 仅支持 Windows 系统。回退到 CPU 硬件。\nThe DirectML-GPU-NPU only support the Windows System. Fallback to the CPU providers.")
             device_type = 'cpu'
             ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
@@ -558,7 +745,9 @@ def MAIN_PROCESS(
     slider_denoise_factor = float(slider_denoise_factor)
     if model_denoiser == "DFSMN":
         SAMPLE_RATE = 48000
-    if model_denoiser == "MelBandRoformer":
+    elif model_denoiser == "ZipEnhancer":
+        slider_vad_pad += 200  # Over denoise
+    elif model_denoiser == "MelBandRoformer":
         SAMPLE_RATE = 44100
     elif model_denoiser == "None":
         USE_DENOISED = False
@@ -621,14 +810,43 @@ def MAIN_PROCESS(
             print(error)
             return error
     elif "MarbleNet" in model_vad:
-        if os.path.isfile("./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/frame_vad_multilingual_marblenet_v2.0.nemo"):
-            vad_type = 5
-            onnx_model_B = None
-            print(f"\n找到了 VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。Found the VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet")
+        if device_type != 'cpu':
+            onnx_model_B = "./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/F16/NVIDIA_MarbleNet.onnx"
         else:
-            error = "\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。"
+            onnx_model_B = "./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/F32/NVIDIA_MarbleNet.onnx"
+        if os.path.isfile(onnx_model_B):
+            vad_type = 5
+            print(f"\n找到了 VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。Found the VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet.")
+        else:
+            error = "\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet 不存在。\nThe VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet doesn't exist. "
             print(error)
             return error
+    elif model_vad == "TEN":
+        if sys_os == "Darwin":
+            # Current not support MAC + Python. Fallback to Default.
+            print("\nTAN-VAD 目前不支持 MAC + Python。回退到 Faster_Whisper-Silero。\nThe TAN-VAD vurrently doesn't support MAC + Python. Fallback to Faster_Whisper-Silero.")
+            if os.path.isdir(PYTHON_PACKAGE + "/faster_whisper"):
+                vad_type = 1
+                onnx_model_B = None
+                print(f"\n找到了 VAD-Faster_Whisper-Silero。Found the VAD-Faster_Whisper-Silero.")
+            else:
+                error = "\nVAD-Faster_Whisper-Silero 不存在。请运行 pip install fastest-whisper --upgrade。\nThe VAD-Faster_Whisper-Silero doesn't exist. Please run 'pip install faster-whisper --upgrade'"
+                print(error)
+                return error
+        else:
+            if sys_os != "Windows":
+                lib_path = "./VAD/TEN/lib/Linux/x64/libten_vad.so"
+                print("\n您正在使用 Linux 操作系统的 TEN-VAD。首次启动前，请运行以下命令。\nYou are using the TEN-VAD with Linux OS. Please run the following commands before the first launch.\n\nsudo apt update\nsudo apt install libc++1")
+            else:
+                lib_path = "./VAD/TEN/lib/Windows/x64/libten_vad.dll"
+            if os.path.isfile(lib_path):
+                vad_type = 6
+                onnx_model_B = None
+                print(f"\n找到了 VAD-TEN。Found the VAD-TEN.")
+            else:
+                error = "\nVAD-TEN 不存在。\nThe VAD-TEN doesn't exist. "
+                print(error)
+                return error
     else:
         vad_type = -1
         onnx_model_B = None
@@ -649,7 +867,7 @@ def MAIN_PROCESS(
         elif model_asr == "Whisper-Large-V3.5-Distil-English":
             path = "./ASR/Whisper/Fine_Tune_Large_Distill_V3.5"
         else:
-            error = f"\n未找到模型。No model-{model_asr} found."
+            error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
         onnx_model_C = f"{path}/{quant}/Whisper_Encoder.onnx"
@@ -708,8 +926,8 @@ def MAIN_PROCESS(
         target_task_id = None
         onnx_model_D = None
     elif "FireRedASR" in model_asr:
-        onnx_model_C = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Encoder.onnx"
-        onnx_model_D = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR-AED-L-Decoder.onnx"
+        onnx_model_C = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR_AED_L-Encoder.onnx"
+        onnx_model_D = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR_AED_L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -720,11 +938,11 @@ def MAIN_PROCESS(
         tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
     elif "Dolphin" in model_asr:
         if device_type != 'cpu':
-            onnx_model_C = "./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
-            onnx_model_D = "./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
+            onnx_model_C = f"./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
+            onnx_model_D = f"./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
         else:
-            onnx_model_C = "./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
-            onnx_model_D = "./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
+            onnx_model_C = f"./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
+            onnx_model_D = f"./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -781,36 +999,41 @@ def MAIN_PROCESS(
         out_name_B3 = out_name_B[3].name
         out_name_B4 = out_name_B[4].name
         out_name_B5 = out_name_B[5].name
-    else:
-        if vad_type == 2:
-            import torch
-            torch.set_num_threads(parallel_threads)
-            silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-        elif vad_type == 3:
-            import torch
-            torch.set_num_threads(parallel_threads)
-            pyannote_vad = Model.from_pretrained("./VAD/Pyannote_Segmentation/pytorch_model.bin")
-            pyannote_vad_pipeline = VoiceActivityDetection(segmentation=pyannote_vad)
-            HYPER_PARAMETERS = {
-                "min_duration_on": slider_vad_MIN_SPEECH_DURATION,
-                "min_duration_off": slider_vad_FUSION_THRESHOLD
-            }
-            pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
-        elif vad_type == 4:
-            import torch
-            torch.set_num_threads(parallel_threads)
-            humaware_vad = torch.jit.load("./VAD/HumAware/HumAwareVAD.jit", map_location='cpu')
-            humaware_vad.eval()
-        elif vad_type == 5:
-            import torch
-            import nemo.collections.asr as nemo_asr
-            torch.set_num_threads(parallel_threads)
-            nemo_vad_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            nemo_vad = nemo_asr.models.EncDecFrameClassificationModel.from_pretrained(model_name="./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/frame_vad_multilingual_marblenet_v2.0.nemo")
-            nemo_vad = nemo_vad.to(nemo_vad_device)
-            nemo_vad.eval()
-
-    print(f"\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
+        print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
+    elif vad_type == 2:
+        import torch
+        torch.set_num_threads(parallel_threads)
+        silero_vad = load_silero_vad(session_opts=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
+    elif vad_type == 3:
+        import torch
+        torch.set_num_threads(parallel_threads)
+        pyannote_vad = Model.from_pretrained("./VAD/Pyannote_Segmentation/pytorch_model.bin")
+        pyannote_vad_pipeline = VoiceActivityDetection(segmentation=pyannote_vad)
+        HYPER_PARAMETERS = {
+            "min_duration_on": slider_vad_MIN_SPEECH_DURATION,
+            "min_duration_off": slider_vad_FUSION_THRESHOLD
+        }
+        pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
+        print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
+    elif vad_type == 4:
+        import torch
+        torch.set_num_threads(parallel_threads)
+        humaware_vad = torch.jit.load("./VAD/HumAware/HumAwareVAD.jit", map_location='cpu')
+        humaware_vad.eval()
+        print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
+    elif vad_type == 5:
+        ort_session_B = onnxruntime.InferenceSession(onnx_model_B, sess_options=session_opts, providers=ORT_Accelerate_Providers)
+        print(f"\nVAD 可用的硬件 VAD Usable Providers: {ort_session_B.get_providers()}")
+        in_name_B = ort_session_B.get_inputs()
+        out_name_B = ort_session_B.get_outputs()
+        in_name_B0 = in_name_B[0].name
+        out_name_B0 = out_name_B[0].name
+        out_name_B1 = out_name_B[1].name
+        out_name_B2 = out_name_B[2].name
+    elif vad_type == 6:
+        ten_vad = TenVad(TEN_VAD_FRAME_LENGTH, 0.5, lib_path)  # TEN_VAD_FRAME_LENGTH = 256, standard threshold = 0.5
+        print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
         if device_type != 'cpu':
@@ -894,7 +1117,6 @@ def MAIN_PROCESS(
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
         else:
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-        input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
         in_name_C0 = in_name_C[0].name
@@ -910,22 +1132,18 @@ def MAIN_PROCESS(
     for input_audio in task_queue:
         print(f"\n加载音频文件 Loading the Input Media: {input_audio}")
         file_name = Path(input_audio).stem
+        audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f"./Cache/{file_name}_{model_denoiser}.wav").exists():
                 print("\n降噪音频文件已存在，改用缓存文件。The denoised audio file already exists. Using the cache instead.")
                 USE_DENOISED = False
+                HAS_CACHE = True
                 SAMPLE_RATE = 16000
                 de_audio = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{model_denoiser}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
                 min_len = min(audio.shape[-1], de_audio.shape[-1])
                 audio = audio[:min_len] * slider_denoise_factor_minus + de_audio[:min_len] * slider_denoise_factor
-                audio = normalize_to_int16(audio)
                 del de_audio
-                if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
-                    sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
             else:
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
-                audio = normalize_to_int16(audio)
                 if FIRST_RUN:
                     if model_denoiser == "ZipEnhancer":
                         if "OpenVINOExecutionProvider" in ORT_Accelerate_Providers:
@@ -946,239 +1164,13 @@ def MAIN_PROCESS(
                     out_name_A0 = out_name_A[0].name
                     a_provider = ort_session_A.get_providers()
                     print(f"\n降噪可用的硬件 Denoise-Usable Providers: {a_provider}")
-        else:
-            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
-            audio = normalize_to_int16(audio)
-            if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
-                sf.write(f"./Cache/{file_name}_vad.wav", audio, SAMPLE_RATE, format='WAVEX')
+
         if FIRST_RUN:
             print(f"\n所有模型已成功加载。All Models have been successfully loaded.")
             print("----------------------------------------------------------------------------------------------------------")
 
-        def process_segment_A(_inv_audio_len, _slice_start, _slice_end, _audio):
-            return _slice_start * _inv_audio_len, ort_session_A.run([out_name_A0], {in_name_A0: _audio[:, :, _slice_start: _slice_end]})[0]
-
-        def process_segment_C_sensevoice(_start, _end, _inv_audio_len, _audio, _sample_rate, _language_idx):
-            start_indices = _start * _sample_rate
-            audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
-            audio_len = audio_segment.shape[-1]
-            if isinstance(input_shape_C, str):
-                INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_len)  # You can adjust it.
-            else:
-                INPUT_AUDIO_LENGTH = input_shape_C
-            stride_step = INPUT_AUDIO_LENGTH
-            if audio_len > INPUT_AUDIO_LENGTH:
-                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
-                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
-                pad_amount = total_length_needed - audio_len
-                final_slice = audio_segment[:, :, -pad_amount:].astype(np.float32)
-                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            elif audio_len < INPUT_AUDIO_LENGTH:
-                audio_segment_float = audio_segment.astype(np.float32)
-                white_noise = (np.sqrt(np.mean(audio_segment_float * audio_segment_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            aligned_len = audio_segment.shape[-1]
-            slice_start = 0
-            slice_end = INPUT_AUDIO_LENGTH
-            text = ""
-            while slice_end <= aligned_len:
-                token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end], in_name_C1: _language_idx})[0]
-                text += tokenizer.decode(token_ids.tolist())[0]
-                slice_start += stride_step
-                slice_end = slice_start + INPUT_AUDIO_LENGTH
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
-
-        def process_segment_C_paraformer(_start, _end, _inv_audio_len, _audio, _sample_rate, _is_english):
-            start_indices = _start * _sample_rate
-            audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
-            audio_len = audio_segment.shape[-1]
-            if isinstance(input_shape_C, str):
-                INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_len)  # You can adjust it.
-            else:
-                INPUT_AUDIO_LENGTH = input_shape_C
-            stride_step = INPUT_AUDIO_LENGTH
-            if audio_len > INPUT_AUDIO_LENGTH:
-                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
-                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
-                pad_amount = total_length_needed - audio_len
-                final_slice = audio_segment[:, :, -pad_amount:].astype(np.float32)
-                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            elif audio_len < INPUT_AUDIO_LENGTH:
-                audio_segment_float = audio_segment.astype(np.float32)
-                white_noise = (np.sqrt(np.mean(audio_segment_float * audio_segment_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            aligned_len = audio_segment.shape[-1]
-            slice_start = 0
-            slice_end = INPUT_AUDIO_LENGTH
-            text = np.array([], dtype=np.str_)
-            while slice_end <= aligned_len:
-                token_ids = ort_session_C.run([out_name_C0], {in_name_C0: audio_segment[:, :, slice_start: slice_end]})[0]
-                text = np.concatenate((text, tokenizer[token_ids[0]]))
-                slice_start += stride_step
-                slice_end = slice_start + INPUT_AUDIO_LENGTH
-            if _is_english:
-                text = ' '.join(text).replace("</s>", "").replace("@@ ", "")
-            else:
-                text = ''.join(text).replace("</s>", "")
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
-
-        def process_segment_CD(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _is_whisper):
-            start_indices = _start * _sample_rate
-            audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
-            audio_len = audio_segment.shape[-1]
-            if isinstance(input_shape_C, str):
-                INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_len)  # You can adjust it.
-            else:
-                INPUT_AUDIO_LENGTH = input_shape_C
-            stride_step = INPUT_AUDIO_LENGTH
-            if audio_len > INPUT_AUDIO_LENGTH:
-                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
-                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
-                pad_amount = total_length_needed - audio_len
-                final_slice = audio_segment[:, :, -pad_amount:].astype(np.float32)
-                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            elif audio_len < INPUT_AUDIO_LENGTH:
-                audio_segment_float = audio_segment.astype(np.float32)
-                white_noise = (np.sqrt(np.mean(audio_segment_float * audio_segment_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            aligned_len = audio_segment.shape[-1]
-            slice_start = 0
-            slice_end = INPUT_AUDIO_LENGTH
-            save_token = []
-            while slice_end <= aligned_len:
-                input_feed_D = {
-                    in_name_D[-1]: _init_attention_mask_D_1,
-                    in_name_D[num_layers_2]: _init_input_ids,
-                    in_name_D[num_layers_2_plus_1]: _init_history_len,
-                    in_name_D[num_layers_2_plus_2]: _init_ids_len
-                }
-                for i in range(num_layers):
-                    input_feed_D[in_name_D[i]] = _init_past_keys_D
-                for i in range(num_layers, num_layers_2):
-                    input_feed_D[in_name_D[i]] = _init_past_values_D
-                num_decode = 0
-                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
-                for i in range(num_layers_2):
-                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
-                while num_decode < generate_limit:
-                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
-                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
-                    num_decode += 1
-                    if max_logit_ids in ASR_STOP_TOKEN:
-                        break
-                    for i in range(amount_of_outputs_D):
-                        input_feed_D[in_name_D[i]] = all_outputs_D[i]
-                    if num_decode < 2:
-                        input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
-                        if _is_whisper:
-                            input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
-                    save_token.append(max_logit_ids)
-                slice_start += stride_step
-                slice_end = slice_start + INPUT_AUDIO_LENGTH
-            if _is_whisper:
-                save_token_array = remove_repeated_parts(save_token, 4)  # To handle "over-talking".
-                text, _ = tokenizer._decode_asr(
-                    [{
-                        "tokens": save_token_array
-                    }],
-                    return_timestamps=None,  # Do not support return timestamps
-                    return_language=None,
-                    time_precision=0
-                )
-            else:
-                text = ("".join([tokenizer.dict[int(id)] for id in save_token])).replace(tokenizer.SPM_SPACE, ' ').strip()
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
-
-        def process_segment_CD_dolphin(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _lang_id, _region_id):
-            start_indices = _start * _sample_rate
-            audio_segment = _audio[:, :, int(start_indices): int(_end * _sample_rate)]
-            audio_len = audio_segment.shape[-1]
-            if isinstance(input_shape_C, str):
-                INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_len)  # You can adjust it.
-            else:
-                INPUT_AUDIO_LENGTH = input_shape_C
-            stride_step = INPUT_AUDIO_LENGTH
-            if audio_len > INPUT_AUDIO_LENGTH:
-                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
-                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
-                pad_amount = total_length_needed - audio_len
-                final_slice = audio_segment[:, :, -pad_amount:].astype(np.float32)
-                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            elif audio_len < INPUT_AUDIO_LENGTH:
-                audio_segment_float = audio_segment.astype(np.float32)
-                white_noise = (np.sqrt(np.mean(audio_segment_float * audio_segment_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio_segment.dtype)
-                audio_segment = np.concatenate((audio_segment, white_noise), axis=-1)
-            aligned_len = audio_segment.shape[-1]
-            save_token = []
-            slice_start = 0
-            slice_end = INPUT_AUDIO_LENGTH
-            while slice_end <= aligned_len:
-                all_outputs_C = ort_session_C.run_with_ort_values(output_names_C, {in_name_C0: onnxruntime.OrtValue.ortvalue_from_numpy(audio_segment[:, :, slice_start: slice_end], device_type, DEVICE_ID)})
-                input_feed_D = {
-                    in_name_D[-1]: _init_attention_mask_D_1,
-                    in_name_D[num_layers_2_plus_1]: _init_history_len,
-                }
-                for i in range(num_layers):
-                    input_feed_D[in_name_D[i]] = _init_past_keys_D
-                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
-                for i in range(num_layers, num_layers_2):
-                    input_feed_D[in_name_D[i]] = _init_past_values_D
-                    input_feed_D[in_name_D[layer_indices[i]]] = all_outputs_C[i]
-
-                if detect_language:
-                    input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999]], dtype=np.int32), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
-                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
-                    _lang_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 7
-                    for i in range(num_layers):
-                        input_feed_D[in_name_D[i]] = _init_past_keys_D
-                    for i in range(num_layers, num_layers_2):
-                        input_feed_D[in_name_D[i]] = _init_past_values_D
-                if detect_region:
-                    input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([324], dtype=np.int64), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([[39999, _lang_id]], dtype=np.int32), device_type, DEVICE_ID)
-                    input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([2], dtype=np.int64), device_type, DEVICE_ID)
-                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
-                    _region_id = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0] + 145
-                    for i in range(num_layers):
-                        input_feed_D[in_name_D[i]] = _init_past_keys_D
-                    for i in range(num_layers, num_layers_2):
-                        input_feed_D[in_name_D[i]] = _init_past_values_D
-                input_ids = np.array([[39999, _lang_id, _region_id, 6, 324]], dtype=np.int32)  # start_id = 39999; itn = 5; asr = 6; no_timestamp = 324
-                ids_len = np.array([input_ids.shape[1]], dtype=np.int64)
-                input_feed_D[in_name_D[num_layers_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(input_ids, device_type, DEVICE_ID)
-                input_feed_D[in_name_D[num_layers_2_plus_2]] = onnxruntime.OrtValue.ortvalue_from_numpy(ids_len, device_type, DEVICE_ID)
-                input_feed_D[in_name_D[-3]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type, DEVICE_ID)
-                input_feed_D[in_name_D[-2]] = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([40002], dtype=np.int64), device_type, DEVICE_ID)
-                num_decode = 0
-                while num_decode < generate_limit:
-                    all_outputs_D = ort_session_D.run_with_ort_values(out_name_D, input_feed_D)
-                    max_logit_ids = onnxruntime.OrtValue.numpy(all_outputs_D[-2])[0][0]
-                    num_decode += 1
-                    if max_logit_ids in ASR_STOP_TOKEN:
-                        break
-                    for i in range(amount_of_outputs_D):
-                        input_feed_D[in_name_D[i]] = all_outputs_D[i]
-                    if num_decode < 2:
-                        input_feed_D[in_name_D[-1]] = _init_attention_mask_D_0
-                        input_feed_D[in_name_D[num_layers_2_plus_2]] = _init_ids_len_1
-                    save_token.append(max_logit_ids)
-                slice_start += stride_step
-                slice_end = slice_start + INPUT_AUDIO_LENGTH
-            text = ""
-            for i in save_token:
-                text += tokenizer.decode(i)
-            text = text.replace("▁", " ")
-            return start_indices * _inv_audio_len, text + ";", (_start, _end)
-
         # Process audio
+        audio = normalize_to_int16(audio)
         audio_len = audio.shape[-1]
         if switcher_run_test:
             audio_len = audio_len // 10
@@ -1228,7 +1220,7 @@ def MAIN_PROCESS(
             end_time = time.time()
             results.sort(key=lambda x: x[0])
             saved = [result[1] for result in results]
-            de_audio = (np.concatenate(saved, axis=-1))
+            de_audio = np.concatenate(saved, axis=-1)
             de_audio = de_audio[:, :, :audio_len]
             audio = audio[:, :, :audio_len].astype(np.float32) * slider_denoise_factor_minus + de_audio.astype(np.float32) * slider_denoise_factor
             if model_denoiser == "DFSMN":
@@ -1251,10 +1243,8 @@ def MAIN_PROCESS(
                     target_sr=SAMPLE_RATE
                 ).reshape(1, 1, -1)
                 inv_audio_len = float(100.0 / audio_len)
-            audio = audio.clip(min=-32768.0, max=32767.0).astype(np.int16)
+            audio = normalize_to_int16(audio.clip(min=-32768.0, max=32767.0))
             sf.write(f"./Cache/{file_name}_{model_denoiser}.wav", de_audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
-            if (vad_type == 3) or (vad_type == 4) or (vad_type == 5):
-                sf.write(f"./Cache/{file_name}_vad.wav", audio.reshape(-1), SAMPLE_RATE, format='WAVEX')
             print(f"Denoising: 100.00%\n降噪完成。Complete.\nTime Cost: {(end_time - start_time):.3f} Seconds.")
             del saved
             del results
@@ -1264,10 +1254,18 @@ def MAIN_PROCESS(
         print("----------------------------------------------------------------------------------------------------------")
         print("\n接下来利用VAD模型提取语音片段。Next, use the VAD model to extract speech segments.")
         start_time = time.time()
+        if vad_type != -1:
+            if USE_DENOISED or HAS_CACHE:
+                waveform = np.array(AudioSegment.from_file(f"./Cache/{file_name}_{model_denoiser}.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=np.float32)
+                waveform = normalize_to_int16(waveform)
+                waveform = waveform.reshape(1, 1, -1)
+            else:
+                waveform = audio
+        
         if vad_type == 0:
             shape_value_in = ort_session_B._inputs_meta[0].shape[-1]
             if isinstance(shape_value_in, str):
-                INPUT_AUDIO_LENGTH = min(1536, audio_len)  # You can adjust it.
+                INPUT_AUDIO_LENGTH = min(8000, audio_len)  # You can adjust it.
             else:
                 INPUT_AUDIO_LENGTH = shape_value_in
             stride_step = INPUT_AUDIO_LENGTH
@@ -1275,14 +1273,14 @@ def MAIN_PROCESS(
                 num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
                 total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
                 pad_amount = total_length_needed - audio_len
-                final_slice = audio[:, :, -pad_amount:].astype(np.float32)
-                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio.dtype)
-                audio = np.concatenate((audio, white_noise), axis=-1)
+                final_slice = waveform[:, :, -pad_amount:].astype(np.float32)
+                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(waveform.dtype)
+                waveform = np.concatenate((waveform, white_noise), axis=-1)
             elif audio_len < INPUT_AUDIO_LENGTH:
-                audio_float = audio.astype(np.float32)
-                white_noise = (np.sqrt(np.mean(audio_float * audio_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(audio.dtype)
-                audio = np.concatenate((audio, white_noise), axis=-1)
-            audio_len = audio.shape[-1]
+                audio_float = waveform.astype(np.float32)
+                white_noise = (np.sqrt(np.mean(audio_float * audio_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH - audio_len))).astype(waveform.dtype)
+                waveform = np.concatenate((waveform, white_noise), axis=-1)
+            audio_len = waveform.shape[-1]
             inv_audio_len = float(100.0 / audio_len)
             cache_0 = init_cache
             cache_1 = init_cache
@@ -1296,7 +1294,7 @@ def MAIN_PROCESS(
                 score, cache_0, cache_1, cache_2, cache_3, noisy_dB = ort_session_B.run(
                     [out_name_B0, out_name_B1, out_name_B2, out_name_B3, out_name_B4, out_name_B5],
                     {
-                        in_name_B0: audio[:, :, slice_start: slice_end],
+                        in_name_B0: waveform[:, :, slice_start: slice_end],
                         in_name_B1: cache_0,
                         in_name_B2: cache_1,
                         in_name_B3: cache_2,
@@ -1316,128 +1314,159 @@ def MAIN_PROCESS(
                 print(f"VAD: {slice_start * inv_audio_len:.3f}%")
                 slice_start += stride_step
                 slice_end = slice_start + INPUT_AUDIO_LENGTH
-            timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
+            timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k, float(slider_vad_pad * 0.001))
             del saved
+            del waveform
             del cache_0
             del cache_1
             del cache_2
             del cache_3
             gc.collect()
-        else:
-            if vad_type == 1:
-                print("\nVAD-Faster_Whisper-Silero 不提供可视化的运行进度。\nThe VAD-Faster_Whisper-Silero does not provide the running progress for visualization.\n")
-                vad_options = {
-                    'threshold': slider_vad_SPEAKING_SCORE,
-                    'neg_threshold': slider_vad_SILENCE_SCORE,
-                    'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
-                    'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
-                    'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
-                    'speech_pad_ms': slider_vad_pad
-                }
-                timestamps = get_speech_timestamps_FW(
-                    (audio.reshape(-1).astype(np.float32) * inv_int16),
-                    vad_options=VadOptions(**vad_options),
-                    sampling_rate=SAMPLE_RATE
+        elif vad_type == 1:
+            print("\nVAD-Faster_Whisper-Silero 不提供可视化的运行进度。\nThe VAD-Faster_Whisper-Silero does not provide the running progress for visualization.\n")
+            vad_options = {
+                'threshold': slider_vad_SPEAKING_SCORE,
+                'neg_threshold': slider_vad_SILENCE_SCORE,
+                'max_speech_duration_s': slider_vad_MAX_SPEECH_DURATION,
+                'min_speech_duration_ms': int(slider_vad_MIN_SPEECH_DURATION * 1000),
+                'min_silence_duration_ms': slider_vad_MIN_SILENCE_DURATION,
+                'speech_pad_ms': slider_vad_pad
+            }
+            timestamps = get_speech_timestamps_FW(
+                (waveform.reshape(-1).astype(np.float32) * inv_int16),
+                vad_options=VadOptions(**vad_options),
+                sampling_rate=SAMPLE_RATE
+            )
+            timestamps = [(item['start'] * inv_16k, item['end'] * inv_16k) for item in timestamps]
+            del waveform
+        elif vad_type == 2:
+            print("\nVAD-Official-Silero 不提供可视化的运行进度。\nThe VAD-Official-Silero does not provide the running progress for visualization.\n")
+            with torch.inference_mode():
+                timestamps = get_speech_timestamps(
+                    torch.from_numpy(waveform.reshape(-1).astype(np.float32) * inv_16k),
+                    model=silero_vad,
+                    threshold=slider_vad_SPEAKING_SCORE,
+                    neg_threshold=slider_vad_SILENCE_SCORE,
+                    max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
+                    min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
+                    min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
+                    speech_pad_ms=slider_vad_pad,
+                    return_seconds=True
                 )
-                timestamps = [(item['start'] * inv_16k, item['end'] * inv_16k) for item in timestamps]
-            elif vad_type == 2:
-                print("\nVAD-Official-Silero 不提供可视化的运行进度。\nThe VAD-Official-Silero does not provide the running progress for visualization.\n")
-                with torch.inference_mode():
-                    timestamps = get_speech_timestamps(
-                        torch.from_numpy(audio.reshape(-1).astype(np.float32) * inv_16k),
-                        model=silero_vad,
-                        threshold=slider_vad_SPEAKING_SCORE,
-                        neg_threshold=slider_vad_SILENCE_SCORE,
-                        max_speech_duration_s=slider_vad_MAX_SPEECH_DURATION,
-                        min_speech_duration_ms=int(slider_vad_MIN_SPEECH_DURATION * 1000),
-                        min_silence_duration_ms=slider_vad_MIN_SILENCE_DURATION,
-                        speech_pad_ms=slider_vad_pad,
-                        return_seconds=True
-                    )
-                    timestamps = [(item['start'], item['end']) for item in timestamps]
-            elif vad_type == 3:
-                print("\nVAD-Pyannote_Segmentation 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation does not provide the running progress for visualization.\n")
-                with torch.inference_mode():
-                    timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_vad.wav")
-                    segments = list(timestamps._tracks.keys())
-                    total_seconds = audio_len * inv_16k
-                    timestamps = []
-                    slider_vad_pad_s = slider_vad_pad * 0.001
-                    for segment in segments:
-                        segment_start = segment.start - slider_vad_pad_s
-                        segment_end = segment.end + slider_vad_pad_s
-                        if segment_start < 0:
-                            segment_start = 0
-                        if segment_end > total_seconds:
-                            segment_end = total_seconds
-                        timestamps.append((segment_start, segment_end))
-            elif vad_type == 4:
-                print("\nVAD-HumAware 不提供可视化的运行进度。\nThe VAD-HumAware does not provide the running progress for visualization.\n")
-                with torch.inference_mode():
-                    waveform = torch.tensor(AudioSegment.from_file(f"./Cache/{file_name}_vad.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples(), dtype=torch.float32) * inv_int16
+                timestamps = [(item['start'], item['end']) for item in timestamps]
+                del waveform
+        elif vad_type == 3:
+            print("\nVAD-Pyannote_Segmentation 不提供可视化的运行进度。\nThe VAD-Pyannote_Segmentation does not provide the running progress for visualization.\n")
+            with torch.inference_mode():
+                timestamps = pyannote_vad_pipeline(f"./Cache/{file_name}_{model_denoiser}.wav")
+                segments = list(timestamps._tracks.keys())
+                total_seconds = audio_len * inv_16k
+                timestamps = []
+                slider_vad_pad_s = float(slider_vad_pad * 0.001)
+                for segment in segments:
+                    segment_start = segment.start - slider_vad_pad_s
+                    segment_end = segment.end + slider_vad_pad_s
+                    if segment_start < 0:
+                        segment_start = 0
+                    if segment_end > total_seconds:
+                        segment_end = total_seconds
+                    timestamps.append((segment_start, segment_end))
+                del waveform
+        elif vad_type == 4:
+            print("\nVAD-HumAware 不提供可视化的运行进度。\nThe VAD-HumAware does not provide the running progress for visualization.\n")
+            with torch.inference_mode():
+                waveform = torch.from_numpy(waveform.reshape(-1).astype(np.float32) * inv_16k)
+                waveform_len = len(waveform)
+                INPUT_AUDIO_LENGTH = 512
+                stride_step = INPUT_AUDIO_LENGTH
+                if waveform_len > INPUT_AUDIO_LENGTH:
+                    num_windows = int(torch.ceil(torch.tensor((waveform_len - INPUT_AUDIO_LENGTH) / stride_step))) + 1
+                    total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
+                    pad_amount = total_length_needed - waveform_len
+                    final_slice = waveform[-pad_amount:]
+                    rms = torch.sqrt(torch.mean(final_slice * final_slice))
+                    white_noise = rms * torch.randn(pad_amount, device=waveform.device, dtype=waveform.dtype)
+                    waveform = torch.cat((waveform, white_noise), dim=-1)
                     waveform_len = len(waveform)
-                    INPUT_AUDIO_LENGTH = 512
-                    stride_step = INPUT_AUDIO_LENGTH
-                    if waveform_len > INPUT_AUDIO_LENGTH:
-                        num_windows = int(torch.ceil(torch.tensor((waveform_len - INPUT_AUDIO_LENGTH) / stride_step))) + 1
-                        total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
-                        pad_amount = total_length_needed - waveform_len
-                        final_slice = waveform[-pad_amount:]
-                        rms = torch.sqrt(torch.mean(final_slice * final_slice))
-                        white_noise = rms * torch.randn(pad_amount, device=waveform.device, dtype=waveform.dtype)
-                        waveform = torch.cat((waveform, white_noise), dim=-1)
-                        waveform_len = len(waveform)
-                    elif waveform_len < INPUT_AUDIO_LENGTH:
-                        rms = torch.sqrt(torch.mean(waveform * waveform))
-                        white_noise = rms * torch.randn(INPUT_AUDIO_LENGTH - audio_len, device=waveform.device, dtype=waveform.dtype)
-                        waveform = torch.cat((waveform, white_noise), dim=-1)
-                        waveform_len = len(waveform)
-                    silence = True
-                    saved = []
-                    for i in range(0, waveform_len, INPUT_AUDIO_LENGTH):
-                        score = humaware_vad(waveform[i: i+INPUT_AUDIO_LENGTH], SAMPLE_RATE)
-                        if silence:
-                            if score >= slider_vad_SPEAKING_SCORE:
-                                silence = False
-                        else:
-                            if score <= slider_vad_SILENCE_SCORE:
-                                silence = True
-                        saved.append(silence)
-                    timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
-                    del saved
-                    del waveform
-                    gc.collect()
-            elif vad_type == 5:
-                print("\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet 不提供可视化的运行进度。\nThe VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet does not provide the running progress for visualization.\n")
-                with torch.inference_mode():
-                    INPUT_AUDIO_LENGTH = 320
-                    waveform = torch.tensor([AudioSegment.from_file(f"./Cache/{file_name}_vad.wav").set_channels(1).set_frame_rate(SAMPLE_RATE).get_array_of_samples()], dtype=torch.float32) * inv_int16
-                    outputs = nemo_vad(
-                        input_signal=waveform.to(nemo_vad_device),
-                        input_signal_length=torch.tensor([waveform.shape[1]]).to(nemo_vad_device)
-                    ).cpu().squeeze(0)
-                    silence = True
-                    saved = []
-                    nemo_slider_vad_SPEAKING_SCORE = float(slider_vad_SPEAKING_SCORE * 5.0)
-                    nemo_slider_vad_SILENCE_SCORE = float(slider_vad_SILENCE_SCORE * 5.0)
-                    outputs_len = outputs.shape[0]
-                    for i in range(outputs_len):
-                        if silence:
-                            score = outputs[i, 1]
-                            if score >= nemo_slider_vad_SPEAKING_SCORE:
-                                silence = False
-                        else:
-                            score = outputs[i, 0]
-                            if score >= nemo_slider_vad_SILENCE_SCORE:
-                                silence = True
-                        saved.append(silence)
-                    timestamps = vad_to_timestamps(saved, INPUT_AUDIO_LENGTH * inv_16k)
-                    del saved
-                    del waveform
-                    gc.collect()
-            else:
-                print("\n这个任务不使用 VAD。This task does not use VAD.\n")
-        if vad_type >= 0:
+                elif waveform_len < INPUT_AUDIO_LENGTH:
+                    rms = torch.sqrt(torch.mean(waveform * waveform))
+                    white_noise = rms * torch.randn(INPUT_AUDIO_LENGTH - audio_len, device=waveform.device, dtype=waveform.dtype)
+                    waveform = torch.cat((waveform, white_noise), dim=-1)
+                    waveform_len = len(waveform)
+                silence = True
+                saved = []
+                for i in range(0, waveform_len, INPUT_AUDIO_LENGTH):
+                    score = humaware_vad(waveform[i: i+INPUT_AUDIO_LENGTH], SAMPLE_RATE)
+                    if silence:
+                        if score >= slider_vad_SPEAKING_SCORE:
+                            silence = False
+                    else:
+                        if score <= slider_vad_SILENCE_SCORE:
+                            silence = True
+                    saved.append(silence)
+                timestamps = vad_to_timestamps(saved, HumAware_param, float(slider_vad_pad * 0.001))
+                del saved
+                del waveform
+                gc.collect()
+        elif vad_type == 5:
+            print("\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet 不提供可视化的运行进度。\nThe VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet does not provide the running progress for visualization.\n")
+            nemo_slider_vad_SPEAKING_SCORE = float(slider_vad_SPEAKING_SCORE * 3.0)
+            nemo_slider_vad_SILENCE_SCORE = float((1.0 - slider_vad_SILENCE_SCORE) * 3.0)
+            logits_silence, logits_active, signal_len = ort_session_B.run([out_name_B0, out_name_B1, out_name_B2], {in_name_B0: waveform})
+            silence = True
+            saved = []
+            for i in range(signal_len[0]):
+                if silence:
+                    if logits_active[:, i] >= nemo_slider_vad_SPEAKING_SCORE:
+                        silence = False
+                else:
+                    if logits_silence[:, i] >= nemo_slider_vad_SILENCE_SCORE:
+                        silence = True
+                saved.append(silence)
+            timestamps = vad_to_timestamps(saved, NVIDIA_VAD_param, float(slider_vad_pad * 0.001))
+            del saved
+            del waveform
+            del logits_silence
+            del logits_active
+            del signal_len
+            gc.collect()
+        elif vad_type == 6:
+            waveform = waveform.reshape(-1)
+            INPUT_AUDIO_LENGTH = TEN_VAD_FRAME_LENGTH
+            stride_step = INPUT_AUDIO_LENGTH
+            if audio_len > INPUT_AUDIO_LENGTH:
+                num_windows = int(np.ceil((audio_len - INPUT_AUDIO_LENGTH) / stride_step)) + 1
+                total_length_needed = (num_windows - 1) * stride_step + INPUT_AUDIO_LENGTH
+                pad_amount = total_length_needed - audio_len
+                final_slice = waveform[-pad_amount:].astype(np.float32)
+                white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(pad_amount))).astype(waveform.dtype)
+                waveform = np.concatenate((waveform, white_noise), axis=-1)
+            elif audio_len < INPUT_AUDIO_LENGTH:
+                audio_float = waveform.astype(np.float32)
+                white_noise = (np.sqrt(np.mean(audio_float * audio_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(INPUT_AUDIO_LENGTH - audio_len))).astype(waveform.dtype)
+                waveform = np.concatenate((waveform, white_noise), axis=-1)
+            audio_len = waveform.shape[-1]
+            inv_audio_len = float(100.0 / audio_len)
+            silence = True
+            saved = []
+            slice_start = 0
+            slice_end = INPUT_AUDIO_LENGTH
+            while slice_end <= audio_len:
+                score, _ = ten_vad.process(waveform[slice_start: slice_end])
+                if silence:
+                    if score >= slider_vad_SPEAKING_SCORE:
+                        silence = False
+                else:
+                    if score <= slider_vad_SILENCE_SCORE:
+                        silence = True
+                saved.append(silence)
+                print(f"VAD: {slice_start * inv_audio_len:.3f}%")
+                slice_start += stride_step
+                slice_end = slice_start + INPUT_AUDIO_LENGTH
+            timestamps = vad_to_timestamps(saved, TEN_VAD_param, float(slider_vad_pad * 0.001))
+        else:
+            print("\n这个任务不使用 VAD。This task does not use VAD.\n")
+        if vad_type != -1:
             timestamps = process_timestamps(timestamps, slider_vad_FUSION_THRESHOLD, slider_vad_MIN_SPEECH_DURATION)
             print(f"VAD: 100.00%\n完成提取语音片段。Complete.\nTime Cost: {(time.time() - start_time):.3f} Seconds.")
         else:
@@ -1541,11 +1570,11 @@ def MAIN_PROCESS(
                     transcription = text
 
                 start_sec = t_stamp[0]
-                if t_stamp[1] - start_sec > 8.0:
+                if t_stamp[1] - start_sec > 10.0:
                     markers = re.split(r'([。、，！？；：,.!?:;])', transcription)  # Keep markers in results
                     text_chunks = ["".join(markers[i:i + 2]) for i in range(0, len(markers), 2)]
                     time_per_chunk = (t_stamp[1] - start_sec) / len(text_chunks)
-                    if len(text_chunks) > 2:
+                    if len(text_chunks) > 3:
                         for i, chunk in enumerate(text_chunks):
                             chunk_start = start_sec + i * time_per_chunk
                             chunk_end = chunk_start + time_per_chunk
@@ -2091,6 +2120,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 "Pyannote-3.0",
                 "HumAware",
                 "NVIDIA-NeMo-MarbleNet-v2.0",
+                "TEN",
                 "None"
             ],
             label="语音活动检测 VAD",
@@ -2100,7 +2130,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
             interactive=True
         )
         slider_vad_pad = gr.Slider(
-            0, 1000, step=10,
+            0, 3000, step=10,
             label="VAD 填充 VAD Padding",
             info="在时间戳的开头和结尾添加填充。单位：毫秒。\nAdd padding to the start and end of the timestamps. Unit: Milliseconds.",
             value=400,
@@ -2154,7 +2184,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0, 5, step=0.025,
                 label="合并时间戳 Merge Timestamps",
                 info="如果两个语音段间隔太近，它们会被合并成一个。 单位：秒。\nIf two voice segments are too close, they will be merged into one. Unit: Seconds.",
-                value=0.0,
+                value=0.2,
                 visible=True,
                 interactive=True
             )
@@ -2266,8 +2296,12 @@ if __name__ == "__main__":
     DEVICE_ID = 0
     MAX_SEQ_LEN = 64
     MAX_ASR_SEGMENT = 240000  # The exported setting of ASR models. Do not edit it.
+    TEN_VAD_FRAME_LENGTH = 256
     inv_16k = float(1.0 / 16000.0)
     inv_int16 = float(1.0 / 32768.0)
+    HumAware_param = 512.0 * inv_16k
+    NVIDIA_VAD_param = 320.0 * inv_16k
+    TEN_VAD_param = TEN_VAD_FRAME_LENGTH * inv_16k
     MEDIA_EXTENSIONS = (
         # Audio formats
         '.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.alac', '.aiff', '.m4a',
@@ -2636,7 +2670,6 @@ if __name__ == "__main__":
     shutil.copyfile("./VAD/Silero/utils_vad.py", PYTHON_PACKAGE + "/silero_vad/utils_vad.py")
     shutil.copyfile("./VAD/Silero/model.py", PYTHON_PACKAGE + "/silero_vad/model.py")
     shutil.copyfile("./VAD/Silero/silero_vad.onnx", PYTHON_PACKAGE + "/silero_vad/data/silero_vad.onnx")
-    shutil.copyfile("./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/common.py", PYTHON_PACKAGE + "/nemo/core/classes/common.py")
 
     GUI.launch()
     
