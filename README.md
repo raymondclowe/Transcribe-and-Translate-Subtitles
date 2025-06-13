@@ -6,7 +6,7 @@
 ---
 ## Updates
 - 2025/6/11
-    - Added HumAware-VAD, NVIDIA-NeMo-VAD
+    - Added HumAware-VAD, NVIDIA-NeMo-VAD, TEN-VAD
 - 2025/6/3
     - Added Dolphin ASR model to support Asian languages.
 - 2025/5/13
@@ -49,6 +49,7 @@ This project is built on ONNX Runtime framework.
   - [Official - Silero](https://github.com/snakers4/silero-vad)
   - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [NVIDIA-NeMo-VAD-v2.0](https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0)
+  - [TEN-VAD](https://github.com/TEN-framework/ten-vad)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Next, place it in the `VAD/pyannote_segmentation` folder.
 
@@ -108,8 +109,13 @@ python run.py
 - Once the application starts, you will see a webpage open in your browser.
    ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-05-08%2013-01-17.png)
 
-### 🛠️ Step 6: Fix Silero-VAD Error (if encountered)
+### 🛠️ Step 6: Fix Error (if encountered)
 - On the first run, you might encounter a **Silero-VAD error**. Simply restart the application, and it should be resolved.
+- On the first run, you might encounter a **libc++1.so error**. Run the following commands in the terminal, and they should resolve the issue.
+```bash
+sudo apt update
+sudo apt install libc++1
+```
 
 ### 💻 Step 7: Device Support
 - This project currently supports:
@@ -150,7 +156,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 ## 最近更新与功能
 - 2025/6/11
-    - 新增 HumAware-VAD, NVIDIA-NeMo-VAD。
+    - 新增 HumAware-VAD, NVIDIA-NeMo-VAD, TEN-VAD。
 - 2025/6/3
     - 新增 Dolphin ASR 模型以支持亚洲语言。
 - 2025/5/13
@@ -193,6 +199,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
   - [官方 - Silero](https://github.com/snakers4/silero-vad)
   - [HumAware](https://huggingface.co/CuriousMonkey7/HumAware-VAD)
   - [NVIDIA-NeMo-VAD-v2.0](https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0)
+  - [TEN-VAD](https://github.com/TEN-framework/ten-vad)
   - [Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
     - 需要接受Pyannote的使用条款，並自行下载 Pyannote `pytorch_model.bin` 文件，并将其放置在 `VAD/pyannote_segmentation` 文件夹中。
 
@@ -254,8 +261,13 @@ python run.py
 - 应用程序启动后，你的浏览器将自动打开一个网页。  
    ![screenshot](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-05-08%2013-01-17.png)
 
-### 🛠️ 第六步：修复 Silero-VAD 错误（如有）  
+### 🛠️ 第六步：修复错误（如有）  
 - 首次运行时，你可能会遇到 **Silero-VAD 错误**。只需重启应用程序即可解决该问题。
+- 首次运行时，你可能会遇到 **libc++1.so 错误**。在终端中运行以下命令，应该可以解决问题。
+```bash
+sudo apt update
+sudo apt install libc++1
+```
 
 ### 💻 第七步：支持设备  
 - 此项目目前支持:
