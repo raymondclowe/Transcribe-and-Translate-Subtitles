@@ -1410,17 +1410,16 @@ def MAIN_PROCESS(
                 gc.collect()
         elif vad_type == 5:
             print("\nVAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet 不提供可视化的运行进度。\nThe VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet does not provide the running progress for visualization.\n")
-            nemo_slider_vad_SPEAKING_SCORE = float(slider_vad_SPEAKING_SCORE * 3.0)
-            nemo_slider_vad_SILENCE_SCORE = float((1.0 - slider_vad_SILENCE_SCORE) * 3.0)
-            logits_silence, logits_active, signal_len = ort_session_B.run([out_name_B0, out_name_B1, out_name_B2], {in_name_B0: waveform})
+            inv_slider_vad_SILENCE_SCORE = float(1.0 - slider_vad_SILENCE_SCORE)
+            score_silence, score_active, signal_len = ort_session_B.run([out_name_B0, out_name_B1, out_name_B2], {in_name_B0: waveform})
             silence = True
             saved = []
             for i in range(signal_len[0]):
                 if silence:
-                    if logits_active[:, i] >= nemo_slider_vad_SPEAKING_SCORE:
+                    if score_active[:, i] >= slider_vad_SPEAKING_SCORE:
                         silence = False
                 else:
-                    if logits_silence[:, i] >= nemo_slider_vad_SILENCE_SCORE:
+                    if score_silence[:, i] >= inv_slider_vad_SILENCE_SCORE:
                         silence = True
                 saved.append(silence)
             timestamps = vad_to_timestamps(saved, NVIDIA_VAD_param, float(slider_vad_pad * 0.001))
