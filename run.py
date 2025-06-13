@@ -197,8 +197,8 @@ def update_denoiser(dropdown_model_denoiser):
 
 def update_vad(dropdown_model_vad):
     if "FSMN" == dropdown_model_vad:
-        update_A = gr.update(visible=True)
-        update_B = gr.update(visible=True)
+        update_A = gr.update(visible=True, value=0.3)
+        update_B = gr.update(visible=True, value=0.3)
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True)
@@ -208,8 +208,8 @@ def update_vad(dropdown_model_vad):
         update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "Pyannote" in dropdown_model_vad:
-        update_A = gr.update(visible=False)
-        update_B = gr.update(visible=False)
+        update_A = gr.update(visible=False, value=0.4)
+        update_B = gr.update(visible=False, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
@@ -219,8 +219,8 @@ def update_vad(dropdown_model_vad):
         update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "Silero" in dropdown_model_vad:
-        update_A = gr.update(visible=True)
-        update_B = gr.update(visible=True)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
@@ -230,8 +230,8 @@ def update_vad(dropdown_model_vad):
         update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "HumAware" in dropdown_model_vad:
-        update_A = gr.update(visible=True)
-        update_B = gr.update(visible=True)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
@@ -241,8 +241,8 @@ def update_vad(dropdown_model_vad):
         update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif "MarbleNet" in dropdown_model_vad:
-        update_A = gr.update(visible=True)
-        update_B = gr.update(visible=True)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.6)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
@@ -252,8 +252,8 @@ def update_vad(dropdown_model_vad):
         update_I = gr.update(visible=True, value=0.05)
         update_J = gr.update(visible=True, value=400)
     elif dropdown_model_vad == "TEN":
-        update_A = gr.update(visible=True, value=0.5)
-        update_B = gr.update(visible=True, value=0.5)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
@@ -2166,7 +2166,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0, 1, step=0.025,
                 label="语音状态分数 Voice State Score",
                 info="值越大，判断语音状态越困难。\nThe higher the value, the more difficult it is to determine the state of the speech",
-                value=0.3,
+                value=0.4,
                 visible=True,
                 interactive=True
             )
@@ -2174,7 +2174,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0, 1, step=0.025,
                 label="静音状态分数 Silence State Score",
                 info="值越大，越容易截断语音。\nA larger value makes it easier to cut off speaking.",
-                value=0.3,
+                value=0.4,
                 visible=True,
                 interactive=True
             )
