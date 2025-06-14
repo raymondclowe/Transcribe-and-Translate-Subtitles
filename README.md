@@ -135,6 +135,9 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 To-Do List
 - [ ] [LLM-MiniCPM4](https://github.com/OpenBMB/MiniCPM)
+- [ ] [Denoiser-MossFormer2-16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
+- [ ] [Denoiser-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SE_48K)
+- [ ] [Upscale the Resolution of Audio-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SR_48K)
 - [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
 - [ ] AMD-ROCm Support
 - [ ] Real-Time Translate & Trascribe Video Player
@@ -288,6 +291,9 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 待办事项  
 - [ ] [LLM-MiniCPM4](https://github.com/OpenBMB/MiniCPM)
+- [ ] [去噪-MossFormer2-16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
+- [ ] [去噪-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SE_48K)
+- [ ] [提高音频质量-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SR_48K)
 - [ ] [提高视频分辨率](https://github.com/sczhou/Upscale-A-Video)
 - [ ] 支持 AMD-ROCm
 - [ ] 实现实时视频转录和翻译播放器
