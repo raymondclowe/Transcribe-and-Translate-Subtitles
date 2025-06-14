@@ -134,6 +134,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 
 ## 📌 To-Do List
+- [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
 - [ ] Real-Time Translate & Trascribe Video Player
 
 ---
@@ -284,5 +285,6 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 
 ## 📌 待办事项  
+- [ ] [提高视频分辨率](https://github.com/sczhou/Upscale-A-Video)
 - [ ] 实现实时视频转录和翻译播放器
 ---
