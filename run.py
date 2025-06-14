@@ -242,7 +242,7 @@ def update_vad(dropdown_model_vad):
         update_J = gr.update(visible=True, value=400)
     elif "MarbleNet" in dropdown_model_vad:
         update_A = gr.update(visible=True, value=0.4)
-        update_B = gr.update(visible=True, value=0.6)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=False)
