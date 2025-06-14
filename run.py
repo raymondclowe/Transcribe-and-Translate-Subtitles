@@ -1428,8 +1428,8 @@ def MAIN_PROCESS(
             timestamps = vad_to_timestamps(saved, NVIDIA_VAD_param, float(slider_vad_pad * 0.001))
             del saved
             del waveform
-            del logits_silence
-            del logits_active
+            del score_silence
+            del score_active
             del signal_len
             gc.collect()
         elif vad_type == 6:
