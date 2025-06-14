@@ -978,6 +978,7 @@ def MAIN_PROCESS(
 
     print("----------------------------------------------------------------------------------------------------------")
     print("\n正在加载所需的模型和目标文件。Now loading the required models and target files.")
+    # Load VAD model
     if vad_type == 0:
         init_cache = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((1, 128, 19, 1), dtype=np.float32), 'cpu', DEVICE_ID)  # FSMN_VAD model fixed cache shape. Do not edit it.
         noise_average_dB = np.array([slider_vad_BACKGROUND_NOISE_dB_INIT + slider_vad_SNR_THRESHOLD], dtype=np.float32) * float(0.1)
@@ -1023,7 +1024,7 @@ def MAIN_PROCESS(
         humaware_vad.eval()
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
     elif vad_type == 5:
-        ort_session_B = onnxruntime.InferenceSession(onnx_model_B, sess_options=session_opts, providers=ORT_Accelerate_Providers)
+        ort_session_B = onnxruntime.InferenceSession(onnx_model_B, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
         print(f"\nVAD 可用的硬件 VAD Usable Providers: {ort_session_B.get_providers()}")
         in_name_B = ort_session_B.get_inputs()
         out_name_B = ort_session_B.get_outputs()
@@ -1035,6 +1036,7 @@ def MAIN_PROCESS(
         ten_vad = TenVad(TEN_VAD_FRAME_LENGTH, 0.5, lib_path)  # TEN_VAD_FRAME_LENGTH = 256, standard threshold = 0.5
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
+    # Load ASR model
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
         if device_type != 'cpu':
             ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1128,7 +1130,7 @@ def MAIN_PROCESS(
         c_provider = ort_session_C.get_providers()
         print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
 
-    # Start Process
+    # Process Loop
     for input_audio in task_queue:
         print(f"\n加载音频文件 Loading the Input Media: {input_audio}")
         file_name = Path(input_audio).stem
@@ -1145,6 +1147,7 @@ def MAIN_PROCESS(
                 del de_audio
             else:
                 if FIRST_RUN:
+                    # Load Denoiser model
                     if model_denoiser == "ZipEnhancer":
                         if "OpenVINOExecutionProvider" in ORT_Accelerate_Providers:
                             provider_options[0]['disable_dynamic_shapes'] = True
