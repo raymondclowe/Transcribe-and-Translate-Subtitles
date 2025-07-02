@@ -950,7 +950,6 @@ def MAIN_PROCESS(
             print(error)
             return error
         asr_type = 4
-        provider_options[0]['fuse_conv_bias'] = '0'
         tokenizer = Dolphin_Tokenizer(r"./ASR/Dolphin/Small/vocab_Dolphin.txt")
     else:
         error = f"\n未找到模型。The {model_asr} doesn't exist."
