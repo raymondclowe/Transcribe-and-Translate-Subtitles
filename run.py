@@ -1229,8 +1229,8 @@ def MAIN_PROCESS(
                 SAMPLE_RATE = 16000
                 audio_len = audio_len // 3
                 audio_len_3 = audio_len + audio_len + audio_len
-                audio = np.sum(audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
-                de_audio = np.sum(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
+                audio = np.mean(audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).reshape(1, 1, -1)
+                de_audio = np.mean(de_audio[:, :, :audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32).clip(min=-32768.0, max=32767.0).astype(np.int16)
                 inv_audio_len = float(100.0 / audio_len)
             elif model_denoiser == "MelBandRoformer":
                 SAMPLE_RATE = 16000
