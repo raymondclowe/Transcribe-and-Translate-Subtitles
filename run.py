@@ -707,7 +707,6 @@ def MAIN_PROCESS(
             device_type = 'cpu'
             ORT_Accelerate_Providers = ['CPUExecutionProvider']
             provider_options = None
-            max_workers = parallel_threads
         else:
             provider_options = [
                 {
@@ -1147,29 +1146,27 @@ def MAIN_PROCESS(
                 if FIRST_RUN:
                     # Load Denoiser model
                     if model_denoiser == "ZipEnhancer":
-                        if device_type == 'cpu':
-                            if "CPUExecutionProvider" in ORT_Accelerate_Providers:
-                                ORT_Accelerate_Providers = ["OpenVINOExecutionProvider"]
-                                provider_options = [
-                                    {
-                                        'device_type': "CPU",
-                                        'precision': 'ACCURACY',
-                                        'model_priority': 'HIGH',
-                                        'num_of_threads': parallel_threads,
-                                        'num_streams': 1,
-                                        'enable_opencl_throttling': True,
-                                        'enable_qdq_optimizer': True,
-                                        'disable_dynamic_shapes': True
-                                    }
-                                ]
-                            else:
-                                provider_options[0]['disable_dynamic_shapes'] = True
+                        if "CPUExecutionProvider" in ORT_Accelerate_Providers:
+                            ORT_Accelerate_Providers = ["OpenVINOExecutionProvider"]
+                            provider_options = [
+                                {
+                                    'device_type': "CPU",
+                                    'precision': 'ACCURACY',
+                                    'model_priority': 'HIGH',
+                                    'num_of_threads': parallel_threads,
+                                    'num_streams': 1,
+                                    'enable_opencl_throttling': False,
+                                    'enable_qdq_optimizer': False,
+                                    'disable_dynamic_shapes': True
+                                }
+                            ]
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                            if "CPUExecutionProvider" in ORT_Accelerate_Providers:
-                                provider_options = None
-                                ORT_Accelerate_Providers = ["CPUExecutionProvider"]
-                            else:
-                                provider_options[0]['disable_dynamic_shapes'] = False
+                            ORT_Accelerate_Providers = ["CPUExecutionProvider"]
+                            provider_options = None
+                        elif "OpenVINOExecutionProvider" in ORT_Accelerate_Providers:
+                            provider_options[0]['disable_dynamic_shapes'] = True
+                            ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+                            provider_options[0]['disable_dynamic_shapes'] = False
                         elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:
                             provider_options[0]['cudnn_conv_algo_search'] = "DEFAULT"
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
