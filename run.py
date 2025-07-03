@@ -642,34 +642,38 @@ def MAIN_PROCESS(
     else:
         print(f"\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.")
 
-    if hardware == "Intel-OpenVINO-GPU":
-        quant = "Q8F32"
+    if hardware == "Intel-OpenVINO-CPU":
+        asr_format = "F16"
+        device_type = 'CPU'
+        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+    elif hardware == "Intel-OpenVINO-GPU":
+        asr_format = "F16"
         device_type = 'GPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-NPU":
-        quant = "Q8F32"
+        asr_format = "F16"
         device_type = 'NPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-AUTO_ALL":
-        quant = "Q8F32"
+        asr_format = "F16"
         device_type = 'AUTO:NPU,GPU,CPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-HETERO_ALL":
-        quant = "Q8F32"
+        asr_format = "F16"
         device_type = 'HETERO:NPU,GPU,CPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "NVIDIA-CUDA-GPU":
-        quant = "F16"
+        asr_format = "F16"
         device_type = 'cuda'
         ORT_Accelerate_Providers = ['CUDAExecutionProvider']
     elif hardware == "Windows-DirectML-GPU-NPU":
-        quant = "F16"
+        asr_format = "F16"
         device_type = 'npu'
         ORT_Accelerate_Providers = ['DmlExecutionProvider']
     else:
-        quant = "Q8F32"
-        device_type = "CPU"
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
+        asr_format = "Q8F32"
+        device_type = "cpu"
+        ORT_Accelerate_Providers = ['CPUExecutionProvider']
 
     if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers:
         provider_options = [
@@ -713,19 +717,8 @@ def MAIN_PROCESS(
         if sys_os != "Windows":
             print("\nDirectML-GPU-NPU 仅支持 Windows 系统。回退到 CPU 硬件。\nThe DirectML-GPU-NPU only support the Windows System. Fallback to the CPU providers.")
             device_type = 'cpu'
-            ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-            provider_options = [
-                {
-                    'device_type': "CPU",
-                    'precision': 'ACCURACY',
-                    'model_priority': 'HIGH',
-                    'num_of_threads': parallel_threads,
-                    'num_streams': 1,
-                    'enable_opencl_throttling': True,
-                    'enable_qdq_optimizer': True,
-                    'disable_dynamic_shapes': False
-                }
-            ]
+            ORT_Accelerate_Providers = ['CPUExecutionProvider']
+            provider_options = None
         else:
             provider_options = [
                 {
@@ -739,6 +732,7 @@ def MAIN_PROCESS(
     else:
         device_type = 'cpu'
         provider_options = None
+        ORT_Accelerate_Providers = ['CPUExecutionProvider']
         max_workers = parallel_threads
 
     slider_denoise_factor_minus = float(1.0 - slider_denoise_factor)
@@ -747,17 +741,17 @@ def MAIN_PROCESS(
     if model_denoiser == "DFSMN":
         SAMPLE_RATE = 48000
     elif model_denoiser == "GTCRN":
-        if device_type != 'cpu':
-            denoiser_format = "/F16"
-        else:
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             denoiser_format = "/F32"
+        else:
+            denoiser_format = "/F16"
     elif model_denoiser == "ZipEnhancer":
         slider_vad_pad += 200  # Over denoise
     elif model_denoiser == "MelBandRoformer":
-        if device_type != 'cpu':
-            denoiser_format = "/F16"
-        else:
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             denoiser_format = "/Q8F32"
+        else:
+            denoiser_format = "/F16"
         SAMPLE_RATE = 44100
     elif model_denoiser == "None":
         USE_DENOISED = False
@@ -820,10 +814,10 @@ def MAIN_PROCESS(
             print(error)
             return error
     elif "MarbleNet" in model_vad:
-        if device_type != 'cpu':
-            onnx_model_B = "./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/F16/NVIDIA_MarbleNet.onnx"
-        else:
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             onnx_model_B = "./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/F32/NVIDIA_MarbleNet.onnx"
+        else:
+            onnx_model_B = "./VAD/NVIDIA_Frame_VAD_Multilingual_MarbleNet/F16/NVIDIA_MarbleNet.onnx"
         if os.path.isfile(onnx_model_B):
             vad_type = 5
             print(f"\n找到了 VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet。Found the VAD-NVIDIA_Frame_VAD_Multilingual_MarbleNet.")
@@ -880,8 +874,8 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
-        onnx_model_C = f"{path}/{quant}/Whisper_Encoder.onnx"
-        onnx_model_D = f"{path}/{quant}/Whisper_Decoder.onnx"
+        onnx_model_C = f"{path}/{asr_format}/Whisper_Encoder.onnx"
+        onnx_model_D = f"{path}/{asr_format}/Whisper_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -936,8 +930,8 @@ def MAIN_PROCESS(
         target_task_id = None
         onnx_model_D = None
     elif "FireRedASR" in model_asr:
-        onnx_model_C = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR_AED_L-Encoder.onnx"
-        onnx_model_D = f"./ASR/FireRedASR/AED/L/{quant}/FireRedASR_AED_L-Decoder.onnx"
+        onnx_model_C = f"./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Encoder.onnx"
+        onnx_model_D = f"./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -947,12 +941,12 @@ def MAIN_PROCESS(
         asr_type = 3
         tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
     elif "Dolphin" in model_asr:
-        if device_type != 'cpu':
-            onnx_model_C = f"./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
-            onnx_model_D = f"./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
-        else:
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             onnx_model_C = f"./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
             onnx_model_D = f"./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
+        else:
+            onnx_model_C = f"./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
+            onnx_model_D = f"./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -1047,12 +1041,8 @@ def MAIN_PROCESS(
 
     # Load ASR model
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
-        if device_type != 'cpu':
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-        else:
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-            ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
+        ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
         input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
@@ -1124,10 +1114,7 @@ def MAIN_PROCESS(
         c_provider = ort_session_C.get_providers()
         print(f"\nASR 可用的硬件 ASR-Usable Providers: {c_provider}")
     else:
-        if device_type != 'cpu':
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
-        else:
-            ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+        ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts,  providers=ORT_Accelerate_Providers, provider_options=provider_options)
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
         in_name_C0 = in_name_C[0].name
@@ -1158,10 +1145,29 @@ def MAIN_PROCESS(
                 if FIRST_RUN:
                     # Load Denoiser model
                     if model_denoiser == "ZipEnhancer":
-                        if "OpenVINOExecutionProvider" in ORT_Accelerate_Providers:
-                            provider_options[0]['disable_dynamic_shapes'] = True
+                        if device_type == 'cpu':
+                            if "CPUExecutionProvider" in ORT_Accelerate_Providers:
+                                ORT_Accelerate_Providers = ["OpenVINOExecutionProvider"]
+                                provider_options = [
+                                    {
+                                        'device_type': "CPU",
+                                        'precision': 'ACCURACY',
+                                        'model_priority': 'HIGH',
+                                        'num_of_threads': parallel_threads,
+                                        'num_streams': 1,
+                                        'enable_opencl_throttling': True,
+                                        'enable_qdq_optimizer': True,
+                                        'disable_dynamic_shapes': True
+                                    }
+                                ]
+                            else:
+                                provider_options[0]['disable_dynamic_shapes'] = True
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                            provider_options[0]['disable_dynamic_shapes'] = False
+                            if "CPUExecutionProvider" in ORT_Accelerate_Providers:
+                                provider_options = None
+                                ORT_Accelerate_Providers = ["CPUExecutionProvider"]
+                            else:
+                                provider_options[0]['disable_dynamic_shapes'] = False
                         elif "CUDAExecutionProvider" in ORT_Accelerate_Providers:
                             provider_options[0]['cudnn_conv_algo_search'] = "DEFAULT"
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
@@ -1725,12 +1731,12 @@ def MAIN_PROCESS(
                 init_attention_mask_E_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int8), device_type, DEVICE_ID)
                 init_history_len = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type, DEVICE_ID)
                 init_ids_len = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int64), device_type, DEVICE_ID)
-                if device_type == 'dml':
-                    init_past_keys_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[0].shape[0], 1, ort_session_E._inputs_meta[0].shape[2], 0), dtype=np.float32), 'cpu', DEVICE_ID)
-                    init_past_values_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[num_layers].shape[0], 1, 0, ort_session_E._inputs_meta[num_layers].shape[3]), dtype=np.float32), 'cpu', DEVICE_ID)
-                else:
+                if device_type != 'dml':
                     init_past_keys_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[0].shape[0], 1, ort_session_E._inputs_meta[0].shape[2], 0), dtype=np.float32), device_type, DEVICE_ID)
                     init_past_values_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[num_layers].shape[0], 1, 0, ort_session_E._inputs_meta[num_layers].shape[3]), dtype=np.float32), device_type, DEVICE_ID)
+                else:
+                    init_past_keys_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[0].shape[0], 1, ort_session_E._inputs_meta[0].shape[2], 0), dtype=np.float32), 'cpu', DEVICE_ID)
+                    init_past_values_E = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((ort_session_E._inputs_meta[num_layers].shape[0], 1, 0, ort_session_E._inputs_meta[num_layers].shape[3]), dtype=np.float32), 'cpu', DEVICE_ID)
                 input_feed_E = {
                     in_name_E[-1]: init_attention_mask_E_1,
                     in_name_E[-3]: init_history_len
@@ -1972,6 +1978,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
             hardware = gr.Dropdown(
                 choices=[
                     "CPU",
+                    "Intel-OpenVINO-CPU",
                     "Intel-OpenVINO-GPU",
                     "Intel-OpenVINO-NPU",
                     "Intel-OpenVINO-AUTO_ALL",
