@@ -642,31 +642,24 @@ def MAIN_PROCESS(
         print(f"\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.")
 
     if hardware == "Intel-OpenVINO-GPU":
-        asr_format = "F16"
         device_type = 'GPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-NPU":
-        asr_format = "F16"
         device_type = 'NPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-AUTO_ALL":
-        asr_format = "F16"
         device_type = 'AUTO:NPU,GPU,CPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "Intel-OpenVINO-HETERO_ALL":
-        asr_format = "F16"
         device_type = 'HETERO:NPU,GPU,CPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
     elif hardware == "NVIDIA-CUDA-GPU":
-        asr_format = "F16"
         device_type = 'cuda'
         ORT_Accelerate_Providers = ['CUDAExecutionProvider']
     elif hardware == "Windows-DirectML-GPU-NPU":
-        asr_format = "F16"
         device_type = 'npu'
         ORT_Accelerate_Providers = ['DmlExecutionProvider']
     else:
-        asr_format = "Q8F32"
         device_type = "cpu"
         ORT_Accelerate_Providers = ['CPUExecutionProvider']
 
@@ -874,8 +867,13 @@ def MAIN_PROCESS(
             error = f"\n未找到模型。The {model_asr} doesn't exist."
             print(error)
             return error
-        onnx_model_C = f"{path}/{asr_format}/Whisper_Encoder.onnx"
-        onnx_model_D = f"{path}/{asr_format}/Whisper_Decoder.onnx"
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
+            onnx_model_C = f"{path}/Q8F32/Whisper_Encoder.onnx"
+            onnx_model_D = f"{path}/Q8F32/Whisper_Decoder.onnx"
+        else:
+            onnx_model_C = f"{path}/F16/Whisper_Encoder.onnx"
+            onnx_model_D = f"{path}/F16/Whisper_Decoder.onnx"
+
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -930,8 +928,12 @@ def MAIN_PROCESS(
         target_task_id = None
         onnx_model_D = None
     elif "FireRedASR" in model_asr:
-        onnx_model_C = "./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Encoder.onnx"
-        onnx_model_D = "./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Decoder.onnx"
+        if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
+            onnx_model_C = "./ASR/FireRedASR/AED/L/Q8F32/FireRedASR_AED_L-Encoder.onnx"
+            onnx_model_D = "./ASR/FireRedASR/AED/L/Q8F32/FireRedASR_AED_L-Decoder.onnx"
+        else:
+            onnx_model_C = "./ASR/FireRedASR/AED/L/F16/FireRedASR_AED_L-Encoder.onnx"
+            onnx_model_D = "./ASR/FireRedASR/AED/L/F16/FireRedASR_AED_L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
