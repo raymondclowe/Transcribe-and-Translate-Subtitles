@@ -707,6 +707,7 @@ def MAIN_PROCESS(
             device_type = 'cpu'
             ORT_Accelerate_Providers = ['CPUExecutionProvider']
             provider_options = None
+            max_workers = parallel_threads
         else:
             provider_options = [
                 {
