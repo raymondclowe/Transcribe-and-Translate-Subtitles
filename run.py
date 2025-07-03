@@ -743,17 +743,27 @@ def MAIN_PROCESS(
 
     slider_denoise_factor_minus = float(1.0 - slider_denoise_factor)
     slider_denoise_factor = float(slider_denoise_factor)
+    denoiser_format = ""
     if model_denoiser == "DFSMN":
         SAMPLE_RATE = 48000
+    elif model_denoiser == "GTCRN":
+        if device_type != 'cpu':
+            denoiser_format = "/F16"
+        else:
+            denoiser_format = "/F32"
     elif model_denoiser == "ZipEnhancer":
         slider_vad_pad += 200  # Over denoise
     elif model_denoiser == "MelBandRoformer":
+        if device_type != 'cpu':
+            denoiser_format = "/F16"
+        else:
+            denoiser_format = "/Q8F32"
         SAMPLE_RATE = 44100
     elif model_denoiser == "None":
         USE_DENOISED = False
 
     if USE_DENOISED:
-        onnx_model_A = f"./Denoiser/{model_denoiser}/{model_denoiser}.onnx"
+        onnx_model_A = f"./Denoiser/{model_denoiser}{denoiser_format}/{model_denoiser}.onnx"
         if os.path.isfile(onnx_model_A):
             print(f"\n找到了降噪器。Found the Denoiser-{model_denoiser}.")
         else:
@@ -1159,7 +1169,7 @@ def MAIN_PROCESS(
                         else:
                             ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                     else:
-                        ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+                        ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                     in_name_A = ort_session_A.get_inputs()
                     out_name_A = ort_session_A.get_outputs()
                     in_name_A0 = in_name_A[0].name
