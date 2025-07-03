@@ -609,7 +609,6 @@ def MAIN_PROCESS(
     FIRST_RUN = True
     USE_DENOISED = True
     HAS_CACHE = False
-    SAMPLE_RATE = 16000
     sys_os = platform.system()
 
     if (sys_os != 'Windows') and (sys_os != 'Darwin') and (sys_os != 'Linux'):
@@ -642,11 +641,7 @@ def MAIN_PROCESS(
     else:
         print(f"\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.")
 
-    if hardware == "Intel-OpenVINO-CPU":
-        asr_format = "F16"
-        device_type = 'CPU'
-        ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-    elif hardware == "Intel-OpenVINO-GPU":
+    if hardware == "Intel-OpenVINO-GPU":
         asr_format = "F16"
         device_type = 'GPU'
         ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
@@ -737,27 +732,32 @@ def MAIN_PROCESS(
 
     slider_denoise_factor_minus = float(1.0 - slider_denoise_factor)
     slider_denoise_factor = float(slider_denoise_factor)
-    denoiser_format = ""
+
     if model_denoiser == "DFSMN":
         SAMPLE_RATE = 48000
+        denoiser_format = "F32"
     elif model_denoiser == "GTCRN":
+        SAMPLE_RATE = 16000
         if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
-            denoiser_format = "/F32"
+            denoiser_format = "F32"
         else:
             denoiser_format = "/F16"
     elif model_denoiser == "ZipEnhancer":
+        SAMPLE_RATE = 16000
+        denoiser_format = "F32"
         slider_vad_pad += 200  # Over denoise
     elif model_denoiser == "MelBandRoformer":
+        SAMPLE_RATE = 44100
         if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             denoiser_format = "/Q8F32"
         else:
             denoiser_format = "/F16"
-        SAMPLE_RATE = 44100
-    elif model_denoiser == "None":
+    else:
+        SAMPLE_RATE = 16000
         USE_DENOISED = False
 
     if USE_DENOISED:
-        onnx_model_A = f"./Denoiser/{model_denoiser}{denoiser_format}/{model_denoiser}.onnx"
+        onnx_model_A = f"./Denoiser/{model_denoiser}/{denoiser_format}/{model_denoiser}.onnx"
         if os.path.isfile(onnx_model_A):
             print(f"\n找到了降噪器。Found the Denoiser-{model_denoiser}.")
         else:
@@ -890,7 +890,7 @@ def MAIN_PROCESS(
         else:
             target_task_id = get_task_id('transcribe', USE_V3)[0]
     elif "SenseVoice" in model_asr:
-        onnx_model_C = f"./ASR/SenseVoice/Small/F32/SenseVoice.onnx"
+        onnx_model_C = "./ASR/SenseVoice/Small/F32/SenseVoice.onnx"
         if os.path.isfile(onnx_model_C):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -908,15 +908,15 @@ def MAIN_PROCESS(
             if "English" in transcribe_language or "english" in transcribe_language:
                 is_english = True
                 tokens_path = "./ASR/Paraformer/English/Large/tokens.json"
-                onnx_model_C = f"./ASR/Paraformer/English/Large/F32/Paraformer.onnx"
+                onnx_model_C = "./ASR/Paraformer/English/Large/F32/Paraformer.onnx"
             else:
                 is_english = False
                 tokens_path = "./ASR/Paraformer/Chinese/Large/tokens.json"
-                onnx_model_C = f"./ASR/Paraformer/Chinese/Large/F32/Paraformer.onnx"
+                onnx_model_C = "./ASR/Paraformer/Chinese/Large/F32/Paraformer.onnx"
         else:
             is_english = False
             tokens_path = "./ASR/Paraformer/Chinese/Small/tokens.json"
-            onnx_model_C = f"./ASR/Paraformer/Chinese/Small/F32/Paraformer.onnx"
+            onnx_model_C = "./ASR/Paraformer/Chinese/Small/F32/Paraformer.onnx"
         if os.path.isfile(onnx_model_C):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -930,8 +930,8 @@ def MAIN_PROCESS(
         target_task_id = None
         onnx_model_D = None
     elif "FireRedASR" in model_asr:
-        onnx_model_C = f"./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Encoder.onnx"
-        onnx_model_D = f"./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Decoder.onnx"
+        onnx_model_C = "./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Encoder.onnx"
+        onnx_model_D = "./ASR/FireRedASR/AED/L/{asr_format}/FireRedASR_AED_L-Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -942,11 +942,11 @@ def MAIN_PROCESS(
         tokenizer = ChineseCharEnglishSpmTokenizer("./ASR/FireRedASR/AED/L/dict.txt", "./ASR/FireRedASR/AED/L/train_bpe1000.model")
     elif "Dolphin" in model_asr:
         if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
-            onnx_model_C = f"./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
-            onnx_model_D = f"./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
+            onnx_model_C = "./ASR/Dolphin/Small/F32/Dolphin_Encoder.onnx"
+            onnx_model_D = "./ASR/Dolphin/Small/F32/Dolphin_Decoder.onnx"
         else:
-            onnx_model_C = f"./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
-            onnx_model_D = f"./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
+            onnx_model_C = "./ASR/Dolphin/Small/F16/Dolphin_Encoder.onnx"
+            onnx_model_D = "./ASR/Dolphin/Small/F16/Dolphin_Decoder.onnx"
         if os.path.isfile(onnx_model_C) and os.path.isfile(onnx_model_D):
             print(f"\n找到了 ASR。Found the {model_asr}.")
         else:
@@ -1043,7 +1043,6 @@ def MAIN_PROCESS(
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
         ort_session_C = onnxruntime.InferenceSession(onnx_model_C, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
         ort_session_D = onnxruntime.InferenceSession(onnx_model_D, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-        input_shape_C = ort_session_C._inputs_meta[0].shape[-1]
         in_name_C = ort_session_C.get_inputs()
         out_name_C = ort_session_C.get_outputs()
         in_name_C0 = in_name_C[0].name
@@ -1716,9 +1715,10 @@ def MAIN_PROCESS(
 
                 prompt_head = tokenizer_llm(prompt_head, return_tensors="np")['input_ids'].astype(np.int32)
                 prompt_tail = tokenizer_llm(prompt_tail, return_tensors="np")['input_ids'].astype(np.int32)
-                if device_type == 'cpu':
+                if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers:
                     ORT_Accelerate_Providers = ['CPUExecutionProvider']  # Currently, OpenVINO will crash with Int4 onnx model.
                     provider_options = None
+                    print("\nCurrently, OpenVINO will crash with Int4 LLM model. Fallback to CPU execution provider.")
                 ort_session_E = onnxruntime.InferenceSession(llm_path, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                 in_name_E = ort_session_E.get_inputs()
                 out_name_E = ort_session_E.get_outputs()
@@ -1978,7 +1978,6 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
             hardware = gr.Dropdown(
                 choices=[
                     "CPU",
-                    "Intel-OpenVINO-CPU",
                     "Intel-OpenVINO-GPU",
                     "Intel-OpenVINO-NPU",
                     "Intel-OpenVINO-AUTO_ALL",
