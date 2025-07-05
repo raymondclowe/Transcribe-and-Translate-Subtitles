@@ -5,6 +5,8 @@
 
 ---
 ## Updates
+- 2025/7/5
+    - Added a noise reduction model: MossFormerGAN_SE_16K
 - 2025/6/11
     - Added HumAware-VAD, NVIDIA-NeMo-VAD, TEN-VAD
 - 2025/6/3
@@ -161,6 +163,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ---
 ## 最近更新与功能
+- 2025/7/5
+    - 新增 降噪 MossFormerGAN_SE_16K
 - 2025/6/11
     - 新增 HumAware-VAD, NVIDIA-NeMo-VAD, TEN-VAD。
 - 2025/6/3
