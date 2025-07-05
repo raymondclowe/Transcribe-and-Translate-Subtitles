@@ -38,9 +38,9 @@
 ## ✨ Features  
 This project is built on ONNX Runtime framework.
 - Deoiser Support:
-  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
-  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
+  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
+  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [Mel-Band-Roformer](https://github.com/KimberleyJensen/Mel-Band-Roformer-Vocal-Model)
   - [MossFormerGAN_SE_16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
 
@@ -194,10 +194,11 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ## ✨ 功能
 这个项目基于 ONNX Runtime 框架。
 - **去噪器 (Denoiser) 支持**：
-  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
-  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
+  - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
+  - [ZipEnhancer](https://modelscope.cn/models/iic/speech_zipenhancer_ans_multiloss_16k_base)
   - [Mel-Band-Roformer](https://github.com/KimberleyJensen/Mel-Band-Roformer-Vocal-Model)
+  - [MossFormerGAN_SE_16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
  
 - **语音活动检测（VAD）支持**：
   - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
@@ -291,7 +292,6 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 待办事项  
 - [ ] [LLM-MiniCPM4](https://github.com/OpenBMB/MiniCPM)
-- [ ] [去噪-MossFormer2-16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
 - [ ] [去噪-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SE_48K)
 - [ ] [提高音频质量-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SR_48K)
 - [ ] [提高视频分辨率](https://github.com/sczhou/Upscale-A-Video)
