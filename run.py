@@ -738,13 +738,15 @@ def MAIN_PROCESS(
     elif model_denoiser == "ZipEnhancer":
         SAMPLE_RATE = 16000
         denoiser_format = "F32"
-        slider_vad_pad += 200  # Over denoise
     elif model_denoiser == "MelBandRoformer":
         SAMPLE_RATE = 44100
         if 'CPUExecutionProvider' in ORT_Accelerate_Providers:
             denoiser_format = "/Q8F32"
         else:
             denoiser_format = "/F16"
+    elif model_denoiser == "MossFormerGAN_SE_16K":
+        SAMPLE_RATE = 16000
+        denoiser_format = "F32"
     else:
         SAMPLE_RATE = 16000
         USE_DENOISED = False
@@ -1145,7 +1147,7 @@ def MAIN_PROCESS(
             else:
                 if FIRST_RUN:
                     # Load Denoiser model
-                    if model_denoiser == "ZipEnhancer":
+                    if (model_denoiser == "ZipEnhancer") or (model_denoiser == "MossFormerGAN_SE_16K"):
                         if "CPUExecutionProvider" in ORT_Accelerate_Providers:
                             ORT_Accelerate_Providers = ["OpenVINOExecutionProvider"]
                             provider_options = [
@@ -2100,7 +2102,8 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                     "GTCRN",
                     "DFSMN",
                     "ZipEnhancer",
-                    "MelBandRoformer"
+                    "MelBandRoformer",
+                    "MossFormerGAN_SE_16K"
                 ],
                 label="降噪器 Denoiser",
                 info="选择用于增强人声的降噪器。\nChoose a denoiser for audio processing.",
@@ -2112,7 +2115,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="Subtitles is All You Need") as GUI:
                 0.1, 1.0, step=0.025,
                 label="降噪系数 Denoise Factor",
                 info="较大的值可增强降噪效果。\nHigher = stronger denoise.",
-                value=0.5,
+                value=0.6,
                 visible=True,
                 interactive=True
             )
