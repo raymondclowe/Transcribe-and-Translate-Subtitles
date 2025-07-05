@@ -42,6 +42,7 @@ This project is built on ONNX Runtime framework.
   - [GTCRN](https://github.com/Xiaobin-Rong/gtcrn)
   - [DFSMN](https://modelscope.cn/models/iic/speech_dfsmn_ans_psm_48k_causal)
   - [Mel-Band-Roformer](https://github.com/KimberleyJensen/Mel-Band-Roformer-Vocal-Model)
+  - [MossFormerGAN_SE_16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
 
 - VAD Support:
   - [FSMN](https://modelscope.cn/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch)
@@ -135,7 +136,6 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 To-Do List
 - [ ] [LLM-MiniCPM4](https://github.com/OpenBMB/MiniCPM)
-- [ ] [Denoiser-MossFormer2-16K](https://www.modelscope.cn/models/alibabasglab/MossFormerGAN_SE_16K)
 - [ ] [Denoiser-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SE_48K)
 - [ ] [Upscale the Resolution of Audio-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SR_48K)
 - [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
