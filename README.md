@@ -138,7 +138,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 To-Do List
 - [ ] Beam Search for ASR models.
-- [ ] [Seed-X-PPO-7B]([https://github.com/OpenBMB/MiniCPM](https://modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B) with Beam Search
+- [ ] [Seed-X-PPO-7B](https://modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B) with Beam Search
 - [ ] [Belle-Whisper-ZH](https://huggingface.co/BELLE-2/Belle-whisper-large-v3-zh-punct)
 - [ ] Remove FSMN-VAD, Qwen, Gemma, Phi, InternLM. Only Gemma3-it-4B and Seed-X-PRO-7B are provided.
 - [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
@@ -298,7 +298,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 
 ## 📌 待办事项  
 - [ ] Beam Search for ASR models.
-- [ ] [Seed-X-PPO-7B]([https://github.com/OpenBMB/MiniCPM](https://modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B) with Beam Search
+- [ ] [Seed-X-PPO-7B](https://modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B) with Beam Search
 - [ ] [Belle-Whisper-ZH](https://huggingface.co/BELLE-2/Belle-whisper-large-v3-zh-punct)
 - [ ] Remove FSMN-VAD, Qwen, Gemma, Phi, InternLM. 仅提供 Gemma3-it-4B 和 Seed-X-PRO-7B。
 - [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
