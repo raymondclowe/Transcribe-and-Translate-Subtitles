@@ -137,13 +137,23 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles
 ---
 
 ## 📌 To-Do List
-- [ ] Beam Search for ASR models.
-- [ ] [Seed-X-PPO-7B](https://modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B) with Beam Search
-- [ ] [Belle-Whisper-ZH](https://huggingface.co/BELLE-2/Belle-whisper-large-v3-zh-punct)
-- [ ] Remove FSMN-VAD, Qwen, Gemma, Phi, InternLM. Only Gemma3-it-4B and Seed-X-PRO-7B are provided.
-- [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
+- [ ] Beam Search for Whisper, Dolphin, FireRedASR models.
+- [ ] Remove Gemma, Phi, InternLM.
+- [ ] Update [Qwen-3-4B-Instruct-2507](https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-Instruct-2507-abliterated), [Qwen-3-8B-Fine_Tuned](https://huggingface.co/huihui-ai/Huihui-Qwen3-8B-abliterated-v2).
+- [ ] Improve FSMN_VAD, SenseVoice, Paraformer, ZipEnhancer, MossFormerGAN_SE_16K. Speed up Mel-Band-Roformer.
 - [ ] [Denoiser-MossFormer2-48K](https://www.modelscope.cn/models/alibabasglab/MossFormer2_SE_48K)
-- [ ] AMD-ROCm Support
+- [ ] [Hunyuan-MT-7B](https://www.modelscope.cn/models/Tencent-Hunyuan/Hunyuan-MT-7B)
+- [ ] [Belle-Whisper-ZH](https://huggingface.co/BELLE-2/Belle-whisper-large-v3-zh-punct)
+- [ ] [Whisper-Anime-V0.3](https://huggingface.co/efwkjn/whisper-ja-anime-v0.3)
+- [ ] [Whisper-Korean](https://huggingface.co/ghost613/whisper-large-v3-turbo-korean)
+- [ ] [Whisper-Cantonese](https://huggingface.co/JackyHoCL/whisper-large-v3-turbo-cantonese-yue-english)
+- [ ] [Whisper-French](https://huggingface.co/bofenghuang/whisper-large-v3-french-distil-dec16)
+- [ ] [Whisper-German](https://huggingface.co/primeline/whisper-large-v3-turbo-german)
+- [ ] [Whisper-Arabic](https://huggingface.co/Byne/whisper-large-v3-arabic)
+- [ ] [Whisper-English-Dialect](https://huggingface.co/tiantiaf/voxlect-english-dialect-whisper-small)
+- [ ] [Whisper-Spanish-Dialect](https://huggingface.co/tiantiaf/voxlect-spanish-dialect-whisper-large-v3)
+- [ ] Add AMD-ROCm, AMD-MIGraphX, NVTensortRTX Execution Provider.
+- [ ] [Upscale the Resolution of Video](https://github.com/sczhou/Upscale-A-Video)
 - [ ] Real-Time Translate & Trascribe Video Player
 
 ---
