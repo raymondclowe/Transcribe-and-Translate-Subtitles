@@ -75,6 +75,8 @@ pip install -r requirements.txt
 Transcribe_and_Translate_Subtitles/Results/Subtitles/
 ```
 **准备好开始了吗？/ Ready to get started?** 🎉
+<br>
+![demo](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-09-19%2013-22-37.png)
 
 ---
 
