@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 视频字幕转录和翻译 / Transcribe and Translate Subtitles
+## 🎬 视频字幕转录和翻译 / Transcribe and Translate Subtitles
 
 **一个强大的、隐私优先的视频字幕转录和翻译工具**
 </br>
