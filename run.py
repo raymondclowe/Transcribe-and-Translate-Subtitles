@@ -39,7 +39,6 @@ print(f'\n找到 {physical_cores} 个物理 CPU 核心。Found {physical_cores} 
 
 DEVICE_ID = 0
 PENALITY_RANGE = 10         # For ASR decode.
-look_backward = 30          # unit: 10ms
 MAX_SEQ_LEN_LLM = 85        # Do not edit it.
 MAX_SEQ_LEN_ASR = 85        # Do not edit it.
 MAX_ASR_SEGMENT = 320000    # Do not edit it.
@@ -3467,7 +3466,6 @@ def create_interface():
 if __name__ == "__main__":
     inv_16k = 1.0 / 16000.0
     inv_int16 = 1.0 / 32768.0
-    inv_look_backward = 1.0 / look_backward
     HumAware_param = 512.0 * inv_16k
     NVIDIA_VAD_param = 320.0 * inv_16k
     TEN_VAD_param = 256 * inv_16k
