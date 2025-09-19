@@ -17,8 +17,8 @@
 ## 🔒 隐私保证 / Privacy Guarantee
 
 > **🚨 所有处理完全离线运行 / All processing runs completely offline**<br>
-> 无需互联网连接，确保最大程度的隐私和数据安全<br>
-> No internet connection required, ensuring maximum privacy and data security.
+> - 无需互联网连接，确保最大程度的隐私和数据安全<br>
+> - No internet connection required, ensuring maximum privacy and data security.
 
 ---
 
@@ -57,11 +57,17 @@ conda install ffmpeg
 pip install -r requirements.txt
 ```
 
-### 设置 / Setup
-1.  **下载模型 / Download Models**: 从 [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles) 获取所需模型 / Get the required models from [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles)
-2.  **下载脚本 / Download Script**: 将 `run.py` 放置在您的 `Transcribe_and_Translate_Subtitles` 文件夹中 / Place `run.py` in your `Transcribe_and_Translate_Subtitles` folder
-3.  **添加媒体 / Add Media**: 将您的视频放置在 `Transcribe_and_Translate_Subtitles/Media/` 目录下 / Place your videos in `Transcribe_and_Translate_Subtitles/Media/`
-4.  **运行 / Run**: 执行 `python run.py` 并打开 Web 界面 / Execute `python run.py` and open the web interface
+### 设置
+1.  **下载模型**: 从 [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles) 获取所需模型 
+2.  **下载脚本**: 将 `run.py` 放置在您的 `Transcribe_and_Translate_Subtitles` 文件夹中
+3.  **添加媒体**: 将您的音视频放置在 `Transcribe_and_Translate_Subtitles/Media/` 目录下
+4.  **运行**: 执行 `python run.py` 并打开 Web 界面
+
+### Setup
+1.  **Download Models**: Get the required models from [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles)
+2.  **Download Script**: Place `run.py` in your `Transcribe_and_Translate_Subtitles` folder
+3.  **Add Media**: Place your audios/videos in `Transcribe_and_Translate_Subtitles/Media/`
+4.  **Run**: Execute `python run.py` and open the web interface
 
 ### 结果 / Results
 在以下位置找到您处理后的字幕 / Find your processed subtitles in:
