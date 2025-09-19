@@ -65,7 +65,8 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 - **[NVIDIA-NeMo-VAD-v2.0](https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0)**
 - **[TEN-VAD](https://github.com/TEN-framework/ten-vad)**
 - **[Pyannote-Segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)**
-  - *注意：您需要接受 Pyannote 的使用条款并下载 Pyannote 的 `pytorch_model.bin` 文件。将其放置在 `VAD/pyannote_segmentation` 文件夹中。/ Note: You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Place it in the `VAD/pyannote_segmentation` folder.*
+  - *注意：您需要接受 Pyannote 的使用条款并下载 Pyannote 的 `pytorch_model.bin` 文件。将其放置在 `VAD/pyannote_segmentation` 文件夹中*。
+  - *Note: You need to accept Pyannote's terms of use and download the Pyannote `pytorch_model.bin` file. Place it in the `VAD/pyannote_segmentation` folder.*
 
 ### 🗣️ 语音识别 (ASR) / Speech Recognition (ASR)
 #### 多语言模型 / Multilingual Models
@@ -83,7 +84,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 - **[台湾客家话 / Chinese-Hakka](https://huggingface.co/formospeech/whisper-large-v3-taiwanese-hakka)**
 - **[台湾闽南语 / Chinese-Minnan](https://huggingface.co/TSukiLen/whisper-medium-chinese-tw-minnan)**
 - **[台湾华语 / Chinese-Taiwan](https://huggingface.co/JacobLinCool/whisper-large-v3-turbo-common_voice_19_0-zh-TW)**
-- **[CrisperWhisper](https://github.com/nyrahealth/CrisperWhisper)**
+- **[CrisperWhisper-Multilingual](https://github.com/nyrahealth/CrisperWhisper)**
 - **[丹麦语 / Danish](https://huggingface.co/sam8000/whisper-large-v3-turbo-danish-denmark)**
 - **[印度英语 / English-Indian](https://huggingface.co/Tejveer12/Indian-Accent-English-Whisper-Finetuned)**
 - **[英语 v3.5 / Engish-v3.5](https://huggingface.co/distil-whisper/distil-large-v3.5)**
@@ -125,21 +126,24 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
   <tr>
     <td valign="top">
       <ul>
-        <li>Intel</li>
-        <li>AMD</li>
         <li>Apple Silicon</li>
+        <li>AMD</li>
+        <li>Intel</li>
       </ul>
     </td>
     <td valign="top">
       <ul>
-        <li>NVIDIA CUDA</li>
+        <li>Apple CoreML</li>
         <li>AMD ROCm</li>
-        <li>Windows DirectML</li>
         <li>Intel OpenVINO</li>
+        <li>NVIDIA CUDA</li>
+        <li>Windows DirectML</li>
       </ul>
     </td>
     <td valign="top">
       <ul>
+        <li>Apple CoreML</li>
+        <li>AMD Ryzen-VitisAI</li>
         <li>Intel OpenVINO</li>
       </ul>
     </td>
@@ -150,9 +154,9 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 
 ## 📊 性能基准测试 / Performance Benchmarks
 
-*测试条件：Ubuntu 24.04, Intel i3-12300, 7602 秒视频 / Test conditions: Ubuntu 24.04, Intel i3-12300, 7602-second video*
+*测试条件 / Test Conditions： Ubuntu 24.04, Intel i3-12300, 7602 秒视频*
 
-| 操作系统 (OS) | 后端 (Backend) | 降噪器 (Denoiser) | VAD | 语音识别 (ASR) | 大语言模型 (LLM) | 实时率 (Real-Time Factor) |
+| 操作系统 (OS) | 后端 (Backend) | 降噪器 (Denoiser) | VAD | 语音识别 (ASR) | 大语言模型 (LLM) | 实时率<br>(Real-Time Factor) |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | Ubuntu-24.04 | CPU i3-12300 | - | Silero | SenseVoiceSmall | - | **0.08** |
 | Ubuntu-24.04 | CPU i3-12300 | GTCRN | Silero | SenseVoiceSmall | Qwen2.5-7B-Instruct | **0.50** |
