@@ -1231,7 +1231,7 @@ def MAIN_PROCESS(
             ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
 
         # Temporary fallback to 'cpu', due to the onnxruntime doesn't update yet.
-        if device_type_x in ['gpu', 'npu']:
+        if device_type_x in ['gpu', 'npu', 'dml']:
             device_type_x = 'cpu'
 
         return ort_session_x, use_sync_operations, device_type_x, _ORT_Accelerate_Providers, _provider_options
@@ -2200,7 +2200,6 @@ def MAIN_PROCESS(
             ids_len_2 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([2], dtype=np.int64), device_type_C, DEVICE_ID)
             ids_len_5 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([5], dtype=np.int64), device_type_C, DEVICE_ID)
             ids_0 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([0], dtype=np.int64), device_type_C, DEVICE_ID)
-            ids_1 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([1], dtype=np.int64), device_type_C, DEVICE_ID)
             ids_7 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([7], dtype=np.int64), device_type_C, DEVICE_ID)
             ids_145 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([145], dtype=np.int64), device_type_C, DEVICE_ID)
             ids_324 = onnxruntime.OrtValue.ortvalue_from_numpy(np.array([324], dtype=np.int64), device_type_C, DEVICE_ID)
@@ -2210,7 +2209,6 @@ def MAIN_PROCESS(
             init_ids_len_2 = ids_len_2._ortvalue
             init_ids_len_5 = ids_len_5._ortvalue
             init_ids_0 = ids_0._ortvalue
-            init_ids_1 = ids_1._ortvalue
             init_ids_7 = ids_7._ortvalue
             init_ids_145 = ids_145._ortvalue
             init_ids_324 = ids_324._ortvalue
@@ -2230,7 +2228,6 @@ def MAIN_PROCESS(
         in_name_D = ort_session_D.get_inputs()
         out_name_D = ort_session_D.get_outputs()
         amount_of_outputs_D = len(out_name_D)
-        amount_of_outputs_D_minus_2 = amount_of_outputs_D - 2
         in_name_D = [in_name_D[i].name for i in range(len(in_name_D))]
         out_name_D = [out_name_D[i].name for i in range(amount_of_outputs_D)]
         num_layers = (amount_of_outputs_D - 2) // 2
