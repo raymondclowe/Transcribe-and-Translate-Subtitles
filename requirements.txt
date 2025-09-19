@@ -21,11 +21,16 @@ gradio>=5.46.0
 # For CPU only
 onnxruntime>=1.22.0
 # ----------------------------------------
+# For Linux + AMD  (Please follow the URL to set up the ROCm first before pip install onnxruntime-rocm) 
+# https://rocm.docs.amd.com/projects/radeon/en/latest/docs/install/native_linux/install-onnx.html
+# onnxruntime>=1.22.0
+# onnxruntime-rocm>=1.22.0
+# ----------------------------------------
 # For Windows + (Intel or AMD)
 # onnxruntime>=1.22.0
 # onnxruntime-directml>=1.22.0
 # ----------------------------------------
-# For Intel OpenVINO
+# For Intel OpenVINO CPU & GPU & NPU
 # onnxruntime>=1.22.0
 # onnxruntime-openvino>=1.22.0
 # ----------------------------------------
