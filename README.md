@@ -16,7 +16,9 @@
 
 ## 🔒 隐私保证 / Privacy Guarantee
 
-> **🚨 所有处理完全离线运行 / All processing runs completely offline** - 无需互联网连接，确保最大程度的隐私和数据安全 / No internet connection required, ensuring maximum privacy and data security.
+> **🚨 所有处理完全离线运行 / All processing runs completely offline**<br>
+> 无需互联网连接，确保最大程度的隐私和数据安全<br>
+> No internet connection required, ensuring maximum privacy and data security.
 
 ---
 
