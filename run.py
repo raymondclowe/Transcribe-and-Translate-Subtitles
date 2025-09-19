@@ -1169,51 +1169,71 @@ def MAIN_PROCESS(
         slider_vad_MAX_SPEECH_DURATION,
         slider_vad_MIN_SILENCE_DURATION
 ):
-    def create_ort_session(_device_type, _has_npu, _onnx_model_x, _ORT_Accelerate_Providers, _session_opts, _provider_options, tag):
+    def create_ort_session(_device_type, _has_npu, _onnx_model_x, _ORT_Accelerate_Providers, _session_opts,
+                           _provider_options, tag):
         ort_session_x = None
         device_type_x = 'cpu'
         use_sync_operations = True
+
+        def try_create_session(device_type, device_name):
+            """Helper function to create ONNX session with given device type"""
+            try:
+                _provider_options[0]['device_type'] = device_type
+                session = onnxruntime.InferenceSession(
+                    _onnx_model_x,
+                    sess_options=_session_opts,
+                    providers=_ORT_Accelerate_Providers,
+                    provider_options=_provider_options
+                )
+                if len(session.get_providers()) > 1:
+                    print(f"\n{tag}: OpenVINO-{device_name}使用成功。OpenVINO-{device_name} is used successfully.")
+                    return session, True
+                else:
+                    print(f"\n{tag}: OpenVINO-{device_name} 使用失败。OpenVINO-{device_name} usage failed.")
+                    return None, False
+            except:
+                print(f"\n{tag}: OpenVINO-{device_name} 使用失败。OpenVINO-{device_name} usage failed.")
+                return None, False
+
         if _device_type != 'cpu':
-            session_opts.add_session_config_entry('session.disable_cpu_ep_fallback', '1')
             try:
                 if 'OpenVINOExecutionProvider' in _ORT_Accelerate_Providers[0]:
+                    # Try NPU first if available, then fallback to GPU
                     if _has_npu:
-                        try:
-                            _provider_options[0]['device_type'] = 'NPU'
-                            ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
+                        ort_session_x, success = try_create_session('NPU', 'NPU')
+                        if success:
                             device_type_x = 'npu'
-                            print(f"\n{tag}: OpenVINO-NPU使用成功。OpenVINO-NPU is used successfully.")
-                        except:
-                            print(f"\n{tag}: OpenVINO-NPU 使用失败。OpenVINO-NPU usage failed.")
-                            try:
-                                _provider_options[0]['device_type'] = 'GPU'
-                                ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
-                                device_type_x = _device_type
-                                print(f"\n{tag}: OpenVINO-GPU使用成功。OpenVINO-GPU is used successfully.")
-                            except:
-                                print(f"\n{tag}: OpenVINO-GPU 使用失败。OpenVINO-GPU usage failed.")
-                    else:
-                        try:
-                            _provider_options[0]['device_type'] = 'GPU'
-                            ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
+
+                    # If NPU failed or not available, try GPU
+                    if ort_session_x is None:
+                        ort_session_x, success = try_create_session('GPU', 'GPU')
+                        if success:
                             device_type_x = _device_type
-                            print(f"\n{tag}: OpenVINO-GPU使用成功。OpenVINO-GPU is used successfully.")
-                        except:
-                            print(f"\n{tag}: OpenVINO-GPU 使用失败。OpenVINO-GPU usage failed.")
                 else:
+                    # Non-OpenVINO provider
                     ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
-                    device_type_x = _device_type
+                    if len(ort_session_x.get_providers()) > 1:
+                        device_type_x = _device_type
+                        print(f"\n{tag}: GPU_NPU 使用成功。GPU_NPU is used successfully.")
+                    else:
+                        print(f"\n{tag}: GPU_NPU 使用失败。GPU_NPU usage failed.")
+                        ort_session_x = None
             except:
                 print(f"\n{tag}: GPU_NPU 使用失败。GPU_NPU usage failed.")
+                ort_session_x = None
+
+        # Fallback to CPU if all other options failed
         if ort_session_x is None:
-            session_opts.add_session_config_entry('session.disable_cpu_ep_fallback', '0')
             _ORT_Accelerate_Providers = ['CPUExecutionProvider']
             _provider_options = None
             use_sync_operations = False
+            _onnx_model_x = _onnx_model_x.replace('FP16', 'FP32')
             ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
-        # Temperary fallback to 'cpu', due to the onnxruntime doesn't update yet.
-        if device_type_x == 'gpu' or device_type_x == 'npu':
+
+        # Temporary fallback to 'cpu', due to the onnxruntime doesn't update yet.
+        if device_type_x in ['gpu', 'npu']:
             device_type_x = 'cpu'
+
         return ort_session_x, use_sync_operations, device_type_x, _ORT_Accelerate_Providers, _provider_options
 
     def inference_A(_inv_audio_len, _slice_start, _slice_end, _audio):
@@ -2127,8 +2147,16 @@ def MAIN_PROCESS(
 
     # Load ASR model
     ort_session_C, _, device_type_C, ORT_Accelerate_Providers_C, provider_options_C = create_ort_session(device_type, has_npu, onnx_model_C, ORT_Accelerate_Providers, session_opts, provider_options, 'ASR')
-    print(f'\nASR 可用的硬件 ASR-Usable Providers: {ort_session_C.get_providers()}')
+    provider_c = ort_session_C.get_providers()
+    print(f'\nASR 可用的硬件 ASR-Usable Providers: {provider_c}')
     if (asr_type == 0) or (asr_type == 3) or (asr_type == 4):  # Whisper & FireRedASR & Dolphin
+        if len(provider_c) < 2:
+            onnx_model_D = onnx_model_D.replace('FP16', 'FP32')
+            onnx_model_G = onnx_model_G.replace('FP16', 'FP32')
+            onnx_model_H = onnx_model_H.replace('FP16', 'FP32')
+            onnx_model_I = onnx_model_I.replace('FP16', 'FP32')
+            onnx_model_J = onnx_model_J.replace('FP16', 'FP32')
+
         if slide_top_k_asr < slide_beam_size_asr:
             slide_top_k_asr = slide_beam_size_asr
         if (slide_top_k_asr < 2) or (slide_beam_size_asr < 2):
@@ -2163,6 +2191,8 @@ def MAIN_PROCESS(
                     detect_region = True
             else:
                 detect_region = True
+            if len(provider_c) < 2:
+                onnx_model_K = onnx_model_K.replace('FP16', 'FP32')
             generate_limit = MAX_SEQ_LEN_ASR - 6  # 6 = length of initial input_ids
             ort_session_K = onnxruntime.InferenceSession(onnx_model_K, sess_options=session_opts, providers=ORT_Accelerate_Providers_C, provider_options=provider_options_C)
             in_name_K = ort_session_K.get_inputs()[0].name
@@ -2333,15 +2363,39 @@ def MAIN_PROCESS(
             else:
                 audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_48K).get_array_of_samples(), dtype=np.float32)
                 if FIRST_RUN:
-                    # Load Denoiser model
-                    ort_session_A = None
-                    device_type_A = 'cpu'
-                    if device_type == 'cpu':
-                        if ('ZipEnhancer' in model_denoiser) or ('MossFormerGAN_SE_16K' in model_denoiser) or ('MossFormer2_SE_48K' in model_denoiser):
-                            if 'OpenVINOExecutionProvider' in usable_providers:
-                                ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-                                provider_options = [
-                                    {
+                    def setup_denoiser_session(onnx_model_A):
+                        def try_create_session_with_config(providers, options, device_name, onnx_model_A, config_setup=None, config_cleanup=None):
+                            try:
+                                if config_setup:
+                                    config_setup()
+                                session = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=providers, provider_options=options)
+                                if len(session.get_providers()) > 1:
+                                    print(f'\nDenoiser: {device_name} 使用成功。{device_name} used successfully.')
+                                    return session, True
+                                else:
+                                    print(f'\nDenoiser: {device_name} 使用失败。{device_name} usage failed.')
+                                    return None, False
+                            except:
+                                print(f'\nDenoiser: {device_name} 使用失败。{device_name} usage failed.')
+                                return None, False
+                            finally:
+                                if config_cleanup:
+                                    config_cleanup()
+
+                        def is_special_model():
+                            return any(model in model_denoiser for model in['ZipEnhancer', 'MossFormerGAN_SE_16K', 'MossFormer2_SE_48K'])
+
+                        # Load Denoiser model
+                        ort_session_A = None
+                        device_type_A = 'cpu'
+
+                        if device_type == 'cpu':
+                            # CPU-specific logic
+                            if is_special_model():
+                                if 'OpenVINOExecutionProvider' in usable_providers:
+                                    # OpenVINO CPU configuration
+                                    openvino_providers = ['OpenVINOExecutionProvider']
+                                    openvino_options = [{
                                         'device_type': "CPU",
                                         'precision': 'ACCURACY',
                                         'model_priority': 'HIGH',
@@ -2350,80 +2404,94 @@ def MAIN_PROCESS(
                                         'enable_opencl_throttling': False,
                                         'enable_qdq_optimizer': False,
                                         'disable_dynamic_shapes': True
-                                    }
-                                ]
-                                ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                                ORT_Accelerate_Providers = ['CPUExecutionProvider']
-                                provider_options = None
-                            elif 'CoreMLExecutionProvider' in usable_providers:
-                                provider_options[0]['MLComputeUnits'] = 'CPUOnly'
-                                try:
-                                    ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                                except:
-                                    print('\nDenoiser: Apple-CoreML-CPU 使用失败。Apple-CoreML-CPU usage failed.')
-                                provider_options[0]['MLComputeUnits'] = 'ALL'
-                    else:
-                        session_opts.add_session_config_entry('session.disable_cpu_ep_fallback', '1')
-                        if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers[0]:
-                            provider_options[0]['disable_dynamic_shapes'] = True
-                            if has_npu:
-                                try:
-                                    provider_options[0]['device_type'] = 'NPU'
-                                    ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                                    device_type_A = 'npu'
-                                    provider_options[0]['device_type'] = 'GPU'
-                                    print('\nDenoiser: OpenVINO-NPU使用成功。OpenVINO-NPU is used successfully.')
-                                except:
-                                    print('\nDenoiser: OpenVINO-NPU 使用失败。OpenVINO-NPU usage failed.')
-                                    try:
-                                        provider_options[0]['device_type'] = 'GPU'
-                                        ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                                        device_type_A = device_type
-                                        print('\nDenoiser: OpenVINO-GPU使用成功。OpenVINO-GPU is used successfully.')
-                                    except:
-                                        print('\nDenoiser: OpenVINO-GPU 使用失败。OpenVINO-GPU usage failed.')
-                            else:
-                                try:
-                                    provider_options[0]['device_type'] = 'GPU'
-                                    ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                                    device_type_A = device_type
-                                    print('\nDenoiser: OpenVINO-GPU使用成功。OpenVINO-GPU is used successfully.')
-                                except:
-                                    print('\nDenoiser: OpenVINO-GPU 使用失败。OpenVINO-GPU usage failed.')
-                            provider_options[0]['disable_dynamic_shapes'] = False
-                        elif 'CUDAExecutionProvider' in ORT_Accelerate_Providers:
-                            if ('ZipEnhancer' in model_denoiser) or ('MossFormerGAN_SE_16K' in model_denoiser) or ('MossFormer2_SE_48K' in model_denoiser):
-                                provider_options[0]['cudnn_conv_algo_search'] = 'DEFAULT'
-                            try:
-                                ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                            except:
-                                print('\nDenoiser: NVIDUA-GPU 使用失败。NVIDUA-GPU usage failed.')
-                            provider_options[0]['cudnn_conv_algo_search'] = 'EXHAUSTIVE'
-                        elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
-                            provider_options[0]['RequireStaticInputShapes'] = '1'
-                            try:
-                                ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                            except:
-                                print('\nDenoiser: Apple-CoreML-GPU_NPU 使用失败。Apple-CoreML-GPU_NPU usage failed.')
-                            provider_options[0]['RequireStaticInputShapes'] = '0'
+                                    }]
+                                    ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=openvino_providers, provider_options=openvino_options)
+
+                                elif 'CoreMLExecutionProvider' in usable_providers:
+                                    # CoreML CPU configuration
+                                    def setup_coreml_cpu():
+                                        provider_options[0]['MLComputeUnits'] = 'CPUOnly'
+
+                                    def cleanup_coreml_cpu():
+                                        provider_options[0]['MLComputeUnits'] = 'ALL'
+
+                                    ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'Apple-CoreML-CPU', onnx_model_A, setup_coreml_cpu, cleanup_coreml_cpu)
                         else:
-                            try:
-                                ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
-                            except:
-                                print('\nDenoiser: GPU_NPU 使用失败。GPU_NPU usage failed.')
-                    if ort_session_A is None :
-                        session_opts.add_session_config_entry('session.disable_cpu_ep_fallback', '0')
-                        ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
-                    in_name_A = ort_session_A.get_inputs()
-                    out_name_A = ort_session_A.get_outputs()
-                    in_name_A0 = in_name_A[0].name
-                    out_name_A0 = [out_name_A[0].name]
-                    INPUT_AUDIO_LENGTH_A = ort_session_A._inputs_meta[0].shape[-1]
-                    stride_step_A = INPUT_AUDIO_LENGTH_A
-                    # Temperary fallback to 'cpu', due to the onnxruntime doesn't update yet.
-                    if device_type_A == 'gpu' or device_type_A == 'npu':
-                        device_type_A = 'cpu'
-                    print(f'\n降噪可用的硬件 Denoise-Usable Providers: {ort_session_A.get_providers()}')
+                            # Non-CPU logic
+                            if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers[0]:
+                                # OpenVINO GPU/NPU configuration
+                                def setup_openvino():
+                                    provider_options[0]['disable_dynamic_shapes'] = True
+
+                                def cleanup_openvino():
+                                    provider_options[0]['disable_dynamic_shapes'] = False
+                                    provider_options[0]['device_type'] = 'GPU'  # Reset to GPU
+
+                                setup_openvino()
+
+                                # Try NPU first if available
+                                if has_npu:
+                                    provider_options[0]['device_type'] = 'NPU'
+                                    ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-NPU', onnx_model_A)
+                                    if success:
+                                        device_type_A = 'npu'
+
+                                # Try GPU if NPU failed or not available
+                                if ort_session_A is None:
+                                    provider_options[0]['device_type'] = 'GPU'
+                                    ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-GPU', onnx_model_A)
+                                    if success:
+                                        device_type_A = device_type
+
+                                cleanup_openvino()
+
+                            elif 'CUDAExecutionProvider' in ORT_Accelerate_Providers:
+                                # CUDA configuration
+                                def setup_cuda():
+                                    if is_special_model():
+                                        provider_options[0]['cudnn_conv_algo_search'] = 'DEFAULT'
+
+                                def cleanup_cuda():
+                                    provider_options[0]['cudnn_conv_algo_search'] = 'EXHAUSTIVE'
+
+                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'NVIDUA-GPU', onnx_model_A, setup_cuda, cleanup_cuda)
+
+                            elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
+                                # CoreML GPU/NPU configuration
+                                def setup_coreml_gpu():
+                                    provider_options[0]['RequireStaticInputShapes'] = '1'
+
+                                def cleanup_coreml_gpu():
+                                    provider_options[0]['RequireStaticInputShapes'] = '0'
+
+                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options,'Apple-CoreML-GPU_NPU', onnx_model_A, setup_coreml_gpu, cleanup_coreml_gpu)
+
+                            else:
+                                # Other providers
+                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'GPU_NPU', onnx_model_A)
+
+                        # Fallback to CPU if all attempts failed
+                        if ort_session_A is None:
+                            onnx_model_A = onnx_model_A.replace('FP16', 'FP32')
+                            ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=['CPUExecutionProvider'], provider_options=None)
+
+                        # Setup input/output metadata
+                        in_name_A = ort_session_A.get_inputs()
+                        out_name_A = ort_session_A.get_outputs()
+                        in_name_A0 = in_name_A[0].name
+                        out_name_A0 = [out_name_A[0].name]
+                        INPUT_AUDIO_LENGTH_A = ort_session_A._inputs_meta[0].shape[-1]
+                        stride_step_A = INPUT_AUDIO_LENGTH_A
+
+                        # Temporary fallback to 'cpu', due to the onnxruntime doesn't update yet.
+                        if device_type_A in ['gpu', 'npu']:
+                            device_type_A = 'cpu'
+
+                        print(f'\n降噪可用的硬件 Denoise-Usable Providers: {ort_session_A.get_providers()}')
+
+                        return ort_session_A, device_type_A, in_name_A0, out_name_A0, INPUT_AUDIO_LENGTH_A, stride_step_A
+                    # Call the function
+                    ort_session_A, device_type_A, in_name_A0, out_name_A0, INPUT_AUDIO_LENGTH_A, stride_step_A = setup_denoiser_session(onnx_model_A)
         else:
             audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
 
@@ -2801,6 +2869,7 @@ def MAIN_PROCESS(
 
                 # Load the LLM
                 ort_session_E, use_sync_operations_E, device_type, _, _ = create_ort_session(device_type, False, llm_path + '/llm.onnx', ORT_Accelerate_Providers, session_opts, provider_options, 'LLM')
+                print(f"\nLLM 可用的硬件 LLM-Usable Providers: {ort_session_E.get_providers()}")
                 device_type_ort = get_ort_device(device_type, DEVICE_ID)
                 io_binding_E = ort_session_E.io_binding()._iobinding
                 in_name_E = ort_session_E.get_inputs()
