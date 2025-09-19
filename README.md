@@ -33,6 +33,7 @@ pip install -r requirements.txt
 
 # 安装 Python 依赖 / Install Python dependencies
 # 请根据您的硬件平台安装正确的包 / Please according to your hardware platform install the right package
+# ----------------------------------------
 # For CPU only
 # onnxruntime>=1.22.0
 # ----------------------------------------
