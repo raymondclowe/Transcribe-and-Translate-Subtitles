@@ -2261,7 +2261,7 @@ def MAIN_PROCESS(
         else:
             init_penality_reset_count_beam = 0
             init_save_id_greedy = np.zeros(MAX_SEQ_LEN_ASR, dtype=np.int32)
-        if asr_type != 0 or device_type_C != 'cpu':
+        if asr_type != 0:
             if device_type_C != 'dml':
                 past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((1, ort_session_D._outputs_meta[0].shape[1], ort_session_D._outputs_meta[0].shape[2], 0), dtype=model_D_dtype), device_type_C, DEVICE_ID)
                 past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((1, ort_session_D._outputs_meta[num_layers].shape[1], 0, ort_session_D._outputs_meta[num_layers].shape[3]), dtype=model_D_dtype), device_type_C, DEVICE_ID)
@@ -2710,7 +2710,6 @@ def MAIN_PROCESS(
         # ASR (transcription)
         # -------------------------
         print('\nStart to transcribe task.')
-        print('\nIf you encounter low RAM, try reducing the number of parallel threads.\n')
         start_time = time.time()
         # Build tasks for the chosen inference function per asr_type
         if asr_type == 0:
