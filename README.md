@@ -213,7 +213,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 ## 📋 更新历史 / Update History
 
 ### 🆕 **2025/9/19** - 重大更新 / Major Release
-- ✅ **新增 ASR / Added ASR**: 30+ 个地区微调的 Whisper 模型 / 30+ region fine-tuned Whisper models
+- ✅ **新增 ASR / Added ASR**: 28 个地区微调的 Whisper 模型 / 28 region fine-tuned Whisper models
 - ✅ **新增降噪器 / Added Denoiser**: MossFormer2_SE_48K
 - ✅ **新增 LLM 模型 / Added LLM Models**:
   - Qwen3-4B-Instruct-2507-abliterated
