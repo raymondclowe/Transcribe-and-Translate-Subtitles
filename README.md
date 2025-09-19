@@ -221,7 +221,9 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 ## 📋 更新历史 / Update History
 
 ### 🆕 **2025/9/19** - 重大更新 / Major Release
-- ✅ **新增 ASR / Added ASR**: 28 个地区微调的 Whisper 模型 / 28 region fine-tuned Whisper models
+- ✅ **新增 ASR / Added ASR**:
+  - 28 个地区微调的 Whisper 模型
+  - 28 region fine-tuned Whisper models
 - ✅ **新增降噪器 / Added Denoiser**: MossFormer2_SE_48K
 - ✅ **新增 LLM 模型 / Added LLM Models**:
   - Qwen3-4B-Instruct-2507-abliterated
@@ -229,10 +231,14 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
   - Hunyuan-MT-7B-abliterated
   - Seed-X-PRO-7B
 - ✅ **性能改进 / Performance Improvements**:
-  - 为类 Whisper 的 ASR 模型应用了束搜索（Beam Search）和重复惩罚（Repeat Penalty）/ Applied Beam Search & Repeat Penalty for Whisper-like ASR models
-  - 应用 ONNX Runtime IOBinding 实现最大加速（比常规 ort_session.run() 快 10%以上）/ Applied ONNX Runtime IOBinding for maximum speed up (10%+ faster than normal ort_session.run())
-  - 支持单次推理处理 20 秒的音频片段 / Support for 20 seconds audio segment per single run inference
-  - 改进了多线程性能 / Improved multi-threads performance
+  - 为类 Whisper 的 ASR 模型应用了束搜索（Beam Search）和重复惩罚（Repeat Penalty）
+  - 应用 ONNX Runtime IOBinding 实现最大加速（比常规 ort_session.run() 快 10%以上）
+  - 支持单次推理处理 20 秒的音频片段
+  - 改进了多线程性能
+  - Applied Beam Search & Repeat Penalty for Whisper-like ASR models
+  - Applied ONNX Runtime IOBinding for maximum speed up (10%+ faster than normal ort_session.run())
+  - Support for 20 seconds audio segment per single run inference
+  - Improved multi-threads performance
 - ✅ **硬件支持扩展 / Hardware Support Expansion**:
   - AMD-ROCm 执行提供程序 / Execution Provider
   - AMD-MIGraphX 执行提供程序 / Execution Provider
