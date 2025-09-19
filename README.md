@@ -12,99 +12,11 @@
 
 </div>
 
-**准备好开始了吗？/ Ready to get started?** 🎉
-
-[🎉 下载模型 / Download Models](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles)
-
 ---
 
 ## 🔒 隐私保证 / Privacy Guarantee
 
 > **🚨 所有处理完全离线运行 / All processing runs completely offline** - 无需互联网连接，确保最大程度的隐私和数据安全 / No internet connection required, ensuring maximum privacy and data security.
-
----
-
-## 📋 更新历史 / Update History
-
-### 🆕 **2025/9/19** - 重大更新 / Major Release
-- ✅ **新增 ASR / Added ASR**: 30+ 个地区微调的 Whisper 模型 / 30+ region fine-tuned Whisper models
-- ✅ **新增降噪器 / Added Denoiser**: MossFormer2_SE_48K
-- ✅ **新增 LLM 模型 / Added LLM Models**:
-  - Qwen3-4B-Instruct-2507-abliterated
-  - Qwen3-8B-abliterated-v2
-  - Hunyuan-MT-7B-abliterated
-  - Seed-X-PRO-7B
-- ✅ **性能改进 / Performance Improvements**:
-  - 为类 Whisper 的 ASR 模型应用了束搜索（Beam Search）和重复惩罚（Repeat Penalty）/ Applied Beam Search & Repeat Penalty for Whisper-like ASR models
-  - 应用 ONNX Runtime IOBinding 实现最大加速（比常规 ort_session.run() 快 10%以上）/ Applied ONNX Runtime IOBinding for maximum speed up (10%+ faster than normal ort_session.run())
-  - 支持单次推理处理 20 秒的音频片段 / Support for 20 seconds audio segment per single run inference
-  - 改进了多线程性能 / Improved multi-threads performance
-- ✅ **硬件支持扩展 / Hardware Support Expansion**:
-  - AMD-ROCm 执行提供程序 / Execution Provider
-  - AMD-MIGraphX 执行提供程序 / Execution Provider
-  - NVIDIA TensorRTX 执行提供程序 / Execution Provider
-  - *(必须先配置环境，否则无法工作 / Must config the env first or it will not work)*
-- ✅ **准确性改进 / Accuracy Improvements**:
-  - SenseVoice
-  - Paraformer
-  - FireRedASR
-  - Dolphin
-  - ZipEnhancer
-  - MossFormerGAN_SE_16K
-  - NVIDIA-NeMo-VAD
-- ✅ **速度改进 / Speed Improvements**:
-  - MelBandRoformer (通过转换为单声道提升速度 / speed boost by converting to mono channel)
-- ❌ **移除的模型 / Removed Models**:
-  - FSMN-VAD
-  - Qwen3-4B-Official
-  - Qwen3-8B-Official
-  - Gemma3-4B-it
-  - Gemma3-12B-it
-  - InternLM3
-  - Phi-4-Instruct
-
-### **2025/7/5** - 降噪增强 / Noise Reduction Enhancement
-- ✅ **新增降噪模型 / Added noise reduction model**: MossFormerGAN_SE_16K
-
-### **2025/6/11** - VAD 模型扩展 / VAD Models Expansion
-- ✅ **新增 VAD 模型 / Added VAD Models**:
-  - HumAware-VAD
-  - NVIDIA-NeMo-VAD
-  - TEN-VAD
-
-### **2025/6/3** - 亚洲语言支持 / Asian Language Support
-- ✅ **新增 Dolphin ASR 模型以支持亚洲语言 / Added Dolphin ASR model** to support Asian languages
-
-### **2025/5/13** - GPU 加速 / GPU Acceleration
-- ✅ **新增 Float16/32 ASR 模型以支持 CUDA/DirectML GPU / Added Float16/32 ASR models** to support CUDA/DirectML GPU usage
-- ✅ **GPU 性能 / GPU Performance**: 这些模型可以实现超过 99% 的 GPU 算子部署 / These models can achieve >99% GPU operator deployment
-
-### **2025/5/9** - 主要功能发布 / Major Feature Release
-- ✅ **灵活性改进 / Flexibility Improvements**:
-  - 新增不使用 VAD（语音活动检测）的选项 / Added option to **not use** VAD (Voice Activity Detection)
-- ✅ **新增模型 / Added Models**:
-  - **降噪 / Noise reduction**: MelBandRoformer
-  - **ASR**: CrisperWhisper
-  - **ASR**: Whisper-Large-v3.5-Distil (英语微调 / English fine-tuned)
-  - **ASR**: FireRedASR-AED-L (支持中文及方言 / Chinese + dialects support)
-  - **三个日语动漫微调的 Whisper 模型 / Three Japanese anime fine-tuned Whisper models**
-- ✅ **性能优化 / Performance Optimizations**:
-  - 移除 IPEX-LLM 框架以提升整体性能 / Removed IPEX-LLM framework to enhance overall performance
-  - 取消 LLM 量化选项，统一使用 **Q4F32** 格式 / Cancelled LLM quantization options, standardized on **Q4F32** format
-  - Whisper 系列推理速度提升 10% 以上 / Improved **Whisper** series inference speed by over 10%
-- ✅ **准确性改进 / Accuracy Improvements**:
-  - 提升 **FSMN-VAD** 准确率 / Improved **FSMN-VAD** accuracy
-  - 提升 **Paraformer** 识别准确率 / Improved **Paraformer** recognition accuracy
-  - 提升 **SenseVoice** 识别准确率 / Improved **SenseVoice** recognition accuracy
-- ✅ **LLM 支持 ONNX Runtime 100% GPU 算子部署 / LLM Support with ONNX Runtime 100% GPU operator deployment**:
-  - Qwen3-4B/8B
-  - InternLM3-8B
-  - Phi-4-mini-Instruct
-  - Gemma3-4B/12B-it
-- ✅ **硬件支持扩展 / Hardware Support Expansion**:
-  - **Intel OpenVINO**
-  - **NVIDIA CUDA GPU**
-  - **Windows DirectML GPU** (支持集成显卡和独立显卡 / supports integrated and discrete GPUs)
 
 ---
 
@@ -130,6 +42,7 @@ pip install -r requirements.txt
 ```
 Transcribe_and_Translate_Subtitles/Results/Subtitles/
 ```
+**准备好开始了吗？/ Ready to get started?** 🎉
 
 ---
 
@@ -258,6 +171,90 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
   sudo apt install libc++1
   ```
 - **苹果芯片 / Apple Silicon**: 请避免安装 `onnxruntime-openvino`，因为它会导致错误 / Avoid installing `onnxruntime-openvino` as it will cause errors
+
+---
+
+## 📋 更新历史 / Update History
+
+### 🆕 **2025/9/19** - 重大更新 / Major Release
+- ✅ **新增 ASR / Added ASR**: 30+ 个地区微调的 Whisper 模型 / 30+ region fine-tuned Whisper models
+- ✅ **新增降噪器 / Added Denoiser**: MossFormer2_SE_48K
+- ✅ **新增 LLM 模型 / Added LLM Models**:
+  - Qwen3-4B-Instruct-2507-abliterated
+  - Qwen3-8B-abliterated-v2
+  - Hunyuan-MT-7B-abliterated
+  - Seed-X-PRO-7B
+- ✅ **性能改进 / Performance Improvements**:
+  - 为类 Whisper 的 ASR 模型应用了束搜索（Beam Search）和重复惩罚（Repeat Penalty）/ Applied Beam Search & Repeat Penalty for Whisper-like ASR models
+  - 应用 ONNX Runtime IOBinding 实现最大加速（比常规 ort_session.run() 快 10%以上）/ Applied ONNX Runtime IOBinding for maximum speed up (10%+ faster than normal ort_session.run())
+  - 支持单次推理处理 20 秒的音频片段 / Support for 20 seconds audio segment per single run inference
+  - 改进了多线程性能 / Improved multi-threads performance
+- ✅ **硬件支持扩展 / Hardware Support Expansion**:
+  - AMD-ROCm 执行提供程序 / Execution Provider
+  - AMD-MIGraphX 执行提供程序 / Execution Provider
+  - NVIDIA TensorRTX 执行提供程序 / Execution Provider
+  - *(必须先配置环境，否则无法工作 / Must config the env first or it will not work)*
+- ✅ **准确性改进 / Accuracy Improvements**:
+  - SenseVoice
+  - Paraformer
+  - FireRedASR
+  - Dolphin
+  - ZipEnhancer
+  - MossFormerGAN_SE_16K
+  - NVIDIA-NeMo-VAD
+- ✅ **速度改进 / Speed Improvements**:
+  - MelBandRoformer (通过转换为单声道提升速度 / speed boost by converting to mono channel)
+- ❌ **移除的模型 / Removed Models**:
+  - FSMN-VAD
+  - Qwen3-4B-Official
+  - Qwen3-8B-Official
+  - Gemma3-4B-it
+  - Gemma3-12B-it
+  - InternLM3
+  - Phi-4-Instruct
+
+### **2025/7/5** - 降噪增强 / Noise Reduction Enhancement
+- ✅ **新增降噪模型 / Added noise reduction model**: MossFormerGAN_SE_16K
+
+### **2025/6/11** - VAD 模型扩展 / VAD Models Expansion
+- ✅ **新增 VAD 模型 / Added VAD Models**:
+  - HumAware-VAD
+  - NVIDIA-NeMo-VAD
+  - TEN-VAD
+
+### **2025/6/3** - 亚洲语言支持 / Asian Language Support
+- ✅ **新增 Dolphin ASR 模型以支持亚洲语言 / Added Dolphin ASR model** to support Asian languages
+
+### **2025/5/13** - GPU 加速 / GPU Acceleration
+- ✅ **新增 Float16/32 ASR 模型以支持 CUDA/DirectML GPU / Added Float16/32 ASR models** to support CUDA/DirectML GPU usage
+- ✅ **GPU 性能 / GPU Performance**: 这些模型可以实现超过 99% 的 GPU 算子部署 / These models can achieve >99% GPU operator deployment
+
+### **2025/5/9** - 主要功能发布 / Major Feature Release
+- ✅ **灵活性改进 / Flexibility Improvements**:
+  - 新增不使用 VAD（语音活动检测）的选项 / Added option to **not use** VAD (Voice Activity Detection)
+- ✅ **新增模型 / Added Models**:
+  - **降噪 / Noise reduction**: MelBandRoformer
+  - **ASR**: CrisperWhisper
+  - **ASR**: Whisper-Large-v3.5-Distil (英语微调 / English fine-tuned)
+  - **ASR**: FireRedASR-AED-L (支持中文及方言 / Chinese + dialects support)
+  - **三个日语动漫微调的 Whisper 模型 / Three Japanese anime fine-tuned Whisper models**
+- ✅ **性能优化 / Performance Optimizations**:
+  - 移除 IPEX-LLM 框架以提升整体性能 / Removed IPEX-LLM framework to enhance overall performance
+  - 取消 LLM 量化选项，统一使用 **Q4F32** 格式 / Cancelled LLM quantization options, standardized on **Q4F32** format
+  - Whisper 系列推理速度提升 10% 以上 / Improved **Whisper** series inference speed by over 10%
+- ✅ **准确性改进 / Accuracy Improvements**:
+  - 提升 **FSMN-VAD** 准确率 / Improved **FSMN-VAD** accuracy
+  - 提升 **Paraformer** 识别准确率 / Improved **Paraformer** recognition accuracy
+  - 提升 **SenseVoice** 识别准确率 / Improved **SenseVoice** recognition accuracy
+- ✅ **LLM 支持 ONNX Runtime 100% GPU 算子部署 / LLM Support with ONNX Runtime 100% GPU operator deployment**:
+  - Qwen3-4B/8B
+  - InternLM3-8B
+  - Phi-4-mini-Instruct
+  - Gemma3-4B/12B-it
+- ✅ **硬件支持扩展 / Hardware Support Expansion**:
+  - **Intel OpenVINO**
+  - **NVIDIA CUDA GPU**
+  - **Windows DirectML GPU** (支持集成显卡和独立显卡 / supports integrated and discrete GPUs)
 
 ---
 
