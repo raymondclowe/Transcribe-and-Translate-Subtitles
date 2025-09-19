@@ -1,10 +1,11 @@
 # Core dependencies
 torch>=2.7.1
-numpy>=2.3.2
+numpy>=2.3.3
 accelerate>=1.10.1
 transformers>=4.56.1
 sentencepiece>=0.2.1
-psutil>=7.0.0
+psutil>=7.1.0
+py-cpuinfo>=9.0.0
 
 # Audio processing
 pydub>=0.25.1
