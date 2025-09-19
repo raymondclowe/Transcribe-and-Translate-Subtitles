@@ -1569,14 +1569,18 @@ def MAIN_PROCESS(
     else:
         print(f'\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.')
 
-    useable_providers = onnxruntime.get_available_providers()
-    cpu_model = cpuinfo.get_cpu_info().get('brand_raw', 'unknown').lower()
-    has_npu = 'intel' in cpu_model and 'ultra' in cpu_model
-
-    if len(useable_providers) > 1:
+    usable_providers = onnxruntime.get_available_providers()
+    
+    try:
+        cpu_model = cpuinfo.get_cpu_info().get('brand_raw', 'unknown').lower()
+        has_npu = 'intel' in cpu_model and 'ultra' in cpu_model
+    except:
+        has_npu = 'unknown'
+    
+    if len(usable_providers) > 1:
         if hardware != "CPU":
             model_dtype = "FP16"
-            has_npu = (('OpenVINOExecutionProvider' in useable_providers) and has_npu) or ('VitisAIExecutionProvider' in useable_providers) or ('QNNExecutionProvider' in useable_providers)
+            has_npu = (('OpenVINOExecutionProvider' in usable_providers) and has_npu) or ('VitisAIExecutionProvider' in usable_providers) or ('QNNExecutionProvider' in usable_providers)
             cuda_options = {
                 'device_id': DEVICE_ID,
                 'gpu_mem_limit': 64 * 1024 * 1024 * 1024,    # 64 GB
@@ -1602,43 +1606,43 @@ def MAIN_PROCESS(
                 'gpu_mem_limit': 64 * 1024 * 1024 * 1024,    # 64 GB,
                 'arena_extend_strategy': 'kNextPowerOfTwo',  # ["kNextPowerOfTwo", "kSameAsRequested"],
             }
-            if 'NvTensorRTRTXExecutionProvider' in useable_providers:
+            if 'NvTensorRTRTXExecutionProvider' in usable_providers:
                 device_type = 'cuda'
                 ORT_Accelerate_Providers = ['NvTensorRTRTXExecutionProvider']
-                if 'CUDAExecutionProvider' in useable_providers:
+                if 'CUDAExecutionProvider' in usable_providers:
                     ORT_Accelerate_Providers = ['NvTensorRTRTXExecutionProvider', 'CUDAExecutionProvider']
-            elif 'TensorrtExecutionProvider' in useable_providers:
+            elif 'TensorrtExecutionProvider' in usable_providers:
                 device_type = 'cuda'
                 ORT_Accelerate_Providers = ['TensorrtExecutionProvider']
-                if 'CUDAExecutionProvider' in useable_providers:
+                if 'CUDAExecutionProvider' in usable_providers:
                     ORT_Accelerate_Providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider']
-            elif 'CUDAExecutionProvider' in useable_providers:
+            elif 'CUDAExecutionProvider' in usable_providers:
                 device_type = 'cuda'
                 ORT_Accelerate_Providers = ['CUDAExecutionProvider']
-            elif 'MIGraphXExecutionProvider' in useable_providers:
+            elif 'MIGraphXExecutionProvider' in usable_providers:
                 device_type = 'gpu'
                 ORT_Accelerate_Providers = ['MIGraphXExecutionProvider']
-                if 'ROCMExecutionProvider' in useable_providers:
+                if 'ROCMExecutionProvider' in usable_providers:
                     ORT_Accelerate_Providers = ['MIGraphXExecutionProvider', 'ROCMExecutionProvider']
-            elif 'ROCMExecutionProvider' in useable_providers:
+            elif 'ROCMExecutionProvider' in usable_providers:
                 device_type = 'gpu'
                 ORT_Accelerate_Providers = ['ROCMExecutionProvider']
-            elif 'VitisAIExecutionProvider' in useable_providers:
+            elif 'VitisAIExecutionProvider' in usable_providers:
                 device_type = 'npu'
                 ORT_Accelerate_Providers = ['VitisAIExecutionProvider']
-            elif 'WebGpuExecutionProvider' in useable_providers:
+            elif 'WebGpuExecutionProvider' in usable_providers:
                 device_type = 'webgpu'
                 ORT_Accelerate_Providers = ['WebGpuExecutionProvider']
-            elif 'DmlExecutionProvider' in useable_providers:
+            elif 'DmlExecutionProvider' in usable_providers:
                 device_type = 'dml'
                 ORT_Accelerate_Providers = ['DmlExecutionProvider']
-            elif 'OpenVINOExecutionProvider' in useable_providers:
+            elif 'OpenVINOExecutionProvider' in usable_providers:
                 device_type = 'gpu'
                 ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
-            elif 'CoreMLExecutionProvider' in useable_providers:
+            elif 'CoreMLExecutionProvider' in usable_providers:
                 device_type = 'gpu'
                 ORT_Accelerate_Providers = ['CoreMLExecutionProvider']
-            elif 'QNNExecutionProvider' in useable_providers:
+            elif 'QNNExecutionProvider' in usable_providers:
                 device_type = 'npu'
                 ORT_Accelerate_Providers = ['QNNExecutionProvider']
             else:
@@ -1757,7 +1761,7 @@ def MAIN_PROCESS(
             provider_options = [migx_options]
     elif 'ROCMExecutionProvider' in ORT_Accelerate_Providers[0]:
         provider_options = [rocm_options]
-    elif 'VitisAIExecutionProvider' in useable_providers:
+    elif 'VitisAIExecutionProvider' in usable_providers:
         provider_options = [
             {
                 'log_level': 'error'
@@ -2334,7 +2338,7 @@ def MAIN_PROCESS(
                     device_type_A = 'cpu'
                     if device_type == 'cpu':
                         if ('ZipEnhancer' in model_denoiser) or ('MossFormerGAN_SE_16K' in model_denoiser) or ('MossFormer2_SE_48K' in model_denoiser):
-                            if 'OpenVINOExecutionProvider' in useable_providers:
+                            if 'OpenVINOExecutionProvider' in usable_providers:
                                 ORT_Accelerate_Providers = ['OpenVINOExecutionProvider']
                                 provider_options = [
                                     {
@@ -2351,7 +2355,7 @@ def MAIN_PROCESS(
                                 ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
                                 ORT_Accelerate_Providers = ['CPUExecutionProvider']
                                 provider_options = None
-                            elif 'CoreMLExecutionProvider' in useable_providers:
+                            elif 'CoreMLExecutionProvider' in usable_providers:
                                 provider_options[0]['MLComputeUnits'] = 'CPUOnly'
                                 try:
                                     ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=ORT_Accelerate_Providers, provider_options=provider_options)
