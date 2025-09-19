@@ -77,8 +77,11 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 **准备好开始了吗？/ Ready to get started?** 🎉
 <br>
 <br>
+<div align="center">
+  
 ![demo](https://github.com/DakeQQ/Transcribe-and-Translate-Subtitles/blob/main/screen/Screenshot%20from%202025-09-19%2013-22-37.png)
 
+</div>
 ---
 
 ## ✨ 功能特性 / Features
@@ -148,7 +151,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 - **[Seed-X-PRO-7B](https://www.modelscope.cn/models/ByteDance-Seed/Seed-X-PPO-7B)**
 
 ---
-
+  
 ## 🖥️ 硬件支持 / Hardware Support
 <table>
   <tr>
