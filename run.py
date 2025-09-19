@@ -867,38 +867,40 @@ def update_task(dropdown_task):
     if "转录 + 翻译 Transcribe + Translate" == dropdown_task:
         update_A = gr.update(visible=True)
         update_B = gr.update(visible=True)
-        update_C = gr.update(visible=True)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
-        update_C = gr.update(visible=False)
-    return update_A, update_B, update_C
+    return update_A, update_B
 
 
 def update_translate_language(dropdown_model_llm):
     if "Whisper" in dropdown_model_llm:
         update_A = gr.update(choices=[WHISPER_LANGUAGE_LIST[1]], value=WHISPER_LANGUAGE_LIST[1])
         update_B = gr.update(value=WHISPER_ASR_LIST[0], choices=WHISPER_ASR_LIST)
+        update_C = gr.update(visible=False)
     elif "Seed" in dropdown_model_llm:
         update_A = gr.update(value=SEED_X_LANGUAGE_LIST[1], choices=SEED_X_LANGUAGE_LIST)
         update_B = gr.update(value=ASR_LIST[0], choices=ASR_LIST)
+        update_C = gr.update(visible=False)
     elif "Hunyuan" in dropdown_model_llm:
         update_A = gr.update(value=HUNYUAN_LANGUAGE_LIST[4], choices=HUNYUAN_LANGUAGE_LIST)
         update_B = gr.update(value=ASR_LIST[0], choices=ASR_LIST)
+        update_C = gr.update(visible=False)
     else:
         update_A = gr.update(value=WHISPER_LANGUAGE_LIST[0], choices=WHISPER_LANGUAGE_LIST)
         update_B = gr.update(value=ASR_LIST[0], choices=ASR_LIST)
-    return update_A, update_B
+        update_C = gr.update(visible=True)
+    return update_A, update_B, update_C
 
 
 def update_transcribe_language(dropdown_model_asr):
     lower_dropdown_model_asr = dropdown_model_asr.lower()
     if "whisper" in lower_dropdown_model_asr:
+        update_A = gr.update(visible=True, value=WHISPER_LANGUAGE_LIST[2], choices=WHISPER_LANGUAGE_LIST)
         for language in WHISPER_LANGUAGE_LIST:
             if language in lower_dropdown_model_asr:
                 update_A = gr.update(visible=True, value=language, choices=[language])
                 break
-        update_A = gr.update(visible=True, value=WHISPER_LANGUAGE_LIST[2], choices=WHISPER_LANGUAGE_LIST)
     elif "sensevoice-small" in lower_dropdown_model_asr:
         update_A = gr.update(visible=True, value=SENSEVOICE_LANGUAGE_LIST[4], choices=SENSEVOICE_LANGUAGE_LIST)
     elif "fireredasr-aed-l" in lower_dropdown_model_asr:
@@ -3071,6 +3073,7 @@ textarea::placeholder {
 # MAIN GRADIO INTERFACE
 # ============================================================================
 
+
 def create_interface():
     """Create and configure the main Gradio interface."""
 
@@ -3174,7 +3177,7 @@ def create_interface():
                 value='Using full context, write a fluent, idiomatic translation that reads native, not literal. Keep the original person name and do not translate it.',
                 interactive=True,
                 elem_classes='llm-prompt',
-                visible=True
+                visible=False
             )
 
             # Advanced ASR settings (initially hidden)
@@ -3420,13 +3423,13 @@ def create_interface():
         task.change(
             fn=update_task,
             inputs=task,
-            outputs=[model_llm, translate_language, llm_prompt]
+            outputs=[model_llm, translate_language]
         )
 
         model_llm.change(
             fn=update_translate_language,
             inputs=model_llm,
-            outputs=[translate_language, model_asr]
+            outputs=[translate_language, model_asr, llm_prompt]
         )
 
         model_asr.change(
@@ -3469,3 +3472,4 @@ if __name__ == "__main__":
 
     GUI = create_interface()
     GUI.launch()
+    
