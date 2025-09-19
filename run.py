@@ -135,6 +135,7 @@ WHISPER_LANGUAGE_LIST = [
         "Assamese          - 阿萨姆语",
         "Azerbaijani       - 阿塞拜疆语",
         "Bashkir           - 巴什基尔语",
+        "Basque            - 巴斯克语",
         "Belarusian        - 白俄罗斯语",
         "Bengali           - 孟加拉语",
         "Bosnian           - 波斯尼亚语",
@@ -175,7 +176,7 @@ WHISPER_LANGUAGE_LIST = [
         "Luxembourgish     - 卢森堡语",
         "Macedonian        - 马其顿语",
         "Malagasy          - 马达加斯加语",
-        "Malay             - 马来语",
+        "Malaysian         - 马来语",
         "Malayalam         - 马拉雅拉姆语",
         "Maltese           - 马耳他语",
         "Maori             - 毛利语",
@@ -278,7 +279,7 @@ WHISPER_LANGUAGE_MAP = {
     'Luxembourgish':  {'id': 50345, 'custom_id': 18959},
     'Macedonian':     {'id': 50308, 'custom_id': 18922},
     'Malagasy':       {'id': 50349, 'custom_id': 18963},
-    'Malay':          {'id': 50282, 'custom_id': 18896},
+    'Malaysian':      {'id': 50282, 'custom_id': 18896},
     'Malayalam':      {'id': 50296, 'custom_id': 18910},
     'Maltese':        {'id': 50343, 'custom_id': 18957},
     'Maori':          {'id': 50295, 'custom_id': 18909},
@@ -366,7 +367,7 @@ DOLPHIN_LANGUAGE_LIST = [
             "韩语",                   "泰语",                    "越南语",
 
             # Southeast Asian languages
-            "Indonesian",            "Malay",                  "Burmese",               "Tagalog",
+            "Indonesian",            "Malaysian",              "Burmese",               "Tagalog",
             "Khmer",                 "Javanese",               "Lao",                   "Filipino",            "Sundanese",
             "印度尼西亚语",            "马来语",                  "缅甸语",                 "塔加洛语",
             "高棉语",                 "爪哇语",                  "老挝语",                 "菲律宾语",              "巽他语",
@@ -486,7 +487,7 @@ DOLPHIN_LANGUAGE_MAP = {
     "Thai"                          : "th-TH",
     "Indonesian"                    : "id-ID",
     "Vietnamese"                    : "vi-VN",
-    "Malay"                         : "ms-MY",
+    "Malaysian"                     : "ms-MY",
     "Burmese"                       : "my-MM",
     "Tagalog"                       : "tl-PH",
     "Khmer"                         : "km-KH",
@@ -635,7 +636,7 @@ INV_DOLPHIN_LANGUAGE_MAP = {
     "th-TH"                         : "Thai",
     "id-ID"                         : "Indonesian",
     "vi-VN"                         : "Vietnamese",
-    "ms-MY"                         : "Malay",
+    "ms-MY"                         : "Malaysian",
     "my-MM"                         : "Burmese",
     "tl-PH"                         : "Tagalog",
     "km-KH"                         : "Khmer",
@@ -707,7 +708,7 @@ SEED_X_LANGUAGE_LIST = [
     "Italian            - 意大利语",
     "Japanese           - 日语",
     "Korean             - 韩语",
-    "Malay              - 马来语",
+    "Malaysian          - 马来语",
     "Norwegian          - 挪威语",
     "Norwegian Bokmål   - 挪威博克马尔语",
     "Polish             - 波兰语",
@@ -737,7 +738,7 @@ SEED_X_LANGUAGE_MAP = {
     "Italian"              : "it",
     "Japanese"             : "ja",
     "Korean"               : "ko",
-    "Malay"                : "ms",
+    "Malaysian"            : "ms",
     "Norwegian"            : "no",
     "Norwegian Bokmål"     : "nb",
     "Polish"               : "pl",
@@ -774,7 +775,7 @@ HUNYUAN_LANGUAGE_LIST = [
     "Kazakh                 - 哈萨克语",
     "Khmer                  - 高棉语",
     "Korean                 - 韩语",
-    "Malay                  - 马来语",
+    "Malaysian              - 马来语",
     "Marathi                - 马拉地语",
     "Mongolian              - 蒙古语",
     "Persian                - 波斯语",
@@ -815,7 +816,7 @@ HUNYUAN_LANGUAGE_MAP = {
         "kk":      {"english_name": "Kazakh",                  "chinese_name": "哈萨克语"},
         "km":      {"english_name": "Khmer",                   "chinese_name": "高棉语"},
         "ko":      {"english_name": "Korean",                  "chinese_name": "韩语"},
-        "ms":      {"english_name": "Malay",                   "chinese_name": "马来语"},
+        "ms":      {"english_name": "Malaysian",               "chinese_name": "马来语"},
         "mr":      {"english_name": "Marathi",                 "chinese_name": "马拉地语"},
         "mn":      {"english_name": "Mongolian",               "chinese_name": "蒙古语"},
         "fa":      {"english_name": "Persian",                 "chinese_name": "波斯语"},
@@ -896,9 +897,10 @@ def update_translate_language(dropdown_model_llm):
 def update_transcribe_language(dropdown_model_asr):
     lower_dropdown_model_asr = dropdown_model_asr.lower()
     if "whisper" in lower_dropdown_model_asr:
+        lang = dropdown_model_asr.split('-')[0].strip()
         update_A = gr.update(visible=True, value=WHISPER_LANGUAGE_LIST[2], choices=WHISPER_LANGUAGE_LIST)
         for language in WHISPER_LANGUAGE_LIST:
-            if language in lower_dropdown_model_asr:
+            if lang in language:
                 update_A = gr.update(visible=True, value=language, choices=[language])
                 break
     elif "sensevoice-small" in lower_dropdown_model_asr:
