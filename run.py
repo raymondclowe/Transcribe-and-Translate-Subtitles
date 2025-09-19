@@ -1570,13 +1570,13 @@ def MAIN_PROCESS(
         print(f'\n找到了 {total_task} 个媒体文件。Totally {total_task} media found.')
 
     usable_providers = onnxruntime.get_available_providers()
-    
+
     try:
         cpu_model = cpuinfo.get_cpu_info().get('brand_raw', 'unknown').lower()
         has_npu = 'intel' in cpu_model and 'ultra' in cpu_model
     except:
-        has_npu = 'unknown'
-    
+        has_npu = False
+
     if len(usable_providers) > 1:
         if hardware != "CPU":
             model_dtype = "FP16"
