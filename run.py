@@ -1598,8 +1598,8 @@ def MAIN_PROCESS(
         has_npu = False
 
     if len(usable_providers) > 1:
-        if hardware != 'CPU':
-            model_dtype = 'FP16'
+        if hardware != "CPU":
+            model_dtype = "FP16"
             has_npu = (('OpenVINOExecutionProvider' in usable_providers) and has_npu) or ('VitisAIExecutionProvider' in usable_providers) or ('QNNExecutionProvider' in usable_providers)
             cuda_options = {
                 'device_id': DEVICE_ID,
@@ -2258,7 +2258,7 @@ def MAIN_PROCESS(
         else:
             init_penality_reset_count_beam = 0
             init_save_id_greedy = np.zeros(MAX_SEQ_LEN_ASR, dtype=np.int32)
-        if asr_type != 0 or hardware != 'CPU:
+        if asr_type != 0:
             if device_type_C != 'dml':
                 past_keys_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((1, ort_session_D._outputs_meta[0].shape[1], ort_session_D._outputs_meta[0].shape[2], 0), dtype=model_D_dtype), device_type_C, DEVICE_ID)
                 past_values_D = onnxruntime.OrtValue.ortvalue_from_numpy(np.zeros((1, ort_session_D._outputs_meta[num_layers].shape[1], 0, ort_session_D._outputs_meta[num_layers].shape[3]), dtype=model_D_dtype), device_type_C, DEVICE_ID)
@@ -2346,19 +2346,36 @@ def MAIN_PROCESS(
     for input_audio in task_queue:
         print(f'\n加载音频文件 Loading the Input Media: {input_audio}')
         file_name = Path(input_audio).stem
+        cache_otiginal = f'./Cache/{file_name}_original.wav'
+        if Path(cache_otiginal).exists():
+            input_audio = cache_otiginal
+            has_cache_otiginal = True
+        else:
+            has_cache_otiginal = False
         if USE_DENOISED:
             if switcher_denoiser_cache and Path(f'./Cache/{file_name}_{model_denoiser}.wav').exists():
                 print('\n降噪音频文件已存在，改用缓存文件。The denoised audio file already exists. Using the cache instead.')
                 USE_DENOISED = False
                 HAS_CACHE = True
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
+                if has_cache_otiginal:
+                    audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
+                else:
+                    audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_48K).get_array_of_samples(), dtype=np.int16)
+                    sf.write(cache_otiginal, audio, SAMPLE_RATE_48K, format='WAVEX')
+                    audio = audio.astype(np.float32)
+                    audio_len = len(audio) // 3
+                    audio_len_3 = audio_len + audio_len + audio_len
+                    audio = np.mean(audio[:audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32)
                 audio = normalize_to_int16(audio).astype(np.float32)
                 de_audio = np.array(AudioSegment.from_file(f'./Cache/{file_name}_{model_denoiser}.wav').set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
                 min_len = min(audio.shape[-1], de_audio.shape[-1])
                 audio = audio[:min_len] * slider_denoise_factor_minus + de_audio[:min_len] * slider_denoise_factor
                 del de_audio
             else:
-                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_48K).get_array_of_samples(), dtype=np.float32)
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_48K).get_array_of_samples(), dtype=np.int16)
+                if not has_cache_otiginal:
+                    sf.write(cache_otiginal, audio, SAMPLE_RATE_48K, format='WAVEX')
+                audio = audio.astype(np.float32)
                 if FIRST_RUN:
                     def setup_denoiser_session(onnx_model_A):
                         def try_create_session_with_config(providers, options, device_name, onnx_model_A, config_setup=None, config_cleanup=None):
@@ -2490,7 +2507,15 @@ def MAIN_PROCESS(
                     # Call the function
                     ort_session_A, device_type_A, in_name_A0, out_name_A0, INPUT_AUDIO_LENGTH_A, stride_step_A = setup_denoiser_session(onnx_model_A)
         else:
-            audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
+            if has_cache_otiginal:
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_16K).get_array_of_samples(), dtype=np.float32)
+            else:
+                audio = np.array(AudioSegment.from_file(input_audio).set_channels(1).set_frame_rate(SAMPLE_RATE_48K).get_array_of_samples(), dtype=np.int16)
+                sf.write(cache_otiginal, audio, SAMPLE_RATE_48K, format='WAVEX')
+                audio = audio.astype(np.float32)
+                audio_len = len(audio) // 3
+                audio_len_3 = audio_len + audio_len + audio_len
+                audio = np.mean(audio[:audio_len_3].reshape(-1, 3), axis=-1, dtype=np.float32)
 
         if FIRST_RUN:
             print(f'\n所有模型已成功加载。All Models have been successfully loaded.')
