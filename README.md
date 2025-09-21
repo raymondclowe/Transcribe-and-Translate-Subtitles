@@ -166,6 +166,7 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
       <ul>
         <li>Apple Silicon</li>
         <li>AMD</li>
+        <li>ARM</li>
         <li>Intel</li>
       </ul>
     </td>
