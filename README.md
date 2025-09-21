@@ -62,13 +62,13 @@ pip install -r requirements.txt
 1.  **下载模型**: 从 [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles) 获取所需模型 
 2.  **下载脚本**: 将 `run.py` 放置在您的 `Transcribe_and_Translate_Subtitles` 文件夹中
 3.  **添加媒体**: 将您的音视频放置在 `Transcribe_and_Translate_Subtitles/Media/` 目录下
-4.  **运行**: 执行 `python run.py` 并打开 Web 界面
+4.  **运行**: 务必在`Transcribe_and_Translate_Subtitles`目录下执行 `python run.py` 并打开 Web 界面
 
 ### Setup
 1.  **Download Models**: Get the required models from [HuggingFace](https://huggingface.co/H5N1AIDS/Transcribe_and_Translate_Subtitles)
 2.  **Download Script**: Place `run.py` in your `Transcribe_and_Translate_Subtitles` folder
 3.  **Add Media**: Place your audios/videos in `Transcribe_and_Translate_Subtitles/Media/`
-4.  **Run**: Execute `python run.py` and open the web interface
+4.  **Run**: You must execute `python run.py` in the `Transcribe_and_Translate_Subtitles` folder and open the web interface
 
 ### 结果 / Results
 在以下位置找到您处理后的字幕 / Find your processed subtitles in:
