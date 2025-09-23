@@ -39,6 +39,7 @@ print(f'\n找到 {physical_cores} 个物理 CPU 核心。Found {physical_cores} 
 
 DEVICE_ID = 0
 PENALITY_RANGE = 10         # For ASR decode.
+REMOVE_OVER_TALKING = 5    # The whisper v3 may over decode.
 MAX_SEQ_LEN_LLM = 85        # Do not edit it.
 MAX_SEQ_LEN_ASR = 85        # Do not edit it.
 MAX_ASR_SEGMENT = 320000    # Do not edit it.
@@ -1248,14 +1249,14 @@ def MAIN_PROCESS(
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
-        saved_text = ""
+        saved_text = ''
         while _slice_start < audio_segment_len:
             wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
             token_ids = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue, in_name_C1: _language_idx}, out_name_C, run_options)
             saved_text += tokenizer.decode(token_ids[0].numpy().tolist())[0]
             _slice_start += _stride_step
             _slice_end = _slice_start + INPUT_AUDIO_LENGTH
-        return _start_indices * _inv_audio_len, saved_text + ";", (_start, _end)
+        return _start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
     def inference_C_paraformer(_start, _end, _inv_audio_len, _audio, _sample_rate, _is_english):
         _start_indices = _start * _sample_rate
@@ -1265,7 +1266,7 @@ def MAIN_PROCESS(
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
-        saved_text = ""
+        saved_text = ''
         while _slice_start < audio_segment_len:
             wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
             token_ids = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue}, out_name_C, run_options)
@@ -1273,11 +1274,11 @@ def MAIN_PROCESS(
             _slice_start += _stride_step
             _slice_end = _slice_start + INPUT_AUDIO_LENGTH
         if _is_english:
-            saved_text = " ".join(text).replace("@@ ", "")
+            saved_text = ' '.join(text).replace('@@ ', '')
         else:
-            saved_text = "".join(text)
-        saved_text = saved_text.replace("</s>", "")
-        return _start_indices * _inv_audio_len, saved_text + ";", (_start, _end)
+            saved_text = ''.join(text)
+        saved_text = saved_text.replace('</s>', '')
+        return _start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
     def inference_CD_beam_search(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _init_save_id_beam, _init_repeat_penality, _init_batch_size, _init_penality_reset_count_beam, _init_save_id_greedy, _is_whisper):
         _start_indices = _start * _sample_rate
@@ -1374,14 +1375,13 @@ def MAIN_PROCESS(
             _slice_end = _slice_start + INPUT_AUDIO_LENGTH
             if num_decode > 0:
                 if USE_BEAM_SEARCH:
-                    save_id_beam = all_outputs_I[num_keys_values_plus_1].numpy()[0]
-                    for i, idx in enumerate(save_id_beam):
+                    save_token_array = all_outputs_I[num_keys_values_plus_1].numpy()[0]
+                    for i, idx in enumerate(save_token_array):
                         if idx in ASR_STOP_TOKEN:
-                            save_id_beam = save_id_beam[:i]
+                            save_token_array = save_token_array[:i]
                             break
-                    save_token_array = remove_repeated_parts(save_id_beam, 3, save_id_beam.shape[-1])      # To handle "over-talking".
                 else:
-                    save_token_array = remove_repeated_parts(_init_save_id_greedy[:num_decode], 3,  num_decode)  # To handle "over-talking".
+                    save_token_array = remove_repeated_parts(_init_save_id_greedy[:num_decode], REMOVE_OVER_TALKING,  num_decode)  # To handle "over-talking".
                 if _is_whisper:
                     text, _ = tokenizer._decode_asr(
                         [{
@@ -1521,12 +1521,11 @@ def MAIN_PROCESS(
             _slice_end = _slice_start + INPUT_AUDIO_LENGTH
             if num_decode > 0:
                 if USE_BEAM_SEARCH:
-                    save_id_beam = all_outputs_I[num_keys_values_plus_1].numpy()[0]
-                    for i, idx in enumerate(save_id_beam):
+                    save_token_array = all_outputs_I[num_keys_values_plus_1].numpy()[0]
+                    for i, idx in enumerate(save_token_array):
                         if idx in ASR_STOP_TOKEN:
-                            save_id_beam = save_id_beam[:i]
+                            save_token_array = save_token_array[:i]
                             break
-                    save_token_array = save_id_beam
                 else:
                     save_token_array = _init_save_id_greedy[:num_decode]
                 for i in save_token_array:
@@ -1534,12 +1533,12 @@ def MAIN_PROCESS(
                 saved_text = saved_text.replace('▁', ' ')
         return start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
-    def run_inference_x(func, args_list, progress_prefix="Progress"):
+    def run_inference_x(func, args_list, progress_prefix='Progress'):
         results = []
         for args in args_list:
             res = func(*args)
             results.append(res)
-            print(f"{progress_prefix}: {res[0]:.3f}%")
+            print(f'{progress_prefix}: {res[0]:.3f}%')
         return results
 
     def get_ort_device(bind_device_type, bind_device_id):
