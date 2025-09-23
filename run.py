@@ -1241,34 +1241,34 @@ def MAIN_PROCESS(
         wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_A, DEVICE_ID)
         return _slice_start * _inv_audio_len, ort_session_A._sess.run_with_ort_values({in_name_A0: wave_form._ortvalue}, out_name_A0, run_options)
 
-    def inference_C_sensevoice(_start, _end, _inv_audio_len, _audio, _sample_rate, _language_idx):
+    def inference_C_sensevoice(_max_asr_segment, _start, _end, _inv_audio_len, _audio, _sample_rate, _language_idx):
         _start_indices = _start * _sample_rate
         _audio = _audio[..., int(_start_indices): int(_end * _sample_rate)]
         audio_segment_len = _audio.shape[-1]
-        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)
+        INPUT_AUDIO_LENGTH = min(_max_asr_segment, audio_segment_len)
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
         saved_text = ''
         while _slice_start < audio_segment_len:
-            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
+            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(np.concatenate([pad_zeros, _audio[..., _slice_start: _slice_end], pad_zeros], axis=-1), device_type_C, DEVICE_ID)
             token_ids = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue, in_name_C1: _language_idx}, out_name_C, run_options)
             saved_text += tokenizer.decode(token_ids[0].numpy().tolist())[0]
             _slice_start += _stride_step
             _slice_end = _slice_start + INPUT_AUDIO_LENGTH
         return _start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
-    def inference_C_paraformer(_start, _end, _inv_audio_len, _audio, _sample_rate, _is_english):
+    def inference_C_paraformer(_max_asr_segment, _start, _end, _inv_audio_len, _audio, _sample_rate, _is_english):
         _start_indices = _start * _sample_rate
         _audio = _audio[..., int(_start_indices): int(_end * _sample_rate)]
         audio_segment_len = _audio.shape[-1]
-        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        INPUT_AUDIO_LENGTH = min(_max_asr_segment, audio_segment_len)  # You can adjust it.
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
         saved_text = ''
         while _slice_start < audio_segment_len:
-            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
+            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(np.concatenate([pad_zeros, _audio[..., _slice_start: _slice_end], pad_zeros], axis=-1), device_type_C, DEVICE_ID)
             token_ids = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue}, out_name_C, run_options)
             saved_text += tokenizer[token_ids[0].numpy()[0]]
             _slice_start += _stride_step
@@ -1280,11 +1280,11 @@ def MAIN_PROCESS(
         saved_text = saved_text.replace('</s>', '')
         return _start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
-    def inference_CD_beam_search(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _init_save_id_beam, _init_repeat_penality, _init_batch_size, _init_penality_reset_count_beam, _init_save_id_greedy, _is_whisper):
+    def inference_CD_beam_search(_max_asr_segment, _start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _init_save_id_beam, _init_repeat_penality, _init_batch_size, _init_penality_reset_count_beam, _init_save_id_greedy, _is_whisper):
         _start_indices = _start * _sample_rate
         _audio = _audio[..., int(_start_indices): int(_end * _sample_rate)]
         audio_segment_len = _audio.shape[-1]
-        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        INPUT_AUDIO_LENGTH = min(_max_asr_segment, audio_segment_len)  # You can adjust it.
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
@@ -1312,7 +1312,7 @@ def MAIN_PROCESS(
                 else:
                     penality_reset_count_greedy = _init_penality_reset_count_beam
             num_decode = 0
-            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
+            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(np.concatenate([pad_zeros, _audio[..., _slice_start: _slice_end], pad_zeros], axis=-1), device_type_C, DEVICE_ID)
             all_outputs_C = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue}, out_name_C, run_options)
             input_feed_D.update(zip(in_name_D[num_keys_values_plus_2: num_keys_values2_plus_2], all_outputs_C))
             while num_decode < generate_limit:
@@ -1397,17 +1397,17 @@ def MAIN_PROCESS(
                 saved_text += text
         return _start_indices * _inv_audio_len, saved_text + ';', (_start, _end)
 
-    def inference_CD_dolphin(_start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_ids_len_2, _init_ids_0, _init_ids_len_5, _init_ids_7, _init_ids_145, _init_ids_324, _init_ids_39999, _init_ids_vocab_size, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _init_save_id_beam, _init_repeat_penality, _init_batch_size, _init_penality_reset_count_beam, _init_save_id_greedy, _lang_id, _region_id):
+    def inference_CD_dolphin(_max_asr_segment, _start, _end, _inv_audio_len, _audio, _sample_rate, _init_input_ids, _init_history_len, _init_ids_len, _init_ids_len_1, _init_ids_len_2, _init_ids_0, _init_ids_len_5, _init_ids_7, _init_ids_145, _init_ids_324, _init_ids_39999, _init_ids_vocab_size, _init_attention_mask_D_0, _init_attention_mask_D_1, _init_past_keys_D, _init_past_values_D, _init_save_id_beam, _init_repeat_penality, _init_batch_size, _init_penality_reset_count_beam, _init_save_id_greedy, _lang_id, _region_id):
         start_indices = _start * _sample_rate
         _audio = _audio[..., int(start_indices): int(_end * _sample_rate)]
         audio_segment_len = _audio.shape[-1]
-        INPUT_AUDIO_LENGTH = min(MAX_ASR_SEGMENT, audio_segment_len)  # You can adjust it.
+        INPUT_AUDIO_LENGTH = min(_max_asr_segment, audio_segment_len)  # You can adjust it.
         _stride_step = INPUT_AUDIO_LENGTH
         _slice_start = 0
         _slice_end = INPUT_AUDIO_LENGTH
         saved_text = ''
         while _slice_start < audio_segment_len:
-            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(_audio[..., _slice_start: _slice_end], device_type_C, DEVICE_ID)
+            wave_form = onnxruntime.OrtValue.ortvalue_from_numpy(np.concatenate([pad_zeros, _audio[..., _slice_start: _slice_end], pad_zeros], axis=-1), device_type_C, DEVICE_ID)
             all_outputs_C = ort_session_C._sess.run_with_ort_values({in_name_C0: wave_form._ortvalue}, out_name_C, run_options)
             input_feed_D = {
                 in_name_D[-1]: _init_attention_mask_D_1,
@@ -2098,6 +2098,9 @@ def MAIN_PROCESS(
     print('----------------------------------------------------------------------------------------------------------')
     print('\n正在加载所需的模型和目标文件。Now loading the required models and target files.')
     # Load VAD model
+    pad_len = int(slider_vad_pad * SAMPLE_RATE_16K * 0.001)
+    pad_zeros = np.zeros([1, 1, pad_len], dtype=np.int16)
+    max_asr_segment = MAX_ASR_SEGMENT - pad_len - pad_len
     if vad_type == 1:
         slider_vad_MIN_SPEECH_DURATION_ms = int(slider_vad_MIN_SPEECH_DURATION * 1000)
     elif vad_type == 2:
@@ -2618,15 +2621,8 @@ def MAIN_PROCESS(
             with torch.inference_mode():
                 timestamps = pyannote_vad_pipeline(f'./Cache/{file_name}_{model_denoiser}.wav')
                 segments = list(timestamps._tracks.keys())
-                total_seconds = audio_len * inv_16k
                 timestamps = []
                 for segment in segments:
-                    segment_start = segment.start - slider_vad_pad
-                    segment_end = segment.end + slider_vad_pad
-                    if segment_start < 0:
-                        segment_start = 0
-                    if segment_end > total_seconds:
-                        segment_end = total_seconds
                     timestamps.append((segment_start, segment_end))
                 del waveform
         elif vad_type == 4:
@@ -2659,7 +2655,7 @@ def MAIN_PROCESS(
                         if score <= slider_vad_SILENCE_SCORE:
                             silence = True
                     saved.append(silence)
-                timestamps = vad_to_timestamps(saved, HumAware_param, slider_vad_pad)
+                timestamps = vad_to_timestamps(saved, HumAware_param)
                 del saved
                 del waveform
                 gc.collect()
@@ -2680,7 +2676,7 @@ def MAIN_PROCESS(
                     if score_silence[:, i] >= slider_vad_SILENCE_SCORE:
                         silence = True
                 saved.append(silence)
-            timestamps = vad_to_timestamps(saved, NVIDIA_VAD_param, slider_vad_pad)
+            timestamps = vad_to_timestamps(saved, NVIDIA_VAD_param)
             del saved
             del waveform
             del score_silence
@@ -2718,7 +2714,7 @@ def MAIN_PROCESS(
                 print(f'VAD: {slice_start * inv_audio_len:.3f}%')
                 slice_start += stride_step_B
                 slice_end = slice_start + INPUT_AUDIO_LENGTH_B
-            timestamps = vad_to_timestamps(saved, TEN_VAD_param, slider_vad_pad)
+            timestamps = vad_to_timestamps(saved, TEN_VAD_param)
         else:
             print('\n这个任务不使用 VAD。This task does not use VAD.\n')
         if vad_type != -1:
@@ -2735,19 +2731,19 @@ def MAIN_PROCESS(
         start_time = time.time()
         # Build tasks for the chosen inference function per asr_type
         if asr_type == 0:
-            args_list = [(start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, True) for start, end in timestamps]
+            args_list = [(max_asr_segment, start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, True) for start, end in timestamps]
             results = run_inference_x(inference_CD_beam_search, args_list, progress_prefix='ASR')
         elif asr_type == 1:
-            args_list = [(start, end, inv_audio_len, audio, SAMPLE_RATE_16K, language_idx) for start, end in timestamps]
+            args_list = [(max_asr_segment, start, end, inv_audio_len, audio, SAMPLE_RATE_16K, language_idx) for start, end in timestamps]
             results = run_inference_x(inference_C_sensevoice, args_list, progress_prefix='ASR')
         elif asr_type == 2:
-            args_list = [(start, end, inv_audio_len, audio, SAMPLE_RATE_16K, is_english) for start, end in timestamps]
+            args_list = [(max_asr_segment, start, end, inv_audio_len, audio, SAMPLE_RATE_16K, is_english) for start, end in timestamps]
             results = run_inference_x(inference_C_paraformer, args_list, progress_prefix='ASR')
         elif asr_type == 3:
-            args_list = [(start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, False) for start, end in timestamps]
+            args_list = [(max_asr_segment, start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, False) for start, end in timestamps]
             results = run_inference_x(inference_CD_beam_search, args_list, progress_prefix='ASR')
         elif asr_type == 4:
-            args_list = [(start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_ids_len_2, init_ids_0, init_ids_len_5, init_ids_7, init_ids_145, init_ids_324, init_ids_39999, init_ids_vocab_size, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, lang_id, region_id) for start, end in timestamps]
+            args_list = [(max_asr_segment, start, end, inv_audio_len, audio, SAMPLE_RATE_16K, init_input_ids, init_history_len, init_ids_len, init_ids_len_1, init_ids_len_2, init_ids_0, init_ids_len_5, init_ids_7, init_ids_145, init_ids_324, init_ids_39999, init_ids_vocab_size, init_attention_mask_D_0, init_attention_mask_D_1, init_past_keys_D, init_past_values_D, init_save_id_beam, init_repeat_penality, init_batch_size, init_penality_reset_count_beam, init_save_id_greedy, lang_id, region_id) for start, end in timestamps]
             results = run_inference_x(inference_CD_dolphin, args_list, progress_prefix='ASR')
         else:
             results = []
@@ -2982,6 +2978,10 @@ def MAIN_PROCESS(
                     bind_inputs_to_device(io_binding_E, in_name_E, all_outputs_E, amount_of_outputs_E)
                     text = tokenizer_llm.decode(max_logit_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
                     save_text += text
+                    if is_seed_x:
+                        if '[COT]' in save_text:
+                            save_text.replace('[COT]', '')
+                            break
                     print(text, end='', flush=True)
                 print(f'\n\nDecode: {(num_decode / (time.time() - start_time)):.3f} token/s')
                 translated_responses.append(save_text)
