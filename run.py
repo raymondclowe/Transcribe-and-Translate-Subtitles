@@ -38,8 +38,8 @@ print(f'\n找到 {physical_cores} 个物理 CPU 核心。Found {physical_cores} 
 
 
 DEVICE_ID = 0
-PENALITY_RANGE = 10         # For ASR decode.
-REMOVE_OVER_TALKING = 5    # The whisper v3 may over decode.
+PENALITY_RANGE = 20         # For ASR decode.
+REMOVE_OVER_TALKING = 5     # The whisper v3 may over decode.
 MAX_SEQ_LEN_LLM = 85        # Do not edit it.
 MAX_SEQ_LEN_ASR = 85        # Do not edit it.
 MAX_ASR_SEGMENT = 320000    # Do not edit it.
@@ -1380,8 +1380,9 @@ def MAIN_PROCESS(
                         if idx in ASR_STOP_TOKEN:
                             save_token_array = save_token_array[:i]
                             break
+                    save_token_array = remove_repeated_parts(save_token_array, REMOVE_OVER_TALKING, save_token_array.shape[-1])
                 else:
-                    save_token_array = remove_repeated_parts(_init_save_id_greedy[:num_decode], REMOVE_OVER_TALKING,  num_decode)  # To handle "over-talking".
+                    save_token_array = remove_repeated_parts(_init_save_id_greedy[:num_decode], REMOVE_OVER_TALKING, num_decode)  # To handle "over-talking".
                 if _is_whisper:
                     text, _ = tokenizer._decode_asr(
                         [{
