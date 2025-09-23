@@ -2835,13 +2835,13 @@ def MAIN_PROCESS(
                     llm_path = f'./LLM/{model_llm}'
 
                 if any(tag in model_llm for tag in ('3B', '4B')):
-                    MAX_TRANSLATE_LINES = 8
+                    MAX_TRANSLATE_LINES = 6
                     TRANSLATE_OVERLAP = 2
                 elif any(tag in model_llm for tag in ('7B', '8B', '9B')):
-                    MAX_TRANSLATE_LINES = 16
-                    TRANSLATE_OVERLAP = 4
+                    MAX_TRANSLATE_LINES = 12
+                    TRANSLATE_OVERLAP = 3
                 elif any(tag in model_llm for tag in ('12B', '13B', '14B')):
-                    MAX_TRANSLATE_LINES = 32
+                    MAX_TRANSLATE_LINES = 24
                     TRANSLATE_OVERLAP = 6
                 else:
                     MAX_TRANSLATE_LINES = 4
