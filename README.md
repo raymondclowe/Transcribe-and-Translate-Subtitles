@@ -310,6 +310,6 @@ Transcribe_and_Translate_Subtitles/Results/Subtitles/
 ---
 
 ## 🗺️ 路线图 / Roadmap
-
+- [ ] **Beam Search for LLM**
 - [ ] **视频超分 / [Video Upscaling](https://github.com/ByteDance-Seed/SeedVR/tree/main)** - 提升分辨率 / Enhance resolution
 - [ ] **实时播放器 / Real-time Player** - 实时转录和翻译 / Live transcription and translation
