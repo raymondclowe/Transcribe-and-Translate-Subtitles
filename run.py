@@ -933,40 +933,40 @@ def update_denoiser(dropdown_model_denoiser):
 
 def update_vad(dropdown_model_vad):
     if "Pyannote" in dropdown_model_vad:
-        update_A = gr.update(visible=False, value=0.5)
-        update_B = gr.update(visible=False, value=0.5)
+        update_A = gr.update(visible=False, value=0.4)
+        update_B = gr.update(visible=False, value=0.4)
         update_C = gr.update(visible=False)
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
         update_G = gr.update(visible=True, value=400)
     elif "Silero" in dropdown_model_vad:
-        update_A = gr.update(visible=True, value=0.5)
-        update_B = gr.update(visible=True, value=0.5)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
         update_G = gr.update(visible=True, value=400)
     elif "HumAware" in dropdown_model_vad:
-        update_A = gr.update(visible=True, value=0.5)
-        update_B = gr.update(visible=True, value=0.5)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
         update_G = gr.update(visible=True, value=400)
     elif "MarbleNet" in dropdown_model_vad:
-        update_A = gr.update(visible=True, value=0.5)
-        update_B = gr.update(visible=True, value=0.5)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
         update_G = gr.update(visible=True, value=400)
     elif dropdown_model_vad == "TEN":
-        update_A = gr.update(visible=True, value=0.5)
-        update_B = gr.update(visible=True, value=0.5)
+        update_A = gr.update(visible=True, value=0.4)
+        update_B = gr.update(visible=True, value=0.4)
         update_C = gr.update(visible=True)
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
@@ -1006,8 +1006,8 @@ def get_task_id_whisper(task_input, is_v3, custom_vocab=False):
             'Transcribe': 50359
         }
         return start_token, [stop_token], task_map[task_input]
-    
-    
+
+
 def get_language_whisper(language_input, custom_vocab=False):
     if custom_vocab:
         return WHISPER_LANGUAGE_MAP[language_input]['custom_id']
@@ -1017,7 +1017,7 @@ def get_language_whisper(language_input, custom_vocab=False):
 def get_language_sensevoice(language_input):
     return SENSEVOICE_LANGUAGE_MAP.get(language_input)
 
-    
+
 def get_language_hunyuan(language_input):
     canonical_abbr = LANGUAGE_ALIAS_MAP.get(language_input)
     if canonical_abbr:
@@ -2088,7 +2088,7 @@ def MAIN_PROCESS(
     session_opts.add_session_config_entry('session.use_device_allocator_for_initializers', '1')
     session_opts.add_session_config_entry('optimization.enable_cast_chain_elimination', '1')
     session_opts.add_session_config_entry('session.graph_optimizations_loop_level', '2')
-    
+
     run_options.add_run_config_entry('disable_synchronize_execution_providers', '1')
     if 'QNNExecutionProvider' in ORT_Accelerate_Providers[0]:
         run_options.add_run_config_entry('qnn.htp_perf_mode', 'burst')
@@ -2623,7 +2623,7 @@ def MAIN_PROCESS(
                 segments = list(timestamps._tracks.keys())
                 timestamps = []
                 for segment in segments:
-                    timestamps.append((segment_start, segment_end))
+                    timestamps.append((segment.start, segment.end))
                 del waveform
         elif vad_type == 4:
             print('\nVAD-HumAware 不提供可视化的运行进度。\nThe VAD-HumAware does not provide the running progress for visualization.\n')
@@ -3402,7 +3402,7 @@ def create_interface():
                     step=0.025,
                     label='语音状态分数 / Voice State Score',
                     info='值越大，判断语音状态越困难。\nThe higher the value, the more difficult it is to determine the state of the speech',
-                    value=0.5,
+                    value=0.4,
                     visible=True,
                     interactive=True
                 )
@@ -3412,7 +3412,7 @@ def create_interface():
                     step=0.025,
                     label='静音状态分数 / Silence State Score',
                     info='值越大，越容易截断语音。\nA larger value makes it easier to cut off speaking.',
-                    value=0.5,
+                    value=0.4,
                     visible=True,
                     interactive=True
                 )
