@@ -2098,7 +2098,7 @@ def MAIN_PROCESS(
     print('----------------------------------------------------------------------------------------------------------')
     print('\n正在加载所需的模型和目标文件。Now loading the required models and target files.')
     # Load VAD model
-    pad_len = int(slider_vad_pad * SAMPLE_RATE_16K * 0.001)
+    pad_len = int(slider_vad_pad * SAMPLE_RATE_16K)
     pad_zeros = np.zeros([1, 1, pad_len], dtype=np.int16)
     max_asr_segment = MAX_ASR_SEGMENT - pad_len - pad_len
     if vad_type == 1:
@@ -2119,7 +2119,6 @@ def MAIN_PROCESS(
             "min_duration_off": slider_vad_FUSION_THRESHOLD
         }
         pyannote_vad_pipeline.instantiate(HYPER_PARAMETERS)
-        slider_vad_pad = slider_vad_pad * 0.001
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
     elif vad_type == 4:
         import torch
@@ -2128,7 +2127,6 @@ def MAIN_PROCESS(
         humaware_vad = humaware_vad.float().eval()
         INPUT_AUDIO_LENGTH_B = 512
         stride_step_B = INPUT_AUDIO_LENGTH_B
-        slider_vad_pad = slider_vad_pad * 0.001
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
     elif vad_type == 5:
         # Using CPU is fast enough.
@@ -2140,12 +2138,10 @@ def MAIN_PROCESS(
         in_name_B0 = in_name_B[0].name
         out_name_B = [out_name_B[i].name for i in range(len(out_name_B))]
         slider_vad_SILENCE_SCORE = 1.0 - slider_vad_SILENCE_SCORE
-        slider_vad_pad = slider_vad_pad * 0.001
     elif vad_type == 6:
         ten_vad = TenVad(256, 0.5, lib_path)  # TEN_VAD_FRAME_LENGTH = 256, standard threshold = 0.5
         INPUT_AUDIO_LENGTH_B = 256
         stride_step_B = INPUT_AUDIO_LENGTH_B
-        slider_vad_pad = slider_vad_pad * 0.001
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
 
     # Load ASR model
@@ -3385,11 +3381,11 @@ def create_interface():
             # VAD padding setting
             slider_vad_pad = gr.Slider(
                 minimum=0,
-                maximum=1000,
-                step=25,
+                maximum=1,
+                step=0.05,
                 label='VAD 填充 / VAD Padding',
-                info='在时间戳的开头和结尾添加填充。单位：毫秒。\nAdd padding to the start and end of the timestamps. Unit: Milliseconds.',
-                value=400,
+                info='在时间戳的开头和结尾添加填充。单位：秒。\nAdd padding to the start and end of the timestamps. Unit: Seconds.',
+                value=0.4,
                 visible=True,
                 interactive=True
             )
@@ -3440,12 +3436,12 @@ def create_interface():
                     interactive=True
                 )
                 slider_vad_MAX_SPEECH_DURATION = gr.Slider(
-                    minimum=5,
+                    minimum=1,
                     maximum=20,
                     step=1,
                     label='过滤长语音段 / Filter Long Voice Segment',
                     info='最大语音时长。单位：秒。\nMaximum voice duration. Unit: Seconds.',
-                    value=16,
+                    value=20,
                     visible=True,
                     interactive=True
                 )
