@@ -3440,12 +3440,12 @@ def create_interface():
                     interactive=True
                 )
                 slider_vad_MAX_SPEECH_DURATION = gr.Slider(
-                    minimum=1,
+                    minimum=5,
                     maximum=20,
                     step=1,
                     label='过滤长语音段 / Filter Long Voice Segment',
                     info='最大语音时长。单位：秒。\nMaximum voice duration. Unit: Seconds.',
-                    value=20,
+                    value=16,
                     visible=True,
                     interactive=True
                 )
