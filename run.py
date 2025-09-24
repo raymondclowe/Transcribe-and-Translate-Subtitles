@@ -939,7 +939,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=False)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
-        update_G = gr.update(visible=True, value=400)
+        update_G = gr.update(visible=True, value=0.4)
     elif "Silero" in dropdown_model_vad:
         update_A = gr.update(visible=True, value=0.4)
         update_B = gr.update(visible=True, value=0.4)
@@ -947,7 +947,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
-        update_G = gr.update(visible=True, value=400)
+        update_G = gr.update(visible=True, value=0.4)
     elif "HumAware" in dropdown_model_vad:
         update_A = gr.update(visible=True, value=0.4)
         update_B = gr.update(visible=True, value=0.4)
@@ -955,7 +955,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
-        update_G = gr.update(visible=True, value=400)
+        update_G = gr.update(visible=True, value=0.4)
     elif "MarbleNet" in dropdown_model_vad:
         update_A = gr.update(visible=True, value=0.4)
         update_B = gr.update(visible=True, value=0.4)
@@ -963,7 +963,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
-        update_G = gr.update(visible=True, value=400)
+        update_G = gr.update(visible=True, value=0.4)
     elif dropdown_model_vad == "TEN":
         update_A = gr.update(visible=True, value=0.4)
         update_B = gr.update(visible=True, value=0.4)
@@ -971,7 +971,7 @@ def update_vad(dropdown_model_vad):
         update_D = gr.update(visible=True)
         update_E = gr.update(visible=True, value=0.2)
         update_F = gr.update(visible=True, value=0.05)
-        update_G = gr.update(visible=True, value=400)
+        update_G = gr.update(visible=True, value=0.4)
     else:
         update_A = gr.update(visible=False)
         update_B = gr.update(visible=False)
