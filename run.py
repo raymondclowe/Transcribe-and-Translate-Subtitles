@@ -18,19 +18,13 @@ import gradio as gr
 import soundfile as sf
 import onnxruntime
 from pydub import AudioSegment
-from pyannote.audio import Model
-from pyannote.audio.pipelines import VoiceActivityDetection
 from transformers import AutoTokenizer
-from sentencepiece import SentencePieceProcessor
-from VAD.TEN.include.ten_vad import TenVad
-from ASR.FireRedASR.AED.L.Tokenizer.aed_tokenizer import ChineseCharEnglishSpmTokenizer
+
 
 PYTHON_PACKAGE = site.getsitepackages()[-1]
 shutil.copyfile(r'./VAD/Silero/utils_vad.py',    PYTHON_PACKAGE + r'/silero_vad/utils_vad.py')
 shutil.copyfile(r'./VAD/Silero/model.py',        PYTHON_PACKAGE + r'/silero_vad/model.py')
 shutil.copyfile(r'./VAD/Silero/silero_vad.onnx', PYTHON_PACKAGE + r'/silero_vad/data/silero_vad.onnx')
-from silero_vad import load_silero_vad, get_speech_timestamps
-from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
 
 
 physical_cores = psutil.cpu_count(logical=False)
@@ -38,7 +32,7 @@ print(f'\n找到 {physical_cores} 个物理 CPU 核心。Found {physical_cores} 
 
 
 DEVICE_ID = 0
-PENALITY_RANGE = 20         # For ASR decode.
+PENALITY_RANGE = 15         # For ASR decode.
 REMOVE_OVER_TALKING = 5     # The whisper v3 may over decode.
 MAX_SEQ_LEN_LLM = 85        # Do not edit it.
 MAX_SEQ_LEN_ASR = 85        # Do not edit it.
@@ -1979,6 +1973,7 @@ def MAIN_PROCESS(
         else:
             whisper_start_token, ASR_STOP_TOKEN, target_task_id = get_task_id_whisper('Transcribe', USE_V3, custom_vocab)
     elif 'SenseVoice' in model_asr:
+        from sentencepiece import SentencePieceProcessor
         onnx_model_C = r'./ASR/SenseVoice/Small/FP32/SenseVoice.onnx'
         if os.path.isfile(onnx_model_C):
             print(f'\n找到了 ASR。Found the {model_asr}.')
@@ -2014,6 +2009,7 @@ def MAIN_PROCESS(
         target_task_id = None
         onnx_model_D = None
     elif 'FireRedASR' in model_asr:
+        from ASR.FireRedASR.AED.L.Tokenizer.aed_tokenizer import ChineseCharEnglishSpmTokenizer
         onnx_model_C = f'./ASR/FireRedASR/AED/L/{model_dtype}/FireRedASR_Encoder.onnx'
         onnx_model_D = f'./ASR/FireRedASR/AED/L/{model_dtype}/FireRedASR_Decoder.onnx'
         onnx_model_G = f'./ASR/FireRedASR/AED/L/{model_dtype}/Greedy_Search.onnx'
@@ -2102,15 +2098,19 @@ def MAIN_PROCESS(
     pad_zeros = np.zeros([1, 1, pad_len], dtype=np.int16)
     max_asr_segment = MAX_ASR_SEGMENT - pad_len - pad_len
     if vad_type == 1:
+        from faster_whisper.vad import get_speech_timestamps as get_speech_timestamps_FW, VadOptions
         slider_vad_MIN_SPEECH_DURATION_ms = int(slider_vad_MIN_SPEECH_DURATION * 1000)
     elif vad_type == 2:
         import torch
+        from silero_vad import load_silero_vad, get_speech_timestamps
         torch.set_num_threads(parallel_threads)
         silero_vad = load_silero_vad(onnx=True)
         slider_vad_MIN_SPEECH_DURATION_ms = int(slider_vad_MIN_SPEECH_DURATION * 1000)
         print("\nVAD 可用的硬件 VAD Usable Providers: ['CPUExecutionProvider']")
     elif vad_type == 3:
         import torch
+        from pyannote.audio import Model
+        from pyannote.audio.pipelines import VoiceActivityDetection
         torch.set_num_threads(parallel_threads)
         pyannote_vad = Model.from_pretrained("./VAD/Pyannote_Segmentation/pytorch_model.bin")
         pyannote_vad_pipeline = VoiceActivityDetection(segmentation=pyannote_vad)
@@ -2139,6 +2139,7 @@ def MAIN_PROCESS(
         out_name_B = [out_name_B[i].name for i in range(len(out_name_B))]
         slider_vad_SILENCE_SCORE = 1.0 - slider_vad_SILENCE_SCORE
     elif vad_type == 6:
+        from VAD.TEN.include.ten_vad import TenVad
         ten_vad = TenVad(256, 0.5, lib_path)  # TEN_VAD_FRAME_LENGTH = 256, standard threshold = 0.5
         INPUT_AUDIO_LENGTH_B = 256
         stride_step_B = INPUT_AUDIO_LENGTH_B
