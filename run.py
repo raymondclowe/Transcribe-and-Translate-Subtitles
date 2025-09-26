@@ -1164,8 +1164,7 @@ def MAIN_PROCESS(
         slider_vad_MAX_SPEECH_DURATION,
         slider_vad_MIN_SILENCE_DURATION
 ):
-    def create_ort_session(_device_type, _has_npu, _onnx_model_x, _ORT_Accelerate_Providers, _session_opts,
-                           _provider_options, tag):
+    def create_ort_session(_device_type, _has_npu, _onnx_model_x, _ORT_Accelerate_Providers, _session_opts, _provider_options, tag):
         ort_session_x = None
         device_type_x = 'cpu'
         use_sync_operations = True
@@ -1352,8 +1351,7 @@ def MAIN_PROCESS(
                     if DO_REPEAT_PENALITY and (num_decode >= PENALITY_RANGE) and (_init_save_id_greedy[penality_reset_count_greedy] != max_logits_idx):
                         repeat_penality = all_outputs_G[1].numpy()
                         repeat_penality[..., penality_reset_count_greedy] = 1.0
-                        repeat_penality = onnxruntime.OrtValue.ortvalue_from_numpy(repeat_penality, device_type_C, DEVICE_ID)
-                        input_feed_G[in_name_G[1]] = repeat_penality._ortvalue
+                        input_feed_G[in_name_G[1]].update_inplace(repeat_penality)
                         penality_reset_count_greedy += 1
                     else:
                         input_feed_G[in_name_G[1]] = all_outputs_G[1]
@@ -1500,8 +1498,7 @@ def MAIN_PROCESS(
                     if DO_REPEAT_PENALITY and (num_decode >= PENALITY_RANGE) and (_init_save_id_greedy[penality_reset_count_greedy] != max_logits_idx):
                         repeat_penality = all_outputs_G[1].numpy()
                         repeat_penality[..., penality_reset_count_greedy] = 1.0
-                        repeat_penality = onnxruntime.OrtValue.ortvalue_from_numpy(repeat_penality, device_type_C, DEVICE_ID)
-                        input_feed_G[in_name_G[1]] = repeat_penality._ortvalue
+                        input_feed_G[in_name_G[1]].update_inplace(repeat_penality)
                         penality_reset_count_greedy += 1
                     else:
                         input_feed_G[in_name_G[1]] = all_outputs_G[1]
@@ -1537,7 +1534,7 @@ def MAIN_PROCESS(
         return results
 
     def get_ort_device(bind_device_type, bind_device_id):
-        return onnxruntime.capi._pybind_state.OrtDevice(onnxruntime.capi.onnxruntime_inference_collection.get_ort_device_type(bind_device_type, bind_device_id), onnxruntime.capi._pybind_state.OrtDevice.default_memory(), bind_device_id)
+        return onnxruntime.capi._pybind_state.OrtDevice(onnxruntime.capi.onnxruntime_inference_collection.get_ort_device_type(bind_device_type), onnxruntime.capi._pybind_state.OrtDevice.default_memory(), bind_device_id)
 
     def bind_inputs_to_device(io_binding, input_names, ortvalue, num_inputs):
         for i in range(num_inputs):
@@ -1551,6 +1548,16 @@ def MAIN_PROCESS(
     print("----------------------------------------------------------------------------------------------------------")
     FIRST_RUN = True
     HAS_CACHE = False
+    ort_session_A = None
+    ort_session_B = None
+    ort_session_C = None
+    ort_session_D = None
+    ort_session_E = None
+    ort_session_G = None
+    ort_session_H = None
+    ort_session_I = None
+    ort_session_J = None
+    ort_session_K = None
 
     transcribe_language_dolphin = transcribe_language
     transcribe_language = transcribe_language.split('-')[0].strip()
@@ -2343,7 +2350,7 @@ def MAIN_PROCESS(
         out_name_C = [out_name_C[0].name]
 
     # Process Loop
-    for input_audio in task_queue:
+    for x, input_audio in enumerate(task_queue, 1):
         print(f'\n加载音频文件 Loading the Input Media: {input_audio}')
         file_name = Path(input_audio).stem
         cache_otiginal = f'./Cache/{file_name}_original.wav'
@@ -2522,11 +2529,11 @@ def MAIN_PROCESS(
             print('----------------------------------------------------------------------------------------------------------')
 
         # Process audio
-        audio = normalize_to_int16(audio)
         audio_len = audio.shape[-1]
         if switcher_run_test:
             audio_len = audio_len // 10
             audio = audio[:audio_len]
+        audio = normalize_to_int16(audio)
         audio = audio.reshape(1, 1, -1)
         inv_audio_len = 100.0 / audio_len
         if USE_DENOISED:
@@ -2537,10 +2544,17 @@ def MAIN_PROCESS(
                 final_slice = audio[..., -pad_amount:].astype(np.float32)
                 white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, pad_amount))).astype(audio.dtype)
                 audio = np.concatenate((audio, white_noise), axis=-1)
+                del final_slice
+                del pad_amount
+                del total_length_needed
+                del num_windows
+                del white_noise
             elif audio_len < INPUT_AUDIO_LENGTH_A:
                 audio_float = audio.astype(np.float32)
                 white_noise = (np.sqrt(np.mean(audio_float * audio_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(1, 1, INPUT_AUDIO_LENGTH_A - audio_len))).astype(audio.dtype)
                 audio = np.concatenate((audio, white_noise), axis=-1)
+                del audio_float
+                del white_noise
             aligned_len = audio.shape[-1]
             print('----------------------------------------------------------------------------------------------------------')
             print('\n对音频进行降噪。Denoising the audio.')
@@ -2568,6 +2582,8 @@ def MAIN_PROCESS(
             del saved
             del results
             del de_audio
+            del audio_len_3
+            gc.collect()
 
         # VAD parts.
         print('----------------------------------------------------------------------------------------------------------')
@@ -2636,11 +2652,19 @@ def MAIN_PROCESS(
                     white_noise = rms * torch.randn(pad_amount, device=waveform.device, dtype=waveform.dtype)
                     waveform = torch.cat((waveform, white_noise), dim=-1)
                     waveform_len = len(waveform)
+                    del white_noise
+                    del rms
+                    del final_slice
+                    del pad_amount
+                    del total_length_needed
+                    del num_windows
                 elif waveform_len < INPUT_AUDIO_LENGTH_B:
                     rms = torch.sqrt(torch.mean(waveform * waveform))
                     white_noise = rms * torch.randn(INPUT_AUDIO_LENGTH_B - audio_len, device=waveform.device, dtype=waveform.dtype)
                     waveform = torch.cat((waveform, white_noise), dim=-1)
                     waveform_len = len(waveform)
+                    del rms
+                    del white_noise
                 silence = True
                 saved = []
                 for i in range(0, waveform_len, INPUT_AUDIO_LENGTH_B):
@@ -2679,6 +2703,8 @@ def MAIN_PROCESS(
             del score_silence
             del score_active
             del signal_len
+            del all_outpus_B
+            del silence
             gc.collect()
         elif vad_type == 6:
             waveform = waveform.reshape(-1)
@@ -2689,10 +2715,17 @@ def MAIN_PROCESS(
                 final_slice = waveform[-pad_amount:].astype(np.float32)
                 white_noise = (np.sqrt(np.mean(final_slice * final_slice, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(pad_amount))).astype(waveform.dtype)
                 waveform = np.concatenate((waveform, white_noise), axis=-1)
+                del white_noise
+                del final_slice
+                del pad_amount
+                del total_length_needed
+                del num_windows
             elif audio_len < INPUT_AUDIO_LENGTH_B:
                 audio_float = waveform.astype(np.float32)
                 white_noise = (np.sqrt(np.mean(audio_float * audio_float, dtype=np.float32), dtype=np.float32) * np.random.normal(loc=0.0, scale=1.0, size=(INPUT_AUDIO_LENGTH_B - audio_len))).astype(waveform.dtype)
                 waveform = np.concatenate((waveform, white_noise), axis=-1)
+                del audio_float
+                del white_noise
             audio_len = waveform.shape[-1]
             inv_audio_len = 100.0 / audio_len
             silence = True
@@ -2712,6 +2745,11 @@ def MAIN_PROCESS(
                 slice_start += stride_step_B
                 slice_end = slice_start + INPUT_AUDIO_LENGTH_B
             timestamps = vad_to_timestamps(saved, TEN_VAD_param)
+            del waveform
+            del silence
+            del saved
+            del slice_start
+            del slice_end
         else:
             print('\n这个任务不使用 VAD。This task does not use VAD.\n')
         if vad_type != -1:
@@ -2749,6 +2787,27 @@ def MAIN_PROCESS(
         print(f'ASR: 100.00%\nComplete. Time Cost: {time.time() - start_time:.3f} Seconds')
         del audio
         del timestamps
+        del args_list
+        del results
+        if x == total_task: # Last audio done
+            if ort_session_A:
+                del ort_session_A
+            if ort_session_B:
+                del ort_session_B
+            if ort_session_C:
+                del ort_session_C
+            if ort_session_D:
+                del ort_session_D
+            if ort_session_G:
+                del ort_session_G
+            if ort_session_H:
+                del ort_session_H
+            if ort_session_I:
+                del ort_session_I
+            if ort_session_J:
+                del ort_session_J
+            if ort_session_K:
+                del ort_session_K
         gc.collect()
         print('----------------------------------------------------------------------------------------------------------')
 
@@ -2813,10 +2872,15 @@ def MAIN_PROCESS(
                         text_file.write(f'{transcription}\n')
                         subtitles_file.write(f'{idx}\n{timestamp}{transcription}\n\n')
                         idx += 1
-            del save_text
-            del save_timestamps
+        del save_text
+        del save_timestamps
+        del time_file
+        del text_file
+        del subtitles_file
+        gc.collect()
         print(f'\n转录任务完成。Transcribe Tasks Complete.\n\n原文字幕保存在文件夹: ./Result/Subtitles\nThe original subtitles are saved in the folder: ./Result/Subtitles\n\nTranscribe Time: {(time.time() - total_process_time):.3f} Seconds.')
         print('----------------------------------------------------------------------------------------------------------')
+
 
         if 'Translate' not in task:
             continue
@@ -3020,6 +3084,7 @@ def MAIN_PROCESS(
             print('----------------------------------------------------------------------------------------------------------')
     success = f'\n所有任务已完成。翻译字幕保存在文件夹: ./Result/Subtitles\nAll tasks complete. The translated subtitles are saved in the folder: ./Result/Subtitles\n\nTotal Time: {(time.time() - total_process_time):.3f} Seconds.\n'
     print(success)
+    gc.collect()
     return success
 
 
