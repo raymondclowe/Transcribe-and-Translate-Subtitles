@@ -1632,11 +1632,11 @@ def MAIN_PROCESS(
                 ORT_Accelerate_Providers = ['NvTensorRTRTXExecutionProvider']
                 if 'CUDAExecutionProvider' in usable_providers:
                     ORT_Accelerate_Providers = ['NvTensorRTRTXExecutionProvider', 'CUDAExecutionProvider']
-            elif 'TensorrtExecutionProvider' in usable_providers:
-                device_type = 'cuda'
-                ORT_Accelerate_Providers = ['TensorrtExecutionProvider']
-                if 'CUDAExecutionProvider' in usable_providers:
-                    ORT_Accelerate_Providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider']
+            # elif 'TensorrtExecutionProvider' in usable_providers:
+            #     device_type = 'cuda'
+            #     ORT_Accelerate_Providers = ['TensorrtExecutionProvider']
+            #     if 'CUDAExecutionProvider' in usable_providers:
+            #         ORT_Accelerate_Providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider']
             elif 'CUDAExecutionProvider' in usable_providers:
                 device_type = 'cuda'
                 ORT_Accelerate_Providers = ['CUDAExecutionProvider']
@@ -2465,17 +2465,6 @@ def MAIN_PROCESS(
                                         device_type_A = device_type
 
                                 cleanup_openvino()
-
-                            elif 'CUDAExecutionProvider' in ORT_Accelerate_Providers:
-                                # CUDA configuration
-                                def setup_cuda():
-                                    if is_special_model():
-                                        provider_options[0]['cudnn_conv_algo_search'] = 'DEFAULT'
-
-                                def cleanup_cuda():
-                                    provider_options[0]['cudnn_conv_algo_search'] = 'EXHAUSTIVE'
-
-                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'NVIDUA-GPU', onnx_model_A, setup_cuda, cleanup_cuda)
 
                             elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
                                 # CoreML GPU/NPU configuration
