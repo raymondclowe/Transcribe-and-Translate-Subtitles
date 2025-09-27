@@ -1534,7 +1534,7 @@ def MAIN_PROCESS(
         return results
 
     def get_ort_device(bind_device_type, bind_device_id):
-        return onnxruntime.capi._pybind_state.OrtDevice(onnxruntime.capi.onnxruntime_inference_collection.get_ort_device_type(bind_device_type), onnxruntime.capi._pybind_state.OrtDevice.default_memory(), bind_device_id)
+        return onnxruntime.capi._pybind_state.OrtDevice(onnxruntime.capi.onnxruntime_inference_collection.get_ort_device_type(bind_device_type, bind_device_id), onnxruntime.capi._pybind_state.OrtDevice.default_memory(), bind_device_id)
 
     def bind_inputs_to_device(io_binding, input_names, ortvalue, num_inputs):
         for i in range(num_inputs):
@@ -1844,7 +1844,7 @@ def MAIN_PROCESS(
             denoiser_format = 'FP32'
         else:
             denoiser_format = model_dtype
-                
+
     else:
         USE_DENOISED = False
 
@@ -2431,15 +2431,15 @@ def MAIN_PROCESS(
                                             'disable_dynamic_shapes': True
                                         }]
                                         ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=openvino_providers, provider_options=openvino_options)
-    
+
                                     elif 'CoreMLExecutionProvider' in usable_providers:
                                         # CoreML CPU configuration
                                         def setup_coreml_cpu():
                                             provider_options[0]['MLComputeUnits'] = 'CPUOnly'
-    
+
                                         def cleanup_coreml_cpu():
                                             provider_options[0]['MLComputeUnits'] = 'ALL'
-    
+
                                         ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'Apple-CoreML-CPU', onnx_model_A, setup_coreml_cpu, cleanup_coreml_cpu)
                             else:
                                 # Non-CPU logic
@@ -2447,39 +2447,39 @@ def MAIN_PROCESS(
                                     # OpenVINO GPU/NPU configuration
                                     def setup_openvino():
                                         provider_options[0]['disable_dynamic_shapes'] = True
-    
+
                                     def cleanup_openvino():
                                         provider_options[0]['disable_dynamic_shapes'] = False
                                         provider_options[0]['device_type'] = 'GPU'  # Reset to GPU
-    
+
                                     setup_openvino()
-    
+
                                     # Try NPU first if available
                                     if has_npu:
                                         provider_options[0]['device_type'] = 'NPU'
                                         ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-NPU', onnx_model_A)
                                         if success:
                                             device_type_A = 'npu'
-    
+
                                     # Try GPU if NPU failed or not available
                                     if ort_session_A is None:
                                         provider_options[0]['device_type'] = 'GPU'
                                         ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-GPU', onnx_model_A)
                                         if success:
                                             device_type_A = device_type
-    
+
                                     cleanup_openvino()
-    
+
                                 elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
                                     # CoreML GPU/NPU configuration
                                     def setup_coreml_gpu():
                                         provider_options[0]['RequireStaticInputShapes'] = '1'
-    
+
                                     def cleanup_coreml_gpu():
                                         provider_options[0]['RequireStaticInputShapes'] = '0'
-    
+
                                     ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options,'Apple-CoreML-GPU_NPU', onnx_model_A, setup_coreml_gpu, cleanup_coreml_gpu)
-    
+
                                 else:
                                     # Other providers
                                     ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'GPU_NPU', onnx_model_A)
