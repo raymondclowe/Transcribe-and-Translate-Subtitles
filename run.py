@@ -1224,8 +1224,8 @@ def MAIN_PROCESS(
             _onnx_model_x = _onnx_model_x.replace('FP16', 'FP32')
             ort_session_x = onnxruntime.InferenceSession(_onnx_model_x, sess_options=_session_opts, providers=_ORT_Accelerate_Providers, provider_options=_provider_options)
 
-        # Temporary fallback to 'cpu', due to the onnxruntime doesn't update yet.
-        if device_type_x in ['gpu', 'npu', 'dml']:
+        # Temporary fallback to 'cpu'.
+        if (device_type_x in ['gpu', 'npu'] and onnxruntime.version != '1.23.0') or device_type_x in ['dml']:
             device_type_x = 'cpu'
 
         return ort_session_x, use_sync_operations, device_type_x, _ORT_Accelerate_Providers, _provider_options
@@ -1844,6 +1844,7 @@ def MAIN_PROCESS(
             denoiser_format = 'FP32'
         else:
             denoiser_format = model_dtype
+                
     else:
         USE_DENOISED = False
 
@@ -2410,75 +2411,78 @@ def MAIN_PROCESS(
                         ort_session_A = None
                         device_type_A = 'cpu'
 
-                        if device_type == 'cpu':
-                            # CPU-specific logic
-                            if is_special_model():
-                                if 'OpenVINOExecutionProvider' in usable_providers:
-                                    # OpenVINO CPU configuration
-                                    openvino_providers = ['OpenVINOExecutionProvider']
-                                    openvino_options = [{
-                                        'device_type': "CPU",
-                                        'precision': 'ACCURACY',
-                                        'model_priority': 'HIGH',
-                                        'num_of_threads': parallel_threads,
-                                        'num_streams': 1,
-                                        'enable_opencl_throttling': False,
-                                        'enable_qdq_optimizer': False,
-                                        'disable_dynamic_shapes': True
-                                    }]
-                                    ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=openvino_providers, provider_options=openvino_options)
-
-                                elif 'CoreMLExecutionProvider' in usable_providers:
-                                    # CoreML CPU configuration
-                                    def setup_coreml_cpu():
-                                        provider_options[0]['MLComputeUnits'] = 'CPUOnly'
-
-                                    def cleanup_coreml_cpu():
-                                        provider_options[0]['MLComputeUnits'] = 'ALL'
-
-                                    ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'Apple-CoreML-CPU', onnx_model_A, setup_coreml_cpu, cleanup_coreml_cpu)
+                        if onnxruntime.version == '1.23.0' and model_denoiser == 'MelBandRoformer':  # Fallback to CPU, because the 1.23.0 will error out on FP16.
+                            pass
                         else:
-                            # Non-CPU logic
-                            if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers[0]:
-                                # OpenVINO GPU/NPU configuration
-                                def setup_openvino():
-                                    provider_options[0]['disable_dynamic_shapes'] = True
-
-                                def cleanup_openvino():
-                                    provider_options[0]['disable_dynamic_shapes'] = False
-                                    provider_options[0]['device_type'] = 'GPU'  # Reset to GPU
-
-                                setup_openvino()
-
-                                # Try NPU first if available
-                                if has_npu:
-                                    provider_options[0]['device_type'] = 'NPU'
-                                    ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-NPU', onnx_model_A)
-                                    if success:
-                                        device_type_A = 'npu'
-
-                                # Try GPU if NPU failed or not available
-                                if ort_session_A is None:
-                                    provider_options[0]['device_type'] = 'GPU'
-                                    ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-GPU', onnx_model_A)
-                                    if success:
-                                        device_type_A = device_type
-
-                                cleanup_openvino()
-
-                            elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
-                                # CoreML GPU/NPU configuration
-                                def setup_coreml_gpu():
-                                    provider_options[0]['RequireStaticInputShapes'] = '1'
-
-                                def cleanup_coreml_gpu():
-                                    provider_options[0]['RequireStaticInputShapes'] = '0'
-
-                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options,'Apple-CoreML-GPU_NPU', onnx_model_A, setup_coreml_gpu, cleanup_coreml_gpu)
-
+                            if device_type == 'cpu':
+                                # CPU-specific logic
+                                if is_special_model():
+                                    if 'OpenVINOExecutionProvider' in usable_providers:
+                                        # OpenVINO CPU configuration
+                                        openvino_providers = ['OpenVINOExecutionProvider']
+                                        openvino_options = [{
+                                            'device_type': "CPU",
+                                            'precision': 'ACCURACY',
+                                            'model_priority': 'HIGH',
+                                            'num_of_threads': parallel_threads,
+                                            'num_streams': 1,
+                                            'enable_opencl_throttling': False,
+                                            'enable_qdq_optimizer': False,
+                                            'disable_dynamic_shapes': True
+                                        }]
+                                        ort_session_A = onnxruntime.InferenceSession(onnx_model_A, sess_options=session_opts, providers=openvino_providers, provider_options=openvino_options)
+    
+                                    elif 'CoreMLExecutionProvider' in usable_providers:
+                                        # CoreML CPU configuration
+                                        def setup_coreml_cpu():
+                                            provider_options[0]['MLComputeUnits'] = 'CPUOnly'
+    
+                                        def cleanup_coreml_cpu():
+                                            provider_options[0]['MLComputeUnits'] = 'ALL'
+    
+                                        ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'Apple-CoreML-CPU', onnx_model_A, setup_coreml_cpu, cleanup_coreml_cpu)
                             else:
-                                # Other providers
-                                ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'GPU_NPU', onnx_model_A)
+                                # Non-CPU logic
+                                if 'OpenVINOExecutionProvider' in ORT_Accelerate_Providers[0]:
+                                    # OpenVINO GPU/NPU configuration
+                                    def setup_openvino():
+                                        provider_options[0]['disable_dynamic_shapes'] = True
+    
+                                    def cleanup_openvino():
+                                        provider_options[0]['disable_dynamic_shapes'] = False
+                                        provider_options[0]['device_type'] = 'GPU'  # Reset to GPU
+    
+                                    setup_openvino()
+    
+                                    # Try NPU first if available
+                                    if has_npu:
+                                        provider_options[0]['device_type'] = 'NPU'
+                                        ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-NPU', onnx_model_A)
+                                        if success:
+                                            device_type_A = 'npu'
+    
+                                    # Try GPU if NPU failed or not available
+                                    if ort_session_A is None:
+                                        provider_options[0]['device_type'] = 'GPU'
+                                        ort_session_A, success = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'OpenVINO-GPU', onnx_model_A)
+                                        if success:
+                                            device_type_A = device_type
+    
+                                    cleanup_openvino()
+    
+                                elif 'CoreMLExecutionProvider' in ORT_Accelerate_Providers[0]:
+                                    # CoreML GPU/NPU configuration
+                                    def setup_coreml_gpu():
+                                        provider_options[0]['RequireStaticInputShapes'] = '1'
+    
+                                    def cleanup_coreml_gpu():
+                                        provider_options[0]['RequireStaticInputShapes'] = '0'
+    
+                                    ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options,'Apple-CoreML-GPU_NPU', onnx_model_A, setup_coreml_gpu, cleanup_coreml_gpu)
+    
+                                else:
+                                    # Other providers
+                                    ort_session_A, _ = try_create_session_with_config(ORT_Accelerate_Providers, provider_options, 'GPU_NPU', onnx_model_A)
 
                         # Fallback to CPU if all attempts failed
                         if ort_session_A is None:
