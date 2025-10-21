@@ -22,9 +22,25 @@ from transformers import AutoTokenizer
 
 
 PYTHON_PACKAGE = site.getsitepackages()[-1]
-shutil.copyfile(r'./VAD/Silero/utils_vad.py',    PYTHON_PACKAGE + r'/silero_vad/utils_vad.py')
-shutil.copyfile(r'./VAD/Silero/model.py',        PYTHON_PACKAGE + r'/silero_vad/model.py')
-shutil.copyfile(r'./VAD/Silero/silero_vad.onnx', PYTHON_PACKAGE + r'/silero_vad/data/silero_vad.onnx')
+# Try to copy local Silero VAD helpers into site-packages, but do not fail if they are missing.
+try:
+    dst_root = os.path.join(PYTHON_PACKAGE, 'silero_vad')
+    os.makedirs(os.path.join(dst_root, 'data'), exist_ok=True)
+    files_to_copy = [
+        ('./VAD/Silero/utils_vad.py', os.path.join(dst_root, 'utils_vad.py')),
+        ('./VAD/Silero/model.py', os.path.join(dst_root, 'model.py')),
+        ('./VAD/Silero/silero_vad.onnx', os.path.join(dst_root, 'data', 'silero_vad.onnx')),
+    ]
+    for src, dst in files_to_copy:
+        if os.path.isfile(src):
+            try:
+                shutil.copyfile(src, dst)
+            except Exception as e:
+                print(f"Warning: failed to copy {src} -> {dst}: {e}")
+        else:
+            print(f"Warning: {src} not found; skipping copy.")
+except Exception as e:
+    print(f"Warning: couldn't prepare silero_vad in site-packages: {e}")
 
 
 physical_cores = psutil.cpu_count(logical=False)
